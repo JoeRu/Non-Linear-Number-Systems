@@ -13,7 +13,7 @@ cap breaks the simplifications both rely on.
 |---|---|
 | `capfib/` | Numerics package: enumeration, DP, generating function, saddle point |
 | `tests/` | Correctness gate — brute-force oracle and cross-checks |
-| `theory/` | Definitions, background analysis, the claim ledger |
+| `theory/` | Definitions, background analysis, proof sketches, the claim ledger |
 | `docs/roadmap.md` | The phase plan |
 | `docs/phases/` | Phase deliverables |
 | `paper/` | LaTeX writeup and bibliography |
