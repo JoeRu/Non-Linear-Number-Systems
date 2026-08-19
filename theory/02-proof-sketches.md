@@ -1,3 +1,14 @@
+> **Note on provenance (added retroactively).** This document predates the current
+> research program and was carried over unchanged from an earlier scaffolding. Its
+> §2 describes the **constant-capacity** model `R(n, c)` — each Fibonacci number used
+> at most `c` times — which is a **different object** from the position-dependent
+> system `0 <= d_k <= F_k` (i.e. `R_c(N)`) that this project now studies; the two are
+> not interchangeable and results below about `R(n, c)` do not transfer. The numerical
+> table in §2.3 was produced by `evaluate.py`, a script that has since been removed
+> from this repository; those numbers are therefore **unverified** and are not, and
+> should not be, recorded in `data/manifest.json`. This document is retained only for
+> its §1 Zeckendorf proof sketches, which remain correct and relevant.
+
 # Fibonacci Partitions — Proof Sketches
 
 ## 1. Zeckendorf's Theorem

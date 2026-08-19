@@ -18,8 +18,21 @@ VALID_STATUS = {"cited", "verified-numeric", "heuristic", "conjecture", "theorem
 REQUIRED_FIELDS = ("id", "statement", "status", "evidence", "source")
 REFERENCE = re.compile(r"\{claim:([a-z0-9-]+)\}")
 SEARCH_DIRS = ("theory", "docs/phases", "paper")
+SEARCH_FILES = ("docs/roadmap.md", "README.md", "CLAUDE.md")
 FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
 DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
+
+# Statuses that must not be asserted as established without a hedge.
+UNSETTLED_STATUS = {"conjecture", "heuristic"}
+
+# Hedge markers required in any paragraph that cites a conjecture/heuristic claim.
+# English and German, because docs/roadmap.md is in German.
+HEDGE_MARKERS = (
+    "conjecture", "heuristic", "not established", "not proved", "unproven",
+    "expected", "supported", "supports", "suggests", "numerical support",
+    "assumption", "konjektur", "heuristik", "nicht bewiesen", "erwartet",
+    "stütze", "vermutung",
+)
 
 
 def validate(root: Path) -> list[str]:
@@ -68,15 +81,42 @@ def validate(root: Path) -> list[str]:
                     f"evidence names a data artifact not recorded in data/manifest.json"
                 )
 
+    status_by_id = {claim.get("id"): claim.get("status") for claim in claims}
+
+    md_paths = []
     for directory in SEARCH_DIRS:
         base = root / directory
-        if not base.exists():
-            continue
-        for md in sorted(base.rglob("*.md")):
-            for ref in REFERENCE.findall(md.read_text()):
-                if ref not in ids:
-                    problems.append(f"{md}: reference to unknown claim '{ref}'")
+        if base.exists():
+            md_paths.extend(sorted(base.rglob("*.md")))
+    for rel in SEARCH_FILES:
+        candidate = root / rel
+        if candidate.exists():
+            md_paths.append(candidate)
 
+    for md in md_paths:
+        text = md.read_text()
+        for ref in REFERENCE.findall(text):
+            if ref not in ids:
+                problems.append(f"{md}: reference to unknown claim '{ref}'")
+        problems.extend(_check_hedging(md, text, status_by_id))
+
+    return problems
+
+
+def _check_hedging(md: Path, text: str, status_by_id: dict) -> list[str]:
+    """Flag paragraphs that cite a conjecture/heuristic claim with no hedge marker."""
+    problems: list[str] = []
+    for paragraph in re.split(r"\n\s*\n", text):
+        lower = paragraph.lower()
+        for ref in REFERENCE.findall(paragraph):
+            status = status_by_id.get(ref)
+            if status not in UNSETTLED_STATUS:
+                continue
+            if not any(marker in lower for marker in HEDGE_MARKERS):
+                problems.append(
+                    f"{md}: paragraph cites claim '{ref}' (status {status}) as "
+                    f"established, with no hedge marker"
+                )
     return problems
 
 

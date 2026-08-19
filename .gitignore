@@ -15,10 +15,6 @@ dist/
 build/
 .pytest_cache/
 
-# LeanDojo cache
-harnesses/lean_dojo/traced_proofs.json
-.leandojo_cache/
-
 # Editor
 .vscode/
 .idea/

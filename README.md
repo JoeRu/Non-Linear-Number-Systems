@@ -24,8 +24,8 @@ cap breaks the simplifications both rely on.
 
 ```bash
 bash scripts/setup.sh
-pytest
-python scripts/run_phase0_gate.py
+.venv/bin/pytest
+.venv/bin/python scripts/run_phase0_gate.py
 ```
 
 ## The convention

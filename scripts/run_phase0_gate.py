@@ -24,8 +24,9 @@ from capfib.saddle import log_R_bound  # noqa: E402
 PHI = (1 + 5 ** 0.5) / 2
 LOG_PHI = math.log(PHI)
 EXPONENTS = [50, 100, 200, 400, 800, 1600, 3200]
-DATA = Path("data/phase0_5_gate.csv")
-FIGURE = Path("figures/phase0_5_gate.png")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA = REPO_ROOT / "data" / "phase0_5_gate.csv"
+FIGURE = REPO_ROOT / "figures" / "phase0_5_gate.png"
 
 
 def main() -> None:
@@ -70,10 +71,11 @@ def main() -> None:
     print(f"1/(4 log phi):     {1 / (4 * LOG_PHI):.6f}")
     print(f"absolute error:    {abs(final - 1 / (4 * LOG_PHI)):.6f}")
 
+    manifest_path = REPO_ROOT / "data" / "manifest.json"
     record(DATA, script="scripts/run_phase0_gate.py",
-           params={"exponents": EXPONENTS})
+           params={"exponents": EXPONENTS}, manifest_path=manifest_path)
     record(FIGURE, script="scripts/run_phase0_gate.py",
-           params={"exponents": EXPONENTS})
+           params={"exponents": EXPONENTS}, manifest_path=manifest_path)
 
 
 if __name__ == "__main__":

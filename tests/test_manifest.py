@@ -31,3 +31,22 @@ def test_records_accumulate(tmp_path):
 
 def test_entries_missing_file(tmp_path):
     assert entries(tmp_path / "nope.json") == []
+
+
+def test_record_upserts_same_file_and_script(tmp_path):
+    mpath = tmp_path / "manifest.json"
+    data = tmp_path / "out.csv"
+
+    data.write_text("N,R\n1,2\n")
+    first = record(data, script="scripts/demo.py", params={"n_max": 10},
+                    manifest_path=mpath)
+
+    data.write_text("N,R\n1,2\n2,3\n")
+    second = record(data, script="scripts/demo.py", params={"n_max": 20},
+                     manifest_path=mpath)
+
+    recorded = entries(mpath)
+    assert len(recorded) == 1
+    assert recorded[0]["sha256"] == second["sha256"]
+    assert recorded[0]["sha256"] != first["sha256"]
+    assert recorded[0]["params"] == {"n_max": 20}

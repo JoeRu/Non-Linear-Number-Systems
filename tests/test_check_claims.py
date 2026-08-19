@@ -71,6 +71,27 @@ def test_verified_numeric_rejects_substring_match(tmp_path):
     assert any("manifest" in p for p in validate(tmp_path))
 
 
+CONJECTURE = """- id: beta
+  statement: "B."
+  status: conjecture
+  evidence: "e"
+  source: "s"
+"""
+
+
+def test_hedged_conjecture_citation_passes(tmp_path):
+    docs = {"theory/x.md": "This is expected but not established {claim:beta}."}
+    _write(tmp_path, CONJECTURE, docs)
+    assert validate(tmp_path) == []
+
+
+def test_unhedged_conjecture_citation_is_reported(tmp_path):
+    docs = {"theory/x.md": "This is true {claim:beta}."}
+    _write(tmp_path, CONJECTURE, docs)
+    problems = validate(tmp_path)
+    assert any("beta" in p and "hedge" in p for p in problems)
+
+
 def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
     # Naming one recorded artifact alongside one unrecorded artifact must not
     # be enough to pass -- every data-artifact token must be recorded.

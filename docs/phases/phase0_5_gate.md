@@ -22,8 +22,8 @@ true constant such as `1/(8 log phi) = 0.260`. Excluding that additionally requi
 saddle-point correction to be of lower order than `(log N)^2`, so that the bound is tight to
 leading order {claim:saddle-tightness}. That is standard for generating functions of this type
 and is expected here, but it is not established in Phase 0.5 — establishing it is part of
-Phase 5's rigorisation. The bound's looseness at reachable `N` is visible directly: at `N = 600`
-the exact `log R_c` is 13.29 against a bound of 19.89.
+Phase 5's rigorisation. The bound's looseness at reachable `N` is visible directly: at `N = 500`
+the exact `log R_c` is 12.53 against a bound of 18.98.
 
 **Reading.** This supports the roadmap's Phase 3 conjecture
 {claim:leading-constant}. The `1/(8 log phi)` figure obtainable from the §4

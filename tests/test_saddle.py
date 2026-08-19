@@ -26,8 +26,15 @@ def test_leading_constant_approaches_quarter_log_phi():
               for i in range(len(pts) - 1)]
     assert slopes == sorted(slopes), "slope should rise monotonically"
     assert slopes[-1] == pytest.approx(target, abs=0.005)
-    assert abs(slopes[-1] - 1.0 / (2 * LOG_PHI)) > 0.4, "rules out 1/(2 log phi)"
-    assert abs(slopes[-1] - 1.0 / (8 * LOG_PHI)) > 0.2, "rules out 1/(8 log phi)"
+    assert abs(slopes[-1] - 1.0 / (2 * LOG_PHI)) > 0.4, (
+        "measured slope is far above 1/(2 log phi); since this is an upper bound, "
+        "that excludes 1/(2 log phi) outright"
+    )
+    assert abs(slopes[-1] - 1.0 / (8 * LOG_PHI)) > 0.2, (
+        "measured slope is far above 1/(8 log phi), but as an upper bound this does "
+        "not by itself exclude a smaller true constant such as 1/(8 log phi) -- "
+        "that additionally requires the saddle-tightness assumption"
+    )
 
 
 def test_rejects_boundary_minimiser():

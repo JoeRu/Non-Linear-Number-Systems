@@ -46,7 +46,12 @@ def record(
     params: dict,
     manifest_path: str | Path = DEFAULT_MANIFEST,
 ) -> dict:
-    """Append a provenance entry for `path` and return it."""
+    """Upsert a provenance entry for `path` and return it.
+
+    If an entry with the same `file` and `script` already exists, it is
+    replaced in place (preserving its position); otherwise the new entry is
+    appended. This keeps re-running a generator from duplicating its entries.
+    """
     target = Path(path)
     entry = {
         "file": target.name,
@@ -57,7 +62,12 @@ def record(
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     existing = entries(manifest_path)
-    existing.append(entry)
+    for i, e in enumerate(existing):
+        if e.get("file") == entry["file"] and e.get("script") == entry["script"]:
+            existing[i] = entry
+            break
+    else:
+        existing.append(entry)
     mp = Path(manifest_path)
     mp.parent.mkdir(parents=True, exist_ok=True)
     mp.write_text(json.dumps(existing, indent=2) + "\n")

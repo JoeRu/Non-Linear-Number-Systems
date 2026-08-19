@@ -48,19 +48,29 @@ results and a Python numerics package to generate and cross-check the underlying
 
 ## Key Concepts
 
-### Fibonacci Partitions
-A **Fibonacci partition** of a positive integer n is a representation
-`n = F_{i₁} + F_{i₂} + … + F_{iₖ}` where each `F_j` is a Fibonacci number.
-The **Zeckendorf representation** is the unique partition using non-consecutive
-Fibonacci numbers.  This project studies *capacity-constrained* variants where
-each Fibonacci number may be used at most `c` times.
+### Position-Dependent Digit Bounds
+A **representation** of a positive integer `N` is a sequence of digits `(d_k)_{k>=1}`
+with `0 <= d_k <= F_k` — the bound on each digit is the place value itself, so it
+grows with position — satisfying `sum_k d_k F_k = N`, where the sum ranges over
+**all** places `F_k <= N` (never a fixed length). Because the digit bound grows with
+`k` rather than being fixed (as in a standard base-`b` system), this numeration is
+**maximally redundant**: most integers have many representations, not one.
 
 ### Non-Unique Representations
-When the capacity constraint `c ≥ 2` is relaxed, multiple valid representations
-exist.  We study:
-- The count of representations for a given n and capacity c
+`R_c(N)` denotes the number of such representations of `N`. We study:
+- The growth of `R_c(N)` — in particular the leading coefficient of `log R_c(N)`
+  as a function of `(log N)^2`
 - Patterns and recurrences in these counts
 - Connections to other combinatorial objects (tilings, lattice paths, etc.)
+
+### Zeckendorf Representation (the unique-representation contrast)
+The **Zeckendorf representation** constrains digits to `{0, 1}` and forbids two
+consecutive nonzero digits (no `F_k` and `F_{k+1}` both used). Under that much
+stricter constraint, every positive integer has a **unique** representation as a
+sum of non-consecutive Fibonacci numbers. This project's position-dependent bound
+`0 <= d_k <= F_k` sits at the opposite extreme from Zeckendorf's `{0,1}` bound —
+maximal redundancy instead of uniqueness — which is why `R_c(N)` is interesting to
+count in the first place.
 
 ---
 
