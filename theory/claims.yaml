@@ -1,0 +1,29 @@
+- id: convention-duplicated-place
+  statement: "The convention F_1 = F_2 = 1 retains two distinct places of value 1."
+  status: cited
+  evidence: "theory/01-background.md §1.1"
+  source: "web-dreamer.de 2009; Lekkerkerker 1952"
+
+- id: place-range
+  statement: "R_c(N) ranges over all places F_k <= N, not a fixed length n."
+  status: theorem
+  evidence: "Direct from the definition; see spec §4.3 Trap 1"
+  source: "spec 2026-08-19 §4.3"
+
+- id: sum-of-squares
+  statement: "sum_{k<=n} F_k^2 = F_n * F_{n+1}."
+  status: theorem
+  evidence: "tests/test_fib.py::test_sum_of_squares_identity, n <= 20"
+  source: "classical Fibonacci identity"
+
+- id: completeness-no-gaps
+  statement: "Every integer in [0, sum_{k<=n} F_k^2] has at least one representation."
+  status: theorem
+  evidence: "Kempner-Fraenkel condition F_k <= 1 + F_{k-1} F_k; theory/01-background.md §3"
+  source: "Fraenkel 1985, Systems of Numeration"
+
+- id: leading-constant
+  statement: "log R_c(N) ~ (log N)^2 / (4 log phi)."
+  status: conjecture
+  evidence: "docs/roadmap.md Phase 3 heuristic; Phase 0.5 numerical support"
+  source: "this project"
