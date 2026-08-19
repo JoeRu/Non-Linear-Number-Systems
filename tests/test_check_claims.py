@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -54,4 +55,30 @@ def test_verified_numeric_needs_manifest(tmp_path):
         '  evidence: "data/results.csv"\n  source: "s"\n'
     )
     _write(tmp_path, claims)
+    assert any("manifest" in p for p in validate(tmp_path))
+
+
+def test_verified_numeric_rejects_substring_match(tmp_path):
+    # A manifest holding "R.csv" must not be satisfied by evidence that merely
+    # contains "R.csv" as a substring of a longer, unrecorded filename.
+    claims = (
+        '- id: alpha\n  statement: "A."\n  status: verified-numeric\n'
+        '  evidence: "verified in NOTES.R.csv-draft (never recorded)"\n'
+        '  source: "s"\n'
+    )
+    manifest = json.dumps([{"file": "R.csv"}])
+    _write(tmp_path, claims, {"data/manifest.json": manifest})
+    assert any("manifest" in p for p in validate(tmp_path))
+
+
+def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
+    # Naming one recorded artifact alongside one unrecorded artifact must not
+    # be enough to pass -- every data-artifact token must be recorded.
+    claims = (
+        '- id: alpha\n  statement: "A."\n  status: verified-numeric\n'
+        '  evidence: "data/unrecorded_run.csv (cf. phase0_5_gate.csv)"\n'
+        '  source: "s"\n'
+    )
+    manifest = json.dumps([{"file": "phase0_5_gate.csv"}])
+    _write(tmp_path, claims, {"data/manifest.json": manifest})
     assert any("manifest" in p for p in validate(tmp_path))

@@ -18,6 +18,8 @@ VALID_STATUS = {"cited", "verified-numeric", "heuristic", "conjecture", "theorem
 REQUIRED_FIELDS = ("id", "statement", "status", "evidence", "source")
 REFERENCE = re.compile(r"\{claim:([a-z0-9-]+)\}")
 SEARCH_DIRS = ("theory", "docs/phases", "paper")
+FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
+DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
 
 
 def validate(root: Path) -> list[str]:
@@ -51,10 +53,19 @@ def validate(root: Path) -> list[str]:
     for claim in claims:
         if claim.get("status") == "verified-numeric":
             evidence = claim.get("evidence", "")
-            if not any(name in evidence for name in manifest_files):
+            tokens = FILE_TOKEN.findall(evidence)
+            data_tokens = [
+                t for t in tokens if Path(t).suffix.lower() in DATA_EXTENSIONS
+            ]
+            if not data_tokens:
                 problems.append(
                     f"claim '{claim.get('id')}': status verified-numeric but its "
-                    f"evidence names no file in data/manifest.json"
+                    f"evidence names no data artifact (.csv/.json/.npy/.npz/.png/.pdf/.svg)"
+                )
+            elif not all(Path(t).name in manifest_files for t in data_tokens):
+                problems.append(
+                    f"claim '{claim.get('id')}': status verified-numeric but its "
+                    f"evidence names a data artifact not recorded in data/manifest.json"
                 )
 
     for directory in SEARCH_DIRS:

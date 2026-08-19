@@ -37,4 +37,5 @@ Primary focus: (A) and (B). (C) is deferred to Phase 6.
 | Completeness: no gaps on `[0, sum F_k^2]` | theorem {claim:completeness-no-gaps} |
 | `sum_{k<=n} F_k^2 = F_n F_{n+1}` | theorem {claim:sum-of-squares} |
 | `C_c = 1 / (4 log phi)` | conjecture {claim:leading-constant} |
+| Saddle-point bound tightness | heuristic {claim:saddle-tightness} |
 | Oscillation structure | open |
