@@ -1674,8 +1674,11 @@ the local slope `d(log R)/d((log N)^2)`, because the plain ratio converges too
 slowly to separate the candidates.
 
 **Result.** See `data/phase0_5_gate.csv` and `figures/phase0_5_gate.png`. The
-local slope rises monotonically and approaches `1/(4 log phi) = 0.519522`,
-decisively excluding `1/(2 log phi) = 1.039` and `1/(8 log phi) = 0.260`.
+local slope rises monotonically to **0.518710** at `N = 10^3200`, against
+`1/(4 log phi) = 0.519522`. Because `log_R_bound` is a Chernoff *upper* bound, this
+excludes `1/(2 log phi) = 1.039` outright; excluding `1/(8 log phi) = 0.260`
+additionally requires the saddle-point correction to be of lower order, which
+Phase 5 must establish.
 
 **Reading.** This supports the roadmap's Phase 3 conjecture
 {claim:leading-constant}. The `1/(8 log phi)` figure obtainable from the §4
@@ -2050,9 +2053,12 @@ In the "Kritischer Pfad und Priorisierung" code block, insert `Phase 0.5 (1 Tag)
 
 At the end of Phase 3's "Konjektur-Statement", append:
 
-> **Numerische Stütze (Phase 0.5):** Die lokale Steigung nähert sich $1/(4\log\varphi)$ und
-> schließt $1/(2\log\varphi)$ und $1/(8\log\varphi)$ aus. Siehe `docs/phases/phase0_5_gate.md`.
-> Das bleibt eine Konjektur — Phase 5 muss sie beweisen.
+> **Numerische Stütze (Phase 0.5):** Die lokale Steigung der Legendre-Transformierten misst
+> 0.518710 bei $N = 10^{3200}$ und steigt monoton gegen $1/(4\log\varphi) = 0.519522$.
+> Da es sich um eine *obere* Schranke handelt, schließt dies $1/(2\log\varphi)$ unmittelbar aus;
+> der Ausschluss von $1/(8\log\varphi)$ setzt zusätzlich voraus, dass die Sattelpunkt-Korrektur
+> von niedrigerer Ordnung ist — erwartet, aber in Phase 0.5 nicht bewiesen.
+> Siehe `docs/phases/phase0_5_gate.md`. Das bleibt eine Konjektur — Phase 5 muss sie beweisen.
 
 - [ ] **Step 6: Verify the roadmap no longer contradicts the definitions**
 
