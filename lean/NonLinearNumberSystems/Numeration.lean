@@ -3,8 +3,8 @@
   =================================
   The capacity-constrained Fibonacci numeration system.
 
-  Convention: F 1 = 1, F 2 = 1, F 3 = 2, ...  (Mathlib's `Nat.fib` with the
-  index shifted by one: our F k is `Nat.fib k` for k >= 1.)
+  Convention: F 1 = 1, F 2 = 1, F 3 = 2, ...  our F k is exactly Mathlib's
+  `Nat.fib k` for k >= 1, with no index shift.
 
   Reference: theory/00-definitions.md
 -/

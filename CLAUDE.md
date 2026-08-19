@@ -80,7 +80,7 @@ lake build         # compile all files
 ### Check a Single File
 ```bash
 cd lean
-lake env lean NonLinearNumberSystems/Fibonacci.lean
+lake env lean NonLinearNumberSystems/Zeckendorf.lean
 ```
 
 ### Common Lean 4 Patterns Used Here

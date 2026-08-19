@@ -29,3 +29,5 @@ theorem exists_numeral_of_le (n N : ℕ)
     (h : N ≤ ∑ k ∈ range n, place (k + 1) * place (k + 1)) :
     ∃ d : Numeral n, d.value = N := by
   sorry  -- greedy algorithm; induction on n using sum_sq_place
+
+end NonLinearNumberSystems
