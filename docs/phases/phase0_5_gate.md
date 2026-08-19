@@ -3,11 +3,12 @@
 **Question.** Which of the candidate leading constants does `log R_c(N)` follow?
 
 **Method.** `log R_c(N) <= min_s [ s N + log F_c(e^-s) ]`, evaluated by ternary
-search on `log s` with the generating function computed in pure log space. The
-leading `(log N)^2` coefficient of the Legendre transform is the leading
-coefficient of `log R_c(N)`; the correction is of lower order. The estimator is
-the local slope `d(log R)/d((log N)^2)`, because the plain ratio converges too
-slowly to separate the candidates.
+search on `log s` with the generating function computed in pure log space. If the
+saddle-point correction is of lower order than `(log N)^2` — expected, but not
+established here {claim:saddle-tightness} — the leading coefficient of the Legendre
+transform is also the leading coefficient of `log R_c(N)`. The estimator is the local
+slope `d(log R)/d((log N)^2)`, because the plain ratio converges too slowly to
+separate the candidates.
 
 **Result.** See `data/phase0_5_gate.csv` and `figures/phase0_5_gate.png`. The local slope rises
 monotonically to **0.518710** at `N = 10^3200`, against `1/(4 log phi) = 0.519522` — an absolute
