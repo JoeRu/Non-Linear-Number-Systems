@@ -42,8 +42,11 @@ Das Problem sitzt exakt zwischen zwei klassischen, gelösten Fällen:
 
 1. **Fibonacci-Konvention:**  
    Festlegen: $F_1, F_2, F_3, \ldots$ mit expliziten Werten.  
-   Beispiel: $F_1=1, F_2=2, F_3=3, F_4=5, F_5=8, \ldots$ (Standard; aber Konsistenz über alle Phasen überprüfen).  
-   **Konsequenz:** $d_1 \in \{0,1\}$, da der Cap für Position 1 den Wert $F_1=1$ hat.
+   **Festgelegt:** $F_1=1, F_2=1, F_3=2, F_4=3, F_5=5, \ldots$ — siehe `theory/00-definitions.md`.
+   Die doppelte 1-Stelle ist beabsichtigt: sie ist der Ursprung des "1 > 1"-Phänomens
+   (Numerale `1000` und `0100` haben beide den Wert 1), und nur unter dieser Konvention
+   gilt $\sum_{k\le n} F_k^2 = F_n F_{n+1}$, das die Vollständigkeitsschranke fixiert.
+   **Konsequenz:** $d_1, d_2 \in \{0,1\}$.
 
 2. **Definitionen schärfen:**  
    - $R_c(N):=$ Anzahl der Folgen $(d_k)_{k\ge1}$ mit $0\le d_k\le F_k$ und $\sum_k d_k F_k=N$.  
@@ -77,6 +80,35 @@ Enthält:
 - Präzise Definition von $R_c, R_u, b$ je in 2–3 Zeilen  
 - Zentrale Forschungsfragen (A), (B), (C) in mathform  
 - Zeichen: Welche Asymptotiken sind *bekannt* (mit Referenz), welche sind *Konjekturen*, welche sind *offen*?
+
+---
+
+## Phase 0.5 — Konstanten-Gate
+
+**Zeithorizont:** 1 Tag
+**Kritikalität:** HOCH — Entscheidungspunkt vor jeder monatelangen Investition
+
+### Ziel
+
+Die führende Konstante $C_c$ *messen*, bevor die Heuristik sie *herleitet*.
+
+### Substanz
+
+Direkte Auswertung von $\log F_c(e^{-s})$ im Log-Raum plus numerische
+Legendre-Transformation $\log R_c(N) \le \min_s [sN + \log F_c(e^{-s})]$.
+Schätzer ist die lokale Steigung $d(\log R)/d((\log N)^2)$, die weit schneller
+konvergiert als das Verhältnis $\log R/(\log N)^2$.
+
+Kandidaten: $1/(2\log\varphi)=1.039$, $1/(4\log\varphi)=0.520$, $1/(8\log\varphi)=0.260$.
+
+### Deliverables
+
+`scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png`,
+`docs/phases/phase0_5_gate.md`.
+
+### Konsequenz
+
+Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusagen.
 
 ---
 
@@ -116,7 +148,10 @@ Enthält:
    - Tabelle: $N$, $R_c(N)$, $\log R_c(N)$, $(\log N)^2$, $\frac{\log R_c(N)}{(\log N)^2}$ für $N\in\{100,500,1000,5000,10000,\ldots\}$.
    - Monotonie: Ist $R_c(N)$ wachsend? Oder gibt es Einbrüche (z.B. bei $N=F_m-1$)?  
    - Lokale Fluktuation: Ratio $R_c(N+1)/R_c(N)$; gibt es Spitzen oder systematische Muster?
-   - **Lückenstruktur:** An welchen $N$ gilt $R_c(N)=0$? (Erwartet: $N\ge\sum_k F_k(F_k+1)$ oder ähnliche Schwellen, wenn Cap *alle* Positionen bindet.)
+   - **Vollständigkeit (erledigt):** Es gibt *keine* Lücken. Die Kempner–Fraenkel-Bedingung
+     $F_k \le 1 + F_{k-1}F_k$ ist mit großem Spielraum erfüllt, also ist jedes $N \in [0, \sum_k F_k^2]$
+     darstellbar (`theory/01-background.md` §3, numerisch bestätigt in `tests/test_dp.py`).
+     Aufgabe ist daher der *Beweis* der Vollständigkeit (Phase 2, Lean-Ziel), nicht die Suche nach Lücken.
 
 ### Deliverables
 
@@ -302,6 +337,13 @@ $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k}
 2. **Konjektur-Statement:**  
    $$\boxed{\ \log R_c(N) \sim \frac{(\log N)^2}{4\log\varphi} \quad \text{(KONJEKTUR)}\ }$$
    Mit explizitem Numerant: $\frac{1}{4\log\varphi} = \frac{1}{4 \cdot 0.481\ldots} \approx 0.520$.
+
+   > **Numerische Stütze (Phase 0.5):** Die lokale Steigung der Legendre-Transformierten misst
+   > 0.518710 bei $N = 10^{3200}$ und steigt monoton gegen $1/(4\log\varphi) = 0.519522$.
+   > Da es sich um eine *obere* Schranke handelt, schließt dies $1/(2\log\varphi)$ unmittelbar aus;
+   > der Ausschluss von $1/(8\log\varphi)$ setzt zusätzlich voraus, dass die Sattelpunkt-Korrektur
+   > von niedrigerer Ordnung ist — erwartet, aber in Phase 0.5 nicht bewiesen.
+   > Siehe `docs/phases/phase0_5_gate.md`. Das bleibt eine Konjektur — Phase 5 muss sie beweisen.
 
 3. **Sekundär-Entwicklung (optional, aber wertvoll):**  
    Falls die Heuristik auch Logarithmische Terme anderer Ordnung andeutet, z.B.
@@ -605,6 +647,8 @@ $$\log R_c(N) = \frac{(\log N)^2}{4\log\varphi} + O\left(\frac{\log N \log\log N
 
 ```
 Phase 0 (1–2 Tage)
+    ↓
+Phase 0.5 (1 Tag)
     ↓
 Phase 1 (1–2 Wochen) ← Parallels mit Phase 3
     ↓
