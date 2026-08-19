@@ -1,0 +1,1 @@
+"""Capacity-constrained Fibonacci numeration."""
