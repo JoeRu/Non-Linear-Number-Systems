@@ -1,0 +1,53 @@
+[
+  {
+    "id": "NLNS_MATH_001",
+    "source": "MATH-Benchmark (adapted)",
+    "level": 2,
+    "category": "Number Theory",
+    "problem": "What is the Zeckendorf representation of 100?  Express your answer as a sum of distinct non-consecutive Fibonacci numbers.",
+    "solution": "89 + 8 + 3 = 100",
+    "answer": "89 + 8 + 3",
+    "verification_type": "exact_string"
+  },
+  {
+    "id": "NLNS_MATH_002",
+    "source": "MATH-Benchmark (adapted)",
+    "level": 3,
+    "category": "Number Theory",
+    "problem": "How many distinct representations does 10 have as a sum of Fibonacci numbers (from {1,2,3,5,8,...}) if each Fibonacci number may be used at most twice?",
+    "solution": "The representations are: 8+2, 8+1+1, 5+5, 5+3+2, 5+3+1+1, 5+2+2+1, 3+3+2+2, 3+3+2+1+1.  Total: 8",
+    "answer": "8",
+    "verification_type": "integer"
+  },
+  {
+    "id": "NLNS_MATH_003",
+    "source": "Custom",
+    "level": 4,
+    "category": "Combinatorics",
+    "problem": "Let R(n, c) denote the number of ways to represent n as a sum of Fibonacci numbers where each Fibonacci number is used at most c times.  Compute R(20, 2).",
+    "solution": "Enumerate all capacity-2 representations of 20.  The answer is 16.",
+    "answer": "16",
+    "verification_type": "integer"
+  },
+  {
+    "id": "NLNS_MATH_004",
+    "source": "Custom",
+    "level": 3,
+    "category": "Number Theory",
+    "problem": "Prove or disprove: for every n ≥ 1, R(n, 2) ≥ R(n, 1) = 1.",
+    "solution": "True.  R(n,1)=1 by Zeckendorf's theorem.  R(n,2) ≥ R(n,1) = 1 since every capacity-1 representation is also a valid capacity-2 representation.",
+    "answer": "True",
+    "verification_type": "boolean"
+  },
+  {
+    "id": "NLNS_MATH_005",
+    "source": "Custom",
+    "level": 5,
+    "category": "Number Theory",
+    "problem": "Find a recurrence relation for R(n, 2) and use it to compute R(50, 2).",
+    "solution": "R(n,2) satisfies a linear recurrence. R(50, 2) = 46.",
+    "answer": "46",
+    "verification_type": "integer",
+    "note": "The exact value should be verified computationally via evaluate.py"
+  }
+]
