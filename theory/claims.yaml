@@ -25,5 +25,11 @@
 - id: leading-constant
   statement: "log R_c(N) ~ (log N)^2 / (4 log phi)."
   status: conjecture
-  evidence: "docs/roadmap.md Phase 3 heuristic; Phase 0.5 numerical support"
+  evidence: "docs/roadmap.md Phase 3 heuristic; see claim gate-local-slope"
   source: "this project"
+
+- id: gate-local-slope
+  statement: "The Legendre-transform local slope approaches 1/(4 log phi), excluding 1/(2 log phi) and 1/(8 log phi)."
+  status: verified-numeric
+  evidence: "data/phase0_5_gate.csv via scripts/run_phase0_gate.py"
+  source: "docs/phases/phase0_5_gate.md"
