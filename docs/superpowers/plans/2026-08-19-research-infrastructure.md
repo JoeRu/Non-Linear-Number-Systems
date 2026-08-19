@@ -11,7 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-08-19-research-infrastructure-design.md`
 
 **Verification status:** Every Python module and test in this plan was extracted and executed
-before the plan was committed. All 45 tests pass, the Phase 0.5 gate runs end to end, and the
+before the plan was committed. All 43 tests pass, the Phase 0.5 gate runs end to end, and the
 ledger validator was confirmed to fail when its evidence is missing. The expected values quoted
 throughout are measured, not estimated.
 
@@ -1275,7 +1275,8 @@ git commit -m "feat: add provenance manifest for generated data"
 - Create: `theory/00-definitions.md`, `theory/claims.yaml`, `scripts/check_claims.py`, `tests/test_check_claims.py`
 
 **Interfaces:**
-- Consumes: `manifest.entries`, pyyaml
+- Consumes: pyyaml; reads `data/manifest.json` directly (not via `capfib.manifest`, so the
+  validator runs without capfib installed)
 - Produces: `check_claims.validate(root: Path) -> list[str]` — returns a list of human-readable problems; empty means valid.
 - Claim reference syntax in Markdown: `{claim:some-id}`.
 
@@ -1543,7 +1544,7 @@ The deliverable that decides whether the roadmap's conjectured constant survives
 - Modify: `theory/claims.yaml`
 
 **Interfaces:**
-- Consumes: `saddle.log_R_bound`, `fit.fit_expansion`, `manifest.record`
+- Consumes: `saddle.log_R_bound`, `manifest.record`
 - Produces: `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png`
 
 - [ ] **Step 1: Write the gate script**
