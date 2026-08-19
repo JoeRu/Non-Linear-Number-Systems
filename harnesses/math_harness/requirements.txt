@@ -1,2 +1,0 @@
-lean-dojo>=1.7.0
-sympy>=1.12

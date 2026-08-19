@@ -1,34 +1,16 @@
 #!/usr/bin/env bash
-# setup.sh — One-shot environment setup for Non-Linear Number Systems
-# Usage: bash scripts/setup.sh
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+echo "==> Python environment"
+python3 -m venv .venv
+.venv/bin/pip install --upgrade pip
+.venv/bin/pip install -e ".[dev]"
 
-echo "==> Installing elan (Lean version manager) …"
-if ! command -v elan &>/dev/null; then
-  curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
-    | sh -s -- -y --no-modify-path
-  # Add to current shell session
-  source "$HOME/.elan/env" 2>/dev/null || export PATH="$HOME/.elan/bin:$PATH"
+echo "==> Lean toolchain (optional)"
+if ! command -v elan >/dev/null 2>&1; then
+  echo "elan not found. Install from https://github.com/leanprover/elan to build lean/."
 else
-  echo "    elan already installed ($(elan --version))"
+  (cd lean && lake update && lake build)
 fi
 
-echo "==> Installing Lean 4 toolchain (from lean/lean-toolchain) …"
-TOOLCHAIN="$(cat "$REPO_ROOT/lean/lean-toolchain")"
-elan toolchain install "$TOOLCHAIN"
-elan override set --path "$REPO_ROOT/lean" "$TOOLCHAIN"
-
-echo "==> Installing Python dependencies (LeanDojo harness) …"
-pip install --quiet -r "$REPO_ROOT/harnesses/lean_dojo/requirements.txt"
-
-echo "==> Installing Python dependencies (MATH harness) …"
-pip install --quiet -r "$REPO_ROOT/harnesses/math_harness/requirements.txt"
-
-echo "==> Fetching Mathlib (this may take several minutes on first run) …"
-cd "$REPO_ROOT/lean"
-lake update
-
-echo ""
-echo "Setup complete!  Run 'bash scripts/run_lean.sh' to build the Lean project."
+echo "==> Done. Run: .venv/bin/pytest"
