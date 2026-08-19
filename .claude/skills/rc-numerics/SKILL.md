@@ -7,10 +7,12 @@ description: Use when computing, regenerating, or reporting any numerical result
 
 ## The gate comes first
 
-Before any numeric result is reported, run:
+Use the project venv created by `scripts/setup.sh`; `capfib` is installed only
+there, so a bare `pytest` fails with an import error rather than a real gate
+result. Before any numeric result is reported, run:
 
 ```bash
-pytest tests/test_brute.py tests/test_dp.py tests/test_gf.py -q
+.venv/bin/pytest tests/test_brute.py tests/test_dp.py tests/test_gf.py -q
 ```
 
 These verify the fast paths against the brute-force oracle to N=200 and against
@@ -30,4 +32,4 @@ failure, do not report around it.
 5. **Check the bracket.** `capfib.saddle.log_R_bound` raises if the minimiser
    reaches an endpoint. Do not catch and ignore it — widen `half`.
 6. After generating data, add or update the `theory/claims.yaml` entry and run
-   `python scripts/check_claims.py`.
+   `.venv/bin/python scripts/check_claims.py`.

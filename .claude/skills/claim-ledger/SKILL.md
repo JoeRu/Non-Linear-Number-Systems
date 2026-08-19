@@ -26,8 +26,10 @@ an explicit epistemic status. Documents cite claims as `{claim:some-id}`.
    makes a conjecture `verified-numeric` at most — never `theorem`.
 3. **`verified-numeric` requires provenance.** The `evidence` field must name a
    file present in `data/manifest.json`, or the validator fails.
-4. Run `python scripts/check_claims.py` after every edit to `theory/claims.yaml`
-   or to any document citing a claim.
+4. Use the project venv created by `scripts/setup.sh`; `capfib` is installed
+   only there, so a bare `pytest` fails with an import error rather than a
+   real gate result. Run `.venv/bin/python scripts/check_claims.py` after
+   every edit to `theory/claims.yaml` or to any document citing a claim.
 
 The distinction this enforces is the epistemic content of the project. Phase 3
 produces a heuristic; Phase 5 produces the theorem. Months separate them —
