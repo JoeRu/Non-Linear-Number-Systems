@@ -63,7 +63,7 @@ structure Representation (n c : ℕ) where
 /-- The number of distinct representations of n with capacity c. -/
 noncomputable def reprCount (n c : ℕ) : ℕ :=
   -- Placeholder: a decidable enumeration would be finite; left as a definition
-  -- for formal development.  See Fibonacci.lean for computable variants.
+  -- for formal development.  See Zeckendorf.lean for computable variants.
   sorry
 
 end NonLinearNumberSystems

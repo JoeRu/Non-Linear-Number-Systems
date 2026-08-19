@@ -6,7 +6,7 @@
 -/
 
 import NonLinearNumberSystems.Basic
-import NonLinearNumberSystems.Fibonacci
+import NonLinearNumberSystems.Zeckendorf
 
 namespace NonLinearNumberSystems
 

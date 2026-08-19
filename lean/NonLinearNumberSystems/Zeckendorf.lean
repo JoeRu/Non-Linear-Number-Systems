@@ -1,6 +1,6 @@
 /-
-  NonLinearNumberSystems.Fibonacci
-  =================================
+  NonLinearNumberSystems.Zeckendorf
+  ==================================
   Theorems about Fibonacci partitions and their capacity-constrained variants.
 
   References:
@@ -9,6 +9,10 @@
   · Klosinski (1977), Fraenkel–Klein–Fraenkel (1995): capacity-constrained
     variants and their counting functions.
 -/
+
+/- NOTE: This file has not been compiled. `elan`/`lake` were unavailable in the
+   environment where it was written, so its syntax and Mathlib API usage are
+   unverified. Run `lake build` before relying on it. -/
 
 import NonLinearNumberSystems.Basic
 import Mathlib.Tactic
