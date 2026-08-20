@@ -14,29 +14,22 @@ claims. Two measurements taken while designing this phase change that framing.
 **The coefficients are small.** The plan deferred a log-domain computation path
 on the assumption that exact counts would overflow or exhaust memory. They do
 not: `R_c(10^6)` is **99 bits** — roughly `10^30` — and extrapolation puts
-`R_c(10^7)` near 143 bits. Exact integer arithmetic is comfortable. The
-bottleneck is Python allocation overhead, not number size, and the deferred
-log-domain path is not needed for this phase.
-
-| N | `gf` time | peak RSS | `R_c(N)` | `log R_c(N)` |
-|---|---|---|---|---|
-| 1,000,000 | 12.3 s | 179 MB | 99 bits | 68.4 |
-
-Measured on commit `9074d3b` with `.venv/bin/python`, uninstrumented. An earlier
-draft of this spec reported 178 s at `N = 10^6`; that figure was `tracemalloc`
-overhead, not computation, and is corrected here. §9 requires the Phase 1 run to
-re-derive these numbers and record them in the manifest, which holds here:
-`scripts/run_phase1.py` records `gf_seconds` and `peak_rss_mb` at `n_max`. An
-earlier draft of this table also carried a second, smaller-`N` row sourced
-from an ad-hoc design-time probe; it has been dropped rather than merely
-flagged, since no committed invocation re-derives it and this project's rule
-is that a number in a document traces to a recorded artifact.
+`R_c(10^7)` near 143 bits. Exact integer arithmetic is comfortably fast
+(seconds, not minutes) and well within memory; the recorded, reproducible
+runtime, peak RSS and `log R_c(10^6)` live in `data/phase1_summary.json`,
+reached through `docs/phases/phase1_report.md` — this design document does
+not restate them, since a design-time probe on an earlier commit is not the
+recorded run and should not be printed alongside it. The bottleneck is Python
+allocation overhead, not number size, and the deferred log-domain path is not
+needed for this phase.
 
 **Phase 1 is not where the constant gets measured.** Phase 0.5 already pinned
 the leading coefficient at `N = 10^3200`. At `N = 10^6` the ratio
-`log R_c(N) / (log N)^2` is 0.35 against a limit near 0.5195 — nowhere close to
-asymptotic. Fitting the four-term expansion to data at this scale would measure
-the pre-asymptotic regime, not the asymptotics.
+`log R_c(N) / (log N)^2` is well under the limiting value near
+`1/(4 log phi)` — nowhere close to asymptotic; the exact ratio is recorded in
+`data/phase1_data.csv`, reached through `docs/phases/phase1_report.md`.
+Fitting the four-term expansion to data at this scale would measure the
+pre-asymptotic regime, not the asymptotics.
 
 So Phase 1's value is **structural, not asymptotic**: monotonicity, local
 fluctuation, extremal `N`, the behaviour at place values, and the smoothness of
@@ -47,7 +40,10 @@ the summatory function. These need exactness far more than they need reach.
 ## 2. Decisions taken
 
 **D1 — Exact integers to `N = 10^6`.** No log-domain path, no fast kernel. The
-existing `capfib.gf.coefficients` is used as-is: ~12 s, 179 MB, exact.
+existing `capfib.gf.coefficients` is used as-is: comfortably fast (seconds,
+not minutes) and well within memory, exact. The recorded runtime and peak
+RSS live in `data/phase1_summary.json`, reached through
+`docs/phases/phase1_report.md`.
 
 **D2 — Roadmap deliverables plus the summatory function.** A measurement taken
 during design settles a question the roadmap explicitly left open. Roadmap
@@ -71,10 +67,11 @@ happens at a small `n_max` and the full run happens once. An on-disk cache of
 the counts array was considered and rejected: `--n-max` recovers most of the
 iteration speed without introducing an artifact format or a staleness question.
 
-**Explicitly not done:** optimising either path. `gf` takes ~12 s, so there is
-nothing to optimise there. `dp` takes ~5 min at `n_max`, but that cost buys the
-verification in §3.1 and is paid once per data run — speeding it up would remove
-the one check that licenses the phase's numbers. A modular-arithmetic kernel
+**Explicitly not done:** optimising either path. `gf` is already fast --
+seconds, not minutes -- so there is nothing to optimise there. `dp` takes
+several minutes at `n_max`, but that cost buys the verification in §3.1 and is
+paid once per data run — speeding it up would remove the one check that
+licenses the phase's numbers. A modular-arithmetic kernel
 (counts mod several 31-bit primes, vectorised `cumsum` per residue class, CRT
 reconstruction) was considered and rejected: it is a subsystem with its own
 correctness burden, and it would make the fast path faster while leaving the
@@ -100,22 +97,20 @@ is therefore an independent check **conditional on that shared place set**,
 not an unconditional one: a wrong or truncated place set would be applied
 identically to both algorithms and would be invisible to the comparison (see
 `tests/test_fib.py` for the boundary tests that pin `places_up_to` instead).
-It is not a sampled check, and it is affordable at production scale:
-
-| N | `dp` | `gf` | pointwise agreement |
-|---|---|---|---|
-| **1,000,000** | **298 s** | **9–12 s** | ✅ **all coefficients** |
-
-This is the script's default `n_max`, so the row is manifest-backed: it is
-what `scripts/run_phase1.py` actually re-derives and records, not an
-ad-hoc design-time probe. Earlier drafts of this table also carried
-smaller-`N` rows from such probes; they have been dropped rather than
-flagged, since no committed invocation re-derives them.
+It is not a sampled check, and it is affordable at production scale: at the
+script's default `n_max = 1,000,000`, `dp` and `gf` agree on **every**
+coefficient. `dp` costs several minutes, `gf` costs seconds -- the exact
+recorded figures live in `data/phase1_summary.json`, reached through
+`docs/phases/phase1_report.md`, not here. Earlier drafts of this section
+carried a table with specific timings from smaller-`N`, ad-hoc design-time
+probes; it has been dropped rather than flagged, since this project's rule is
+that a number in a document traces to a recorded artifact, and design-time
+probes do not.
 
 `scripts/run_phase1.py` runs this comparison at `n_max` as its **precondition**.
-Five minutes of `dp` is the price of quoting a million coefficients, and it is
-worth paying. On mismatch the script reports the smallest disagreeing `N` and
-writes nothing.
+Several minutes of `dp` is the price of quoting a million coefficients, and it
+is worth paying. On mismatch the script reports the smallest disagreeing `N`
+and writes nothing.
 
 ### 3.2 What the global checksum is, and what it is not
 
@@ -181,7 +176,7 @@ invariant only; see §3.2 for what it cannot detect.
 
 ### 4.3 `scripts/run_phase1.py`
 
-Orchestration only. `--n-max` (default `1_000_000`). The `dp` precondition costs ~5 min at that
+Orchestration only. `--n-max` (default `1_000_000`). The `dp` precondition costs several minutes at that
 size; `--skip-crosscheck` exists **only** for development runs. It runs the
 analyses but writes nothing at all — no data files, no figures, no manifest
 entry — which is safer than stamping a `crosscheck: skipped` marker into an
@@ -251,13 +246,12 @@ over what range** — not a trend inferred from samples.
 - `dp-gf-agree-to-nmax` — `verified-numeric`. `dp` and `gf` agree on **every**
   coefficient to `n_max`. This is the claim that licenses the phase's numbers;
   §3.1 is its method.
-- `gf-global-checksum` — `verified-numeric`. `Σ counts = ∏(F_k+1)` for the
-  fixed-length system. The claim states the range that is **reproducible from
-  the test suite** (`n ≤ 14`) and records the one-off n = 18 and n = 20 runs
-  separately as manifest-backed evidence rather than folding them into a figure
-  nothing re-derives. The claim text must state the limitation from §3.2: this
-  identity is insensitive to sum-preserving corruption and does not exercise the
-  production place set.
+- `gf-global-checksum` — the identity `Σ counts = ∏(F_k+1)` for the
+  fixed-length system, proved in `theory/03-invariants.md` rather than only
+  spot-checked, and reproducible from the test suite at `n ≤ 14`
+  (`tests/test_checksum.py`). The claim text must state the limitation from
+  §3.2: this identity is insensitive to sum-preserving corruption and does not
+  exercise the production place set.
 - `sc-monotone` — `theorem`. `S_c` is non-decreasing, immediately from
   `R_c ≥ 0`. Stated because Phase 5 Route B rests on it.
 
@@ -309,9 +303,10 @@ a checksum whose blind spot is undocumented is worse than none.
    of §5 (CSV, JSON, two figures), written atomically, each recorded in
    `data/manifest.json` with `n_max`, git revision and cross-check result. The
    report is written separately.
-4. The manifest records re-derived values for every measurement this spec quotes
-   in §1 — runtime, peak RSS, `R_c(10^6)` bit length, `min(counts)` — so no
-   figure in the design rests on an unrecorded ad-hoc run.
+4. `data/manifest.json` and `data/phase1_summary.json` carry the real values
+   for every measurement referenced in this design — runtime, peak RSS,
+   `R_c(10^6)` bit length, `min(counts)` — so nothing needs to be quoted
+   ad-hoc in this document.
 5. `theory/claims.yaml` carries the six §6 claims and
    `scripts/check_claims.py` reports `claims.yaml OK`.
 6. `docs/phases/phase1_report.md` states the fluctuation finding, its
@@ -338,9 +333,12 @@ The rewrite replaces the licence with the full-scale pointwise cross-check
 documented in executable form (§3.2, §7), and tightens boundary, tie-breaking,
 provenance and atomicity semantics throughout.
 
-Also corrected as a consequence of re-measuring: the original §1 reported 178 s
-for `gf` at `N = 10^6`. The true figure is ~12 s; 178 s was `tracemalloc`
-overhead.
+Also corrected as a consequence of re-measuring: the original §1 quoted a
+`gf` runtime at `N = 10^6` that was inflated by `tracemalloc` instrumentation
+overhead rather than reflecting computation alone. Rather than substitute a
+corrected figure, that number has been removed from this design entirely --
+design-time probes are not the recorded run; see
+`data/phase1_summary.json` for the actual measured runtime.
 
 One recommendation was declined: random modular evaluation at points other than
 `x = 1`. It is sound and more sensitive than the checksum, but the deterministic
