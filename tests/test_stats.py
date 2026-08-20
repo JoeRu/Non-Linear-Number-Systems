@@ -47,3 +47,59 @@ def test_summatory_is_exact_ints_and_monotone():
 def test_summatory_last_is_total():
     c = coefficients(200)
     assert summatory(c)[-1] == sum(c)
+
+
+import math
+
+import pytest
+
+from capfib.stats import local_ratios, place_jumps
+
+
+def test_local_ratios_length_and_indices():
+    c = coefficients(50)
+    r = local_ratios(c)
+    assert len(r) == len(c) - 1 == 50
+    assert r[0] == pytest.approx(c[1] / c[0])
+    assert r[-1] == pytest.approx(c[50] / c[49])
+
+
+def test_local_ratios_all_finite():
+    """Guarded by min(counts) >= 1, asserted at runtime -- not by appealing to
+    completeness, which is still a `sorry` in Lean."""
+    r = local_ratios(coefficients(2000))
+    assert all(math.isfinite(x) for x in r)
+
+
+def test_local_ratios_rejects_zero_count():
+    with pytest.raises(AssertionError):
+        local_ratios([1, 0, 1])
+
+
+def test_place_jumps_skips_F_equals_one_and_dedupes():
+    """F_1 = F_2 = 1 is one distinct place, and F = 1 has no F-1 in range."""
+    jumps = place_jumps(coefficients(20))
+    assert [j["place"] for j in jumps] == [2, 3, 5, 8, 13]
+
+
+def test_place_jumps_exact_values():
+    c = coefficients(20)
+    jumps = {j["place"]: j["ratio"] for j in place_jumps(c)}
+    assert jumps[2] == pytest.approx(2 / 2)      # exactly 1.0 -- NOT > 1
+    assert jumps[3] == pytest.approx(3 / 2)
+    assert jumps[5] == pytest.approx(5 / 4)
+    assert jumps[8] == pytest.approx(8 / 6)
+    assert jumps[13] == pytest.approx(15 / 13)
+
+
+def test_place_jumps_not_monotone_below_13():
+    """Pins the two known exceptions so nobody 'fixes' them into a false law."""
+    ratios = {j["place"]: j["ratio"] for j in place_jumps(coefficients(100_000))}
+    assert ratios[2] == pytest.approx(1.0)
+    assert ratios[3] > ratios[2]   # rises
+    assert ratios[5] < ratios[3]
+    assert ratios[8] > ratios[5]   # rises again
+    # monotone decay only from F = 13 onward
+    tail = [r for f, r in sorted(ratios.items()) if f >= 13]
+    assert tail == sorted(tail, reverse=True)
+    assert all(r > 1.0 for r in tail)
