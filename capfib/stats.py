@@ -74,3 +74,29 @@ def place_jumps(counts: Sequence[int]) -> list[dict]:
             continue
         out.append({"place": place, "ratio": counts[place] / counts[place - 1]})
     return out
+
+
+def block_extrema(counts: Sequence[int]) -> list[dict]:
+    """Argmax/argmin of R_c within each Fibonacci block.
+
+    Blocks run between consecutive DISTINCT place values -- F_1 = F_2 = 1
+    would otherwise yield a degenerate duplicate first block. Ties are broken
+    toward the smallest N so results are reproducible.
+
+    Progress on open problem 2 of theory/01-background.md section 14: which
+    integers carry the most and fewest representations.
+    """
+    n_max = len(counts) - 1
+    places = [p for p in sorted(set(places_up_to(n_max))) if p <= n_max]
+    out: list[dict] = []
+    for i, lo in enumerate(places):
+        hi = min(places[i + 1] if i + 1 < len(places) else n_max + 1, n_max + 1)
+        block = range(lo, hi)
+        argmax = min(block, key=lambda n: (-counts[n], n))
+        argmin = min(block, key=lambda n: (counts[n], n))
+        out.append({
+            "lo": lo, "hi": hi,
+            "argmax": argmax, "max": counts[argmax],
+            "argmin": argmin, "min": counts[argmin],
+        })
+    return out
