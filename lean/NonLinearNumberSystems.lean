@@ -3,14 +3,12 @@
   ======================
   Root module. Importing this gives the whole development.
 
-  The `lean_lib` glob in `lakefile.lean` is `.andSubmodules`, which means the
-  root module itself plus every submodule — so this file must exist for the
-  build to resolve.
+  See `NonLinearNumberSystems.Theorems` for an index of what is proved and what
+  remains open.
 -/
 
-import NonLinearNumberSystems.Basic
 import NonLinearNumberSystems.Numeration
 import NonLinearNumberSystems.Completeness
+import NonLinearNumberSystems.Redundancy
 import NonLinearNumberSystems.Bounds
-import NonLinearNumberSystems.Zeckendorf
 import NonLinearNumberSystems.Theorems

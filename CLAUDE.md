@@ -90,7 +90,7 @@ lake build         # compile all files
 ### Check a Single File
 ```bash
 cd lean
-lake env lean NonLinearNumberSystems/Zeckendorf.lean
+lake env lean NonLinearNumberSystems/Redundancy.lean
 ```
 
 ### Common Lean 4 Patterns Used Here

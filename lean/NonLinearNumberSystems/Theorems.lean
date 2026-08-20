@@ -1,52 +1,54 @@
 /-
   NonLinearNumberSystems.Theorems
-  ================================
-  Top-level collection of open and proved theorems for the project.
-  Import this file to get everything.
+  ===============================
+  Index of the formal development, and the open statements.
+
+  Importing this file gives everything.
+
+  ## What is proved
+
+  * `place_add_two`          — the place values satisfy the Fibonacci recurrence
+  * `sum_sq_place`           — `∑_{k ≤ n} F_k² = F_n · F_{n+1}` (not in Mathlib)
+  * `value_le_sum_sq`        — an `n`-place numeral cannot exceed that bound
+  * `exists_two_numerals_same_value` — **"1 > 1"**: two distinct numerals share
+                                a value, because F 1 = F 2 = 1
+  * `value_not_injective`    — the evaluation map is not injective
+
+  ## What is open
+
+  * `exists_numeral_of_le`   — completeness (Phase 2); the greedy descent
+  * `countReps_le_uncapped`  — `R_c(N) ≤ R_u(N)` (Phase 2)
+
+  Each open statement carries a `sorry` and a proof sketch. A `sorry` is a
+  statement; replacing one with a wrong proof is worse than leaving it open.
+
+  ## What is deliberately NOT here
+
+  Zeckendorf's theorem — Mathlib proves it (`Nat.zeckendorfEquiv` in
+  `Mathlib.Data.Nat.Fib.Zeckendorf`). See `Redundancy.lean`, which cites it
+  rather than re-deriving it.
+
+  The asymptotics of `R_c(N)` — Mellin transforms and the analytic continuation
+  of ζ_F are far outside what Mathlib makes practical. Those live in `paper/`
+  and are tracked in `theory/claims.yaml`.
 -/
 
-import NonLinearNumberSystems.Basic
-import NonLinearNumberSystems.Zeckendorf
+import NonLinearNumberSystems.Numeration
+import NonLinearNumberSystems.Completeness
+import NonLinearNumberSystems.Redundancy
+import NonLinearNumberSystems.Bounds
 
 namespace NonLinearNumberSystems
 
-/-! ## Summary of Open Problems -/
+/- Sanity checks on the convention: F 1 = F 2 = 1, F 3 = 2, F 4 = 3, F 5 = 5. -/
+example : place 1 = 1 := rfl
+example : place 2 = 1 := rfl
+example : place 3 = 2 := rfl
+example : place 4 = 3 := rfl
+example : place 5 = 5 := rfl
 
-/--
-  **Open Problem 1 (Counting formula).**
-  Find a closed-form expression for `reprCount n c` in terms of n and c.
-
-  Conjecture: for fixed c, reprCount n c satisfies a linear recurrence of order
-  F(c) where F is the Fibonacci function, i.e. the generating function is rational.
--/
-theorem reprCount_closed_form_conjecture :
-    ∀ c : ℕ, ∃ (k : ℕ) (a : Fin k → ℤ),
-      ∀ n : ℕ, (k : ℤ) * reprCount n c =
-        ∑ i : Fin k, a i * reprCount (n - i.val) c := by
-  sorry
-
-/-
-  **Open Problem 2 (Bijection with tilings) -- not yet formalised.**
-  Intended claim: there is a natural bijection between capacity-c Fibonacci
-  representations of n and certain tilings of a 1×n board with tiles of sizes
-  corresponding to Fibonacci numbers, where each tile size may appear at most
-  c times.
-
-  This is not stated as a Lean theorem here: without first formalising the
-  tiling family (and without a working `lake build` to check any attempt), a
-  real statement would be guesswork. A theorem whose body is `True` proved by
-  `trivial` would assert nothing while looking like a result, which is worse
-  than leaving the claim as a comment. The bijection remains open.
--/
-
-/-
-  **Trivial upper bound.**
-  reprCount n c ≤ reprCount n (c + 1)  (already stated as `reprCount_mono`).
-  This bound is tight only for specific (n, c).
-
-  A `/-- … -/` doc comment must attach to a declaration; `#check` is a command,
-  so this is a plain `/- … -/` comment.
--/
-#check @reprCount_mono
+/- The identity that fixes the completeness range, at n = 4:
+   1 + 1 + 4 + 9 = 15 = F 4 · F 5 = 3 · 5. -/
+example : ∑ k ∈ Finset.range 4, place (k + 1) * place (k + 1) = 15 := by decide
 
 end NonLinearNumberSystems
