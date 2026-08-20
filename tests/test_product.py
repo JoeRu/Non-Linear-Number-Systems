@@ -26,5 +26,6 @@ def test_survives_extreme_log_s():
 
 
 def test_monotone_decreasing_in_s():
-    values = [log_F_c(math.log(s)) for s in (0.5, 0.4, 0.3, 0.2, 0.1)]
-    assert values == sorted(values)
+    ss = (0.1, 0.2, 0.3, 0.4, 0.5)
+    values = [log_F_c(math.log(s)) for s in ss]
+    assert values == sorted(values, reverse=True)
