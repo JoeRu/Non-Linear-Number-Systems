@@ -28,8 +28,10 @@ fluctuation figure (`figures/phase1_fluctuation.png`) shows the contrast
 directly against the growth curve (`figures/phase1_growth.png`).
 
 *Structural note.* Exactly 11 flat steps occur over `N <= 10^6`
-(`data/phase1_summary.json`, census field). This is recorded as the
-observation it is; Phase 1 does not speculate about why.
+(`data/phase1_summary.json`, `census` and `flat_step_positions` fields), at
+`N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78` -- the largest being `N = 78`.
+This is recorded as the observation it is; Phase 1 does not speculate about
+why.
 
 **Result 2 — structure at place values.** The ratio `R_c(F)/R_c(F-1)` at each
 distinct Fibonacci place `F <= 1000000`:
