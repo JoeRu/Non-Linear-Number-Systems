@@ -66,6 +66,23 @@ def atomic_write_text(path: Path, text: str) -> None:
         raise
 
 
+def atomic_savefig(fig, path: Path, **kwargs) -> None:
+    """Save a figure via a temp file and rename, matching atomic_write_text.
+
+    matplotlib infers the format from the filename, so the temp file keeps the
+    target's suffix.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=path.suffix)
+    os.close(fd)
+    try:
+        fig.savefig(tmp, **kwargs)
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
 def ladder(n_max: int) -> list[int]:
     """Decades and half-decades from 100, plus every distinct place value."""
     pts = set()
@@ -191,7 +208,7 @@ def main() -> int:
     ax.set_title(f"Phase 1: growth of R_c and S_c (exact, N <= {n_max})")
     ax.legend()
     fig.tight_layout()
-    fig.savefig(FIG_GROWTH, dpi=150)
+    atomic_savefig(fig, FIG_GROWTH, dpi=150)
     plt.close(fig)
 
     step = max(1, n_max // 20_000)
@@ -208,7 +225,7 @@ def main() -> int:
     ax.set_title("Phase 1: R_c fluctuates, S_c does not")
     ax.legend()
     fig.tight_layout()
-    fig.savefig(FIG_FLUCT, dpi=150)
+    atomic_savefig(fig, FIG_FLUCT, dpi=150)
     plt.close(fig)
 
     params = {"n_max": n_max, "crosscheck": crosscheck}
