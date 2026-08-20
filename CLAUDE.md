@@ -7,86 +7,70 @@ to contribute effectively to this project.
 
 ## Project Overview
 
-**Non-Linear Number Systems** is a mathematical research project studying:
+**Non-Linear Number Systems** is a research program on the asymptotics of `R_c(N)` — the
+number of representations of `N` as `sum_k d_k F_k` with position-dependent digit bounds
+`0 <= d_k <= F_k`.
 
-- Capacity-constrained Fibonacci partitions (Kapazitätsbeschränkte Fibonacci-Partitionen)
-- Non-unique number representations and their combinatorial properties
-- Formal verification of theorems about these systems using Lean 4 / Mathlib
-
-The goal is to state, explore, and **formally prove** properties of non-linear number
-systems using modern interactive theorem provers and automated benchmark harnesses.
+The problem sits between two solved cases: binary partitions (Mahler 1940, de Bruijn 1948)
+and uncapped Fibonacci partitions (Coons–Kristensen–Laursen 2023). The position-dependent
+cap breaks the simplifications both rely on. The goal is to state, explore numerically, and
+**formally prove** properties of this system, using Lean 4 / Mathlib for the elementary
+results and a Python numerics package to generate and cross-check the underlying claims.
 
 ---
 
 ## Repository Layout
 
-```
-.
-├── CLAUDE.md                  ← You are here: AI-assistant guide
-├── README.md                  ← Human-facing project overview
-│
-├── lean/                      ← Lean 4 / Mathlib formal proofs
-│   ├── lean-toolchain         ← Pinned Lean 4 version
-│   ├── lakefile.lean          ← Lake build system configuration
-│   └── NonLinearNumberSystems/
-│       ├── Basic.lean         ← Core definitions
-│       ├── Fibonacci.lean     ← Fibonacci partition definitions & theorems
-│       └── Theorems.lean      ← Top-level theorem statements
-│
-├── proofs/                    ← Human-readable proof sketches & LaTeX write-ups
-│   └── fibonacci_partitions.md
-│
-├── benchmarks/                ← Formal benchmark problem sets
-│   ├── miniF2F/               ← miniF2F-style problem stubs (Lean 4)
-│   │   └── problems.lean
-│   ├── proofnet/              ← ProofNet-style problem stubs (Lean 4)
-│   │   └── problems.lean
-│   └── math_benchmark/        ← MATH-Benchmark problems (JSON + Python driver)
-│       ├── problems.json
-│       └── evaluate.py
-│
-├── harnesses/                 ← Harness runners that interface with theorem provers
-│   ├── lean_dojo/             ← LeanDojo integration
-│   │   ├── requirements.txt
-│   │   ├── trace_proofs.py    ← Trace & extract proof states via LeanDojo
-│   │   └── search_proofs.py   ← BFS/MCTS proof search with LeanDojo
-│   └── math_harness/          ← MATH dataset evaluation harness
-│       ├── requirements.txt
-│       └── run_eval.py
-│
-├── tools/                     ← Shared Python utilities
-│   ├── __init__.py
-│   ├── lean_utils.py          ← Helpers to invoke Lean / Lake
-│   └── benchmark_utils.py     ← Benchmark scoring & reporting helpers
-│
-├── scripts/                   ← Shell convenience scripts
-│   ├── setup.sh               ← One-shot environment setup
-│   ├── run_lean.sh            ← Build & check all Lean files
-│   └── run_benchmarks.sh      ← Run all benchmark harnesses
-│
-└── docs/                      ← Extended documentation
-    ├── lean_setup.md
-    ├── leandojo_setup.md
-    └── math_benchmark_setup.md
-```
+| Path | Contents |
+|---|---|
+| `capfib/` | Numerics package: enumeration, DP, generating function, saddle point |
+| `tests/` | Correctness gate — brute-force oracle and cross-checks |
+| `theory/` | Definitions, background analysis, proof sketches, the claim ledger |
+| `docs/roadmap.md` | The phase plan |
+| `docs/phases/` | Phase deliverables |
+| `paper/` | LaTeX writeup and bibliography |
+| `lean/` | Formal proofs of the elementary results |
+| `data/`, `figures/` | Generated output; regenerate, never hand-edit |
+
+---
+
+## Global Constraints
+
+- Python >= 3.11.
+- **The Fibonacci convention is F_1 = 1, F_2 = 1, F_3 = 2, F_4 = 3, F_5 = 5, …** (spec D2). Place values are constructed in `capfib/fib.py` and **nowhere else**. Every other module imports from there. The duplicated 1-place is load-bearing — it is the source of the "1 > 1" phenomenon, and dropping it also breaks the identity `sum_{k<=n} F_k^2 = F_n * F_{n+1}`.
+- `R_c(N)` counts digit tuples over **all** places `F_k <= N`, never a fixed length `n`. Fixing the length undercounts (spec §4.3, Trap 1).
+- **The §4.2 gate:** no output of `capfib.dp` or `capfib.gf` may appear in any report, figure, or claim until it has matched `capfib.brute` for all N <= 200 and the two fast paths have matched each other for all N <= 500.
+- Never remove a Lean `sorry` without a real proof. A `sorry` is a statement; a wrong proof is worse than an open one.
+- Every generated dataset writes an entry to `data/manifest.json`.
+- Commit at the end of every task.
 
 ---
 
 ## Key Concepts
 
-### Fibonacci Partitions
-A **Fibonacci partition** of a positive integer n is a representation
-`n = F_{i₁} + F_{i₂} + … + F_{iₖ}` where each `F_j` is a Fibonacci number.
-The **Zeckendorf representation** is the unique partition using non-consecutive
-Fibonacci numbers.  This project studies *capacity-constrained* variants where
-each Fibonacci number may be used at most `c` times.
+### Position-Dependent Digit Bounds
+A **representation** of a positive integer `N` is a sequence of digits `(d_k)_{k>=1}`
+with `0 <= d_k <= F_k` — the bound on each digit is the place value itself, so it
+grows with position — satisfying `sum_k d_k F_k = N`, where the sum ranges over
+**all** places `F_k <= N` (never a fixed length). Because the digit bound grows with
+`k` rather than being fixed (as in a standard base-`b` system), this numeration is
+**maximally redundant**: most integers have many representations, not one.
 
 ### Non-Unique Representations
-When the capacity constraint `c ≥ 2` is relaxed, multiple valid representations
-exist.  We study:
-- The count of representations for a given n and capacity c
+`R_c(N)` denotes the number of such representations of `N`. We study:
+- The growth of `R_c(N)` — in particular the leading coefficient of `log R_c(N)`
+  as a function of `(log N)^2`
 - Patterns and recurrences in these counts
 - Connections to other combinatorial objects (tilings, lattice paths, etc.)
+
+### Zeckendorf Representation (the unique-representation contrast)
+The **Zeckendorf representation** constrains digits to `{0, 1}` and forbids two
+consecutive nonzero digits (no `F_k` and `F_{k+1}` both used). Under that much
+stricter constraint, every positive integer has a **unique** representation as a
+sum of non-consecutive Fibonacci numbers. This project's position-dependent bound
+`0 <= d_k <= F_k` sits at the opposite extreme from Zeckendorf's `{0,1}` bound —
+maximal redundancy instead of uniqueness — which is why `R_c(N)` is interesting to
+count in the first place.
 
 ---
 
@@ -106,7 +90,7 @@ lake build         # compile all files
 ### Check a Single File
 ```bash
 cd lean
-lake env lean NonLinearNumberSystems/Fibonacci.lean
+lake env lean NonLinearNumberSystems/Zeckendorf.lean
 ```
 
 ### Common Lean 4 Patterns Used Here
@@ -114,54 +98,6 @@ lake env lean NonLinearNumberSystems/Fibonacci.lean
 - `simp`, `ring`, `omega`, `norm_num` for automated tactics
 - `induction`, `rcases`, `obtain` for structural proofs
 - `#check`, `#eval` for interactive exploration
-
----
-
-## Working with LeanDojo
-
-LeanDojo lets you programmatically interact with Lean proofs — extract proof states,
-replay proofs, and run proof-search algorithms.
-
-### Setup
-```bash
-pip install lean-dojo
-# See docs/leandojo_setup.md for full instructions
-```
-
-### Trace Proofs
-```bash
-python harnesses/lean_dojo/trace_proofs.py
-```
-
-### Proof Search
-```bash
-python harnesses/lean_dojo/search_proofs.py --theorem fibonacci_unique_zeckendorf
-```
-
----
-
-## Working with MATH-Benchmark
-
-The `benchmarks/math_benchmark/` directory contains problems in the format used by
-the MATH dataset (Hendrycks et al., 2021) and the accompanying Python evaluation
-harness.
-
-### Run Evaluation
-```bash
-pip install -r harnesses/math_harness/requirements.txt
-python harnesses/math_harness/run_eval.py --problems benchmarks/math_benchmark/problems.json
-```
-
----
-
-## Working with miniF2F / ProofNet
-
-`benchmarks/miniF2F/problems.lean` and `benchmarks/proofnet/problems.lean` contain
-formal theorem **statements** (without proofs) from the respective benchmarks,
-adapted to the Non-Linear Number Systems domain.
-
-To attempt a proof, copy the relevant `sorry`-filled theorem into the appropriate
-`lean/NonLinearNumberSystems/` file and fill in the proof.
 
 ---
 
@@ -178,8 +114,9 @@ To attempt a proof, copy the relevant `sorry`-filled theorem into the appropriat
 
 4. **Add docstrings** to all new Python functions using the Google style.
 
-5. **Keep benchmark problem files stable.** Only add new problems; never modify
-   existing problem IDs.
+5. **Respect the correctness gate.** Never present `capfib.dp` or `capfib.gf` output as
+   a fact until it has passed the cross-checks described in Global Constraints above.
 
-6. **Cite sources.** When adapting a theorem from Mathlib, miniF2F, or ProofNet,
-   include the source reference in a comment.
+6. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
+   de Bruijn, Coons–Kristensen–Laursen, Fraenkel) or from Mathlib, include the source
+   reference in a comment.

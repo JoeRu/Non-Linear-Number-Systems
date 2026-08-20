@@ -1,0 +1,41 @@
+- id: convention-duplicated-place
+  statement: "The convention F_1 = F_2 = 1 retains two distinct places of value 1."
+  status: cited
+  evidence: "theory/01-background.md §1.1"
+  source: "web-dreamer.de 2009; Lekkerkerker 1952"
+
+- id: place-range
+  statement: "R_c(N) ranges over all places F_k <= N, not a fixed length n."
+  status: cited
+  evidence: "theory/00-definitions.md; spec §4.3 Trap 1"
+  source: "spec 2026-08-19 §4.3"
+
+- id: sum-of-squares
+  statement: "sum_{k<=n} F_k^2 = F_n * F_{n+1}."
+  status: theorem
+  evidence: "Classical Fibonacci identity, proved by induction on n; corroborated numerically by tests/test_fib.py::test_sum_of_squares_identity, n <= 20"
+  source: "classical Fibonacci identity"
+
+- id: completeness-no-gaps
+  statement: "Every integer in [0, sum_{k<=n} F_k^2] has at least one representation."
+  status: theorem
+  evidence: "Kempner-Fraenkel condition F_k <= 1 + F_{k-1} F_k; theory/01-background.md §3"
+  source: "Fraenkel 1985, Systems of Numeration"
+
+- id: leading-constant
+  statement: "log R_c(N) ~ (log N)^2 / (4 log phi)."
+  status: conjecture
+  evidence: "docs/roadmap.md Phase 3 heuristic; see claim gate-local-slope"
+  source: "this project"
+
+- id: gate-local-slope
+  statement: "The leading coefficient of the Legendre-transform upper bound on log R_c(N) measures 0.518710 at N = 10^3200, rising monotonically toward 1/(4 log phi) = 0.519522. This bounds C_c from above, excluding 1/(2 log phi); excluding 1/(8 log phi) additionally requires saddle-tightness."
+  status: verified-numeric
+  evidence: "data/phase0_5_gate.csv via scripts/run_phase0_gate.py"
+  source: "docs/phases/phase0_5_gate.md"
+
+- id: saddle-tightness
+  statement: "The saddle-point correction to min_s [sN + log F_c(e^-s)] is of lower order than (log N)^2, so the Legendre transform and log R_c(N) share a leading coefficient."
+  status: heuristic
+  evidence: "Standard for generating functions of this type; not established here. Required before the Phase 0.5 measurement can bound C_c from below as well as above."
+  source: "Phase 5 rigorisation target"

@@ -15,10 +15,6 @@ dist/
 build/
 .pytest_cache/
 
-# LeanDojo cache
-harnesses/lean_dojo/traced_proofs.json
-.leandojo_cache/
-
 # Editor
 .vscode/
 .idea/
@@ -28,3 +24,11 @@ harnesses/lean_dojo/traced_proofs.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated data -- everything except the provenance manifest
+data/*
+!data/manifest.json
+
+# Generated figures
+figures/*.png
+figures/*.pdf

@@ -4,7 +4,7 @@
 
 - A Unix-like OS (Linux, macOS) or Windows with WSL2
 - `curl` installed
-- Python ≥ 3.10 (for the harnesses)
+- Python ≥ 3.11 (for the `capfib` numerics package)
 
 ## Step 1: Install elan
 
