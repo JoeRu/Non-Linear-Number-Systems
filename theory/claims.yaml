@@ -13,7 +13,7 @@
 - id: sum-of-squares
   statement: "sum_{k<=n} F_k^2 = F_n * F_{n+1}."
   status: theorem
-  evidence: "Classical Fibonacci identity, proved by induction on n; corroborated numerically by tests/test_fib.py::test_sum_of_squares_identity, n <= 20"
+  evidence: "Proved by induction on n in theory/03-invariants.md (sum-of-squares); corroborated numerically by tests/test_fib.py::test_sum_of_squares_identity, n <= 20"
   source: "classical Fibonacci identity"
 
 - id: completeness-no-gaps
@@ -67,11 +67,11 @@
 - id: gf-global-checksum
   statement: "For the fixed-length system on F_1..F_n, sum(counts) equals prod(F_k+1). Reproducible from the test suite for n <= 14. This invariant is insensitive to sum-preserving corruption and does not exercise the production place set; it is not a licence to report values."
   status: theorem
-  evidence: "Immediate from counting all fixed-length digit tuples: summing over N counts every tuple exactly once. Corroborated in tests/test_checksum.py for n <= 14, which also asserts the sum-preserving blind spot (test_checksum_misses_sum_preserving_corruption)."
+  evidence: "Proved in theory/03-invariants.md (gf-global-checksum): each digit tuple has exactly one value, so summing counts over all values counts every tuple exactly once. Corroborated in tests/test_checksum.py for n <= 14, which also asserts the sum-preserving blind spot (test_checksum_misses_sum_preserving_corruption)."
   source: "this project, Phase 1"
 
 - id: sc-monotone
   statement: "S_c(N) = sum_{n<=N} R_c(n) is non-decreasing."
   status: theorem
-  evidence: "Immediate from R_c(n) >= 0. Corroborated in tests/test_stats.py::test_summatory_is_exact_ints_and_monotone."
+  evidence: "Proved in theory/03-invariants.md (sc-monotone): R_c(n) >= 0 for all n since it counts digit tuples, so S_c(N+1) - S_c(N) = R_c(N+1) >= 0. Corroborated in tests/test_stats.py::test_summatory_is_exact_ints_and_monotone."
   source: "this project"

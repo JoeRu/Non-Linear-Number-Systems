@@ -101,9 +101,28 @@ def ladder(n_max: int) -> list[int]:
     return sorted(pts)
 
 
+def _n_max_type(raw: str) -> int:
+    """argparse type for --n-max: reject anything below 2.
+
+    n_max=0 divides by zero in the decreasing-steps percentage; n_max in
+    {0, 1} leaves local_ratios empty, so the quantile indexing raises;
+    n_max=1 also divides by log(1)**2 == 0 in the CSV ratio column; negative
+    values leave the counts array empty, so min(c) raises. All of these are
+    confusing crashes deep in analysis code rather than a clear rejection at
+    the argument boundary.
+    """
+    n = int(raw)
+    if n < 2:
+        raise argparse.ArgumentTypeError(
+            f"--n-max must be >= 2 (got {n}); N=0 and N=1 have no ratio to "
+            f"compute and negative N is not meaningful"
+        )
+    return n
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--n-max", type=int, default=1_000_000)
+    ap.add_argument("--n-max", type=_n_max_type, default=1_000_000)
     ap.add_argument("--skip-crosscheck", action="store_true",
                     help="DEVELOPMENT ONLY: skips the precondition and refuses "
                          "to write to the real artifact paths.")

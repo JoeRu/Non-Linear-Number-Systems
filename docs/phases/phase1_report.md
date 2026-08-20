@@ -10,10 +10,14 @@ independently implemented digit-loop DP — two independent counting algorithms
 (`places_up_to` in `capfib/fib.py`, pinned by boundary tests in
 `tests/test_fib.py`). A wrong place set would be invisible to the cross-check
 by construction. Reported values are licensed by that full-range agreement
-{claim:dp-gf-agree-to-nmax} (`dp==gf pointwise for all N <= 1000000`, `gf` in
-8.7 s, `dp` in 286.9 s, peak RSS 273 MB — whole-process, i.e. covering `gf`
-and `dp` together, which is what the script measures), not by a global
-checksum — see the design spec section 3 for why the checksum is insufficient.
+{claim:dp-gf-agree-to-nmax} (`dp==gf pointwise for all N <= 1000000`), not by
+a global checksum — see the design spec section 3 for why the checksum is
+insufficient. The same run recorded `gf` at 8.7 s, `dp` at 286.9 s, and peak
+RSS 273 MB (whole-process, i.e. covering `gf` and `dp` together, which is what
+the script measures); these are environment-qualified observations from that
+one recorded run — nothing pins the machine, OS, Python build, or dependency
+versions (`pyproject.toml` states only lower bounds) — not reproducible
+performance figures.
 
 **What Phase 1 is not.** It does not measure the leading asymptotic constant.
 Phase 0.5 already did that at `N = 10^3200`. At `N = 10^6`, `R_c(10^6) =
@@ -26,12 +30,14 @@ pre-asymptotic regime convincingly and wrongly.
 increasing steps, 11 flat steps and 495548 decreasing steps out of 1000000
 steps — **49.6% of steps are decreasing** {claim:rc-not-monotone}. Roadmap
 Phase 0 left this question open and made Phase 5's route depend on it: a
-heavily fluctuating `R_c` means the direct attack is unavailable and the
-summatory function `S_c` is the object a Tauberian argument must use. **This
-constrains Route B, it does not select it:** any Tauberian attack on the
-leading asymptotic must go through `S_c(N)` rather than `R_c(N)` directly;
-Route A remains the primary route for the rigorous asymptotic theorem (see
-`docs/roadmap.md`, Phase 5). `S_c` is non-decreasing {claim:sc-monotone}, and
+census this fluctuating over the observed range motivates working with the
+summatory function `S_c` rather than `R_c` directly, and makes `S_c` the
+safer numerical target for a Tauberian argument. **This constrains Route B,
+it does not select it:** the fluctuation observed here makes a Tauberian
+attack on the leading asymptotic safer to run through `S_c(N)` than through
+`R_c(N)` directly; Route A remains the primary route for the rigorous
+asymptotic theorem (see `docs/roadmap.md`, Phase 5). `S_c` is non-decreasing
+{claim:sc-monotone}, and
 the fluctuation figure (`figures/phase1_fluctuation.png`) shows the contrast
 directly against the growth curve (`figures/phase1_growth.png`).
 
@@ -43,12 +49,15 @@ why.
 
 *Quantiles of the step ratio.* `data/phase1_summary.json` records
 `fluctuation_quantiles` for `R_c(N+1)/R_c(N)` over `N <= 10^6`: min `0.9853`,
-p25 `0.9984`, median `1.0000`, p75 `1.0016`, max `2.0`. The median sitting at
-essentially 1 with a p25 below 1 is direct, distribution-level evidence for
-the fluctuation finding above — it is not just the binary increasing/flat/
-decreasing count that shows fluctuation, but the fact that a full quarter of
-steps have a ratio below 0.9984, while the extremes reach as low as 0.9853 and
-as high as 2.0.
+p25 `0.9984`, median `1.0000`, p75 `1.0016`, max `2.0`. Each of these is the
+order statistic recorded by the script — the sorted-ratio array indexed at
+`len(srt)//4` etc., not a claim about the exact proportion of steps on either
+side (ties and integer-index rounding can make an "exactly a quarter" reading
+false). The median sitting at essentially 1 with a p25 order statistic below
+1 is direct, distribution-level evidence for the fluctuation finding above —
+it is not just the binary increasing/flat/decreasing count that shows
+fluctuation: the 25th-percentile order statistic is 0.9984, and the extremes
+reach as low as 0.9853 and as high as 2.0.
 
 **Result 2 — structure at place values.** The ratio `R_c(F)/R_c(F-1)` at each
 distinct Fibonacci place `F <= 1000000`:

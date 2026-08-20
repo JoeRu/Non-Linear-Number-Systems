@@ -1039,10 +1039,11 @@ pre-asymptotic regime convincingly and wrongly.
 `data/phase1_summary.json` verbatim (its four fields: increasing, flat,
 decreasing, steps) and state the decreasing share as a percentage
 {claim:rc-not-monotone}. Roadmap Phase 0 left this question open and
-made Phase 5's route depend on it: a heavily fluctuating `R_c` means the direct
-attack is unavailable and the summatory function `S_c` is the object a
-Tauberian argument must use. **This constrains Route B, it does not select
-it** (Route A remains primary; see spec §6). `S_c` is non-decreasing
+made Phase 5's route depend on it: a census this fluctuating over the
+observed range motivates working with the summatory function `S_c` rather
+than `R_c` directly, and makes `S_c` the safer numerical target. **This
+constrains Route B, it does not select it** (Route A remains primary; see
+spec §6). `S_c` is non-decreasing
 {claim:sc-monotone}, and the fluctuation figure shows the contrast directly.
 
 **Result 2 — structure at place values.** Reproduce the `place_jumps` table

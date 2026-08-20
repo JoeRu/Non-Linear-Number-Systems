@@ -22,6 +22,19 @@ SEARCH_FILES = ("docs/roadmap.md", "README.md", "CLAUDE.md")
 FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
 DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
 
+# A `theorem` claim's evidence must point at something checkable: a path
+# under one of these directories, or a Lean declaration name.
+THEOREM_LOCATION_DIRS = ("theory/", "paper/", "lean/")
+THEOREM_LOCATION_RE = re.compile(
+    r"(?:^|[\s(\"'`])(?:theory|paper|lean)/[\w./-]*\w"
+)
+# A dotted, namespaced identifier such as `NonLinearNumberSystems.Fibonacci.foo`
+# -- the shape of a Lean declaration name, as distinct from a file path (no
+# slash) or an ordinary sentence (no dots between words).
+LEAN_DECL_RE = re.compile(
+    r"\b[A-Z][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*){1,}\b"
+)
+
 # Statuses that must not be asserted as established without a hedge.
 UNSETTLED_STATUS = {"conjecture", "heuristic"}
 
@@ -79,6 +92,15 @@ def validate(root: Path) -> list[str]:
                 problems.append(
                     f"claim '{claim.get('id')}': status verified-numeric but its "
                     f"evidence names a data artifact not recorded in data/manifest.json"
+                )
+        if claim.get("status") == "theorem":
+            evidence = claim.get("evidence", "")
+            if not (THEOREM_LOCATION_RE.search(evidence) or LEAN_DECL_RE.search(evidence)):
+                problems.append(
+                    f"claim '{claim.get('id')}': status theorem but its evidence "
+                    f"does not reference a checkable proof location (a path under "
+                    f"theory/, paper/, or lean/, or a Lean declaration name) -- "
+                    f"a test file or prose alone is not enough"
                 )
 
     status_by_id = {claim.get("id"): claim.get("status") for claim in claims}

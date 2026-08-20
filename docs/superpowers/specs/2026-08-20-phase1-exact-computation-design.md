@@ -20,14 +20,18 @@ log-domain path is not needed for this phase.
 
 | N | `gf` time | peak RSS | `R_c(N)` | `log R_c(N)` |
 |---|---|---|---|---|
-| 200,000 | 1.6 s | — | 76 bits | 52.1 |
+| 200,000\* | 1.6 s | — | 76 bits | 52.1 |
 | 1,000,000 | 12.3 s | 179 MB | 99 bits | 68.4 |
 
 Measured on commit `9074d3b` with `.venv/bin/python`, uninstrumented. An earlier
 draft of this spec reported 178 s at `N = 10^6`; that figure was `tracemalloc`
 overhead, not computation, and is corrected here. §9 requires the Phase 1 run to
-re-derive these numbers and record them in the manifest, so no figure quoted in
-this document rests on an unrecorded ad-hoc measurement.
+re-derive these numbers and record them in the manifest; this holds for the
+`N = 1,000,000` row, since `scripts/run_phase1.py` records `gf_seconds` and
+`peak_rss_mb` only at `n_max`. \*The `200,000` row is not re-derived by any
+Phase 1 invocation — the script's default ladder does not stop timing there —
+so it stays what it was: an ad-hoc design-time probe, kept for the pre-phase
+"the coefficients are small" argument, not a reproducible artifact.
 
 **Phase 1 is not where the constant gets measured.** Phase 0.5 already pinned
 the leading coefficient at `N = 10^3200`. At `N = 10^6` the ratio
@@ -89,15 +93,25 @@ magnitude past that. A previous review already caught a report quoting `gf` at
 
 `capfib.dp` (naive digit loop) and `capfib.gf` (closed-form
 multiply-by-`(1-x^M)`, divide-by-`(1-x^f)` recurrence) are structurally
-different algorithms over the *same* place set. Running both at `n_max` and
-comparing every coefficient is therefore a genuine independent check, not a
-sampled one, and it is affordable:
+different algorithms, both obtaining their places from the same
+`places_up_to` call. Running both at `n_max` and comparing every coefficient
+is therefore an independent check **conditional on that shared place set**,
+not an unconditional one: a wrong or truncated place set would be applied
+identically to both algorithms and would be invisible to the comparison (see
+`tests/test_fib.py` for the boundary tests that pin `places_up_to` instead).
+It is not a sampled check, and it is affordable:
 
 | N | `dp` | `gf` | pointwise agreement |
 |---|---|---|---|
-| 40,000 | 2.3 s | 0.3 s | ✅ all coefficients |
-| 200,000 | 28.8 s | 1.6 s | ✅ all coefficients |
+| 40,000\* | 2.3 s | 0.3 s | ✅ all coefficients |
+| 200,000\* | 28.8 s | 1.6 s | ✅ all coefficients |
 | **1,000,000** | **298 s** | **9–12 s** | ✅ **all coefficients** |
+
+\*The `40,000` and `200,000` rows are ad-hoc design-time probes run while
+scoping the feasibility of a full-scale cross-check; `scripts/run_phase1.py`
+only ever runs the comparison at `n_max`, so these two rows are not
+re-derived by any committed invocation and are not reproducible artifacts —
+only the `1,000,000` row (at the script's default `n_max`) is.
 
 `scripts/run_phase1.py` runs this comparison at `n_max` as its **precondition**.
 Five minutes of `dp` is the price of quoting a million coefficients, and it is
@@ -180,10 +194,14 @@ operations:
    disagreeing `N` and exit non-zero, writing nothing.
 3. Assert `min(counts) >= 1` (guards `local_ratios`).
 4. Call each analysis in `capfib.stats`.
-5. Write artifacts to temporary paths, then **atomically rename** into place —
-   all-or-nothing, so a failure part-way cannot leave a half-written artifact
-   that later looks validated. Stale artifacts from earlier runs are replaced,
-   not merged.
+5. Write each artifact to a temporary path, then **atomically rename** it into
+   place, so a failure mid-write cannot leave that one file half-written and
+   later mistaken for validated data. This atomicity is **per file, not
+   across the run**: the four artifacts (CSV, summary JSON, two figures) are
+   written and renamed one at a time, so a failure between two of these
+   renames can leave a mixed generation on disk -- e.g. a new CSV alongside
+   an old summary. Stale artifacts from earlier runs are replaced, not
+   merged.
 6. Record each artifact in `data/manifest.json` via `capfib.manifest`, together
    with `n_max`, the git revision, and the cross-check result.
 
@@ -245,11 +263,11 @@ over what range** — not a trend inferred from samples.
   `R_c ≥ 0`. Stated because Phase 5 Route B rests on it.
 
 The report must state that the fluctuation finding **constrains** Phase 5
-Route B — makes it necessary to attack `S_c(N)` rather than `R_c(N)` directly
-in any Tauberian argument, without selecting Route B over Route A, which
-remains the primary route for the rigorous asymptotic theorem — and equally
-that this is a numerical observation over `N ≤ 10^6`, not a theorem about all
-`N`. No numerical result is promoted to `theorem`.
+Route B — makes attacking `S_c(N)` the safer numerical target rather than
+`R_c(N)` directly, without selecting Route B over Route A, which remains the
+primary route for the rigorous asymptotic theorem — and equally that this is
+a numerical observation over `N ≤ 10^6`, not a theorem about all `N`. No
+numerical result is promoted to `theorem`.
 
 ## 7. Testing
 

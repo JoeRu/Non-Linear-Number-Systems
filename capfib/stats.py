@@ -35,8 +35,10 @@ def monotonicity_census(counts: Sequence[int]) -> dict[str, int]:
 def summatory(counts: Sequence[int]) -> list[int]:
     """S_c(N) = sum_{n <= N} R_c(n), exact.
 
-    Phase 5 Route B needs this: R_c itself fluctuates too much for a direct
-    Tauberian attack, while S_c is non-decreasing by construction.
+    Phase 5 Route B needs this: the fluctuation observed in R_c over
+    N <= 10^6 (docs/phases/phase1_report.md) motivates working with the
+    summatory function instead of attacking R_c directly, and S_c is
+    non-decreasing by construction, which R_c is not.
     """
     out: list[int] = []
     running = 0

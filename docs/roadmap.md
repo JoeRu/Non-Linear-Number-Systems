@@ -653,9 +653,10 @@ zwischen zwei Alternativen für dasselbe Ziel — sie beantworten verschiedene
 Fragen. Route A bleibt die primäre Route für das rigorose
 Asymptotik-Theorem über $\log R_c(N)$. Der Fluktuations-Befund aus Phase 1
 (`docs/phases/phase1_report.md`) zeigt aber, dass $R_c(N)$ selbst über
-$N \le 10^6$ zu unregelmäßig ist (49.6% fallende Schritte), um direkt als
-Taubersatz-Objekt zu dienen — jeder Tauberian-Angriff (Route B) *muss* daher
-über die summatorische Funktion $S_c(N)$ laufen, nicht über $R_c(N)$ selbst.
+$N \le 10^6$ so unregelmäßig ist (49.6% fallende Schritte), dass ein direkter
+Taubersatz-Angriff auf $R_c(N)$ dadurch erschwert wird — die summatorische
+Funktion $S_c(N)$ ist daher das numerisch sicherere Ziel für einen
+Tauberian-Angriff (Route B), sobald sie verfolgt wird, statt $R_c(N)$ selbst.
 Das ist keine Abschwächung von Route A, sondern eine Randbedingung an Route B,
 sobald sie verfolgt wird.
 
