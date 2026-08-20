@@ -117,6 +117,22 @@ lake env lean NonLinearNumberSystems/Redundancy.lean
 5. **Respect the correctness gate.** Never present `capfib.dp` or `capfib.gf` output as
    a fact until it has passed the cross-checks described in Global Constraints above.
 
-6. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
+6. **Codex reviews everything.** Standing decision (2026-08-20). Every design
+   spec goes to Codex before it becomes an implementation plan; every code
+   change gets a Codex review; and a **full Codex review runs before pushing
+   for a pull request**, not after. Invoke through the `codex:rescue` skill.
+
+   Treat its findings as external review: verify each against
+   the codebase before acting, push back with technical reasoning where it is
+   wrong, and record the outcome in the artifact itself — the Phase 1 spec
+   carries an "Appendix — review history" naming what was rejected, what was
+   verified, and what was declined and why.
+
+   This exists because it worked the first time it was used: Codex rejected the
+   Phase 1 spec's central verification argument, correctly, after that spec had
+   already passed an internal review loop. An outside reader with no stake in
+   the reasoning catches what self-review structurally cannot.
+
+7. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
    de Bruijn, Coons–Kristensen–Laursen, Fraenkel) or from Mathlib, include the source
    reference in a comment.
