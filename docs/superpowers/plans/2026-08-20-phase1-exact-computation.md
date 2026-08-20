@@ -596,6 +596,14 @@ catches the same corruption."
 
 - [ ] **Step 1: Write the script**
 
+> **Stale pre-execution draft.** The code block below is the plan's original
+> proposal, written before implementation. It carries two defects that were
+> found and fixed during execution: `ladder()` here has no `1 < p` filter,
+> which divides by zero at the degenerate place `F_1 = F_2 = 1`; and the
+> `fig.savefig(...)` calls are bare, non-atomic writes. Both were fixed in the
+> committed source. `scripts/run_phase1.py` is authoritative — do not copy
+> from here.
+
 ```python
 #!/usr/bin/env python3
 """Phase 1 -- exact computation of R_c(N) and its structural analyses.
@@ -1001,6 +1009,14 @@ Expected: `claims.yaml OK`. If a `verified-numeric` claim fails, its evidence do
 
 Prose, written by hand. It must contain, with real numbers substituted from the summary JSON:
 
+> **Stale pre-execution draft.** The template below is the plan's original
+> proposal, including phrasing that treated the census as if it had chosen a
+> proof strategy outright. Review after execution found that overstates a
+> finite observation; the committed `docs/phases/phase1_report.md` instead
+> says the finding *constrains* the route without selecting it over the
+> alternative (see spec §6 and `docs/roadmap.md` Phase 5). The committed
+> report is authoritative — do not copy this wording from here.
+
 ```markdown
 # Phase 1 — Exact Computation of R_c(N)
 
@@ -1025,7 +1041,8 @@ decreasing, steps) and state the decreasing share as a percentage
 {claim:rc-not-monotone}. Roadmap Phase 0 left this question open and
 made Phase 5's route depend on it: a heavily fluctuating `R_c` means the direct
 attack is unavailable and the summatory function `S_c` is the object a
-Tauberian argument must use. **This selects Route B.** `S_c` is non-decreasing
+Tauberian argument must use. **This constrains Route B, it does not select
+it** (Route A remains primary; see spec §6). `S_c` is non-decreasing
 {claim:sc-monotone}, and the fluctuation figure shows the contrast directly.
 
 **Result 2 — structure at place values.** Reproduce the `place_jumps` table
@@ -1129,11 +1146,18 @@ append their commits. The items to check off, with the commit that covers each:
 
 Add one new checked line recording the finding that decides Phase 5:
 
+> **Stale pre-execution draft.** The line below originally phrased the
+> census as if it had chosen a proof route outright, which overstates a
+> finite observation. The committed `docs/roadmap.md` says the finding
+> constrains that route without choosing it over the alternative. Do not
+> copy this wording from here.
+
 ```markdown
 - [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (Anteil fallender
       Schritte aus `data/phase1_summary.json` einsetzen), damit ist die in Phase 0
-      offengelassene Frage entschieden: **Phase 5 nutzt Route B** über die
-      summatorische Funktion `S_c(N)` — Commit aus Task 7 einsetzen
+      offengelassene Frage entschieden: der Befund **schränkt Route B ein**
+      (keine Auswahl gegen Route A) über die summatorische Funktion `S_c(N)`
+      — Commit aus Task 7 einsetzen
 ```
 
 - [ ] **Step 2: Full verification**

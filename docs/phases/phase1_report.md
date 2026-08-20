@@ -5,9 +5,14 @@ which of Phase 5's routes does its behaviour select?
 
 **Method.** Exact integer computation to `N = 10^6` via the closed-form
 generating-function recurrence, with every coefficient cross-checked against an
-independently implemented digit-loop DP. Reported values are licensed by that
-full-range agreement {claim:dp-gf-agree-to-nmax} (`dp==gf pointwise for all N
-<= 1000000`, `gf` in 8.4 s, `dp` in 284.6 s, peak RSS 274 MB), not by a global
+independently implemented digit-loop DP — two independent counting algorithms
+(`dp` and `gf`; `brute` too) run over a shared, separately-tested place set
+(`places_up_to` in `capfib/fib.py`, pinned by boundary tests in
+`tests/test_fib.py`). A wrong place set would be invisible to the cross-check
+by construction. Reported values are licensed by that full-range agreement
+{claim:dp-gf-agree-to-nmax} (`dp==gf pointwise for all N <= 1000000`, `gf` in
+8.7 s, `dp` in 286.9 s, peak RSS 273 MB — whole-process, i.e. covering `gf`
+and `dp` together, which is what the script measures), not by a global
 checksum — see the design spec section 3 for why the checksum is insufficient.
 
 **What Phase 1 is not.** It does not measure the leading asymptotic constant.
@@ -23,8 +28,11 @@ steps — **49.6% of steps are decreasing** {claim:rc-not-monotone}. Roadmap
 Phase 0 left this question open and made Phase 5's route depend on it: a
 heavily fluctuating `R_c` means the direct attack is unavailable and the
 summatory function `S_c` is the object a Tauberian argument must use. **This
-selects Route B.** `S_c` is non-decreasing {claim:sc-monotone}, and the
-fluctuation figure (`figures/phase1_fluctuation.png`) shows the contrast
+constrains Route B, it does not select it:** any Tauberian attack on the
+leading asymptotic must go through `S_c(N)` rather than `R_c(N)` directly;
+Route A remains the primary route for the rigorous asymptotic theorem (see
+`docs/roadmap.md`, Phase 5). `S_c` is non-decreasing {claim:sc-monotone}, and
+the fluctuation figure (`figures/phase1_fluctuation.png`) shows the contrast
 directly against the growth curve (`figures/phase1_growth.png`).
 
 *Structural note.* Exactly 11 flat steps occur over `N <= 10^6`
@@ -32,6 +40,15 @@ directly against the growth curve (`figures/phase1_growth.png`).
 `N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78` -- the largest being `N = 78`.
 This is recorded as the observation it is; Phase 1 does not speculate about
 why.
+
+*Quantiles of the step ratio.* `data/phase1_summary.json` records
+`fluctuation_quantiles` for `R_c(N+1)/R_c(N)` over `N <= 10^6`: min `0.9853`,
+p25 `0.9984`, median `1.0000`, p75 `1.0016`, max `2.0`. The median sitting at
+essentially 1 with a p25 below 1 is direct, distribution-level evidence for
+the fluctuation finding above — it is not just the binary increasing/flat/
+decreasing count that shows fluctuation, but the fact that a full quarter of
+steps have a ratio below 0.9984, while the extremes reach as low as 0.9853 and
+as high as 2.0.
 
 **Result 2 — structure at place values.** The ratio `R_c(F)/R_c(F-1)` at each
 distinct Fibonacci place `F <= 1000000`:
@@ -106,11 +123,15 @@ block `[F, F')`, ties broken toward the smallest `N`:
 | [196418, 317811) | 317809 | 3663199405522131720967230 | 196420 | 37223323185940462824302 |
 | [317811, 514229) | 514227 | 447011053723657655159723062 | 317813 | 3653612162743972195432946 |
 | [514229, 832040) | 832038 | 67818682314307972010462530933 | 514231 | 446005217902628828758934222 |
-| [832040, 1000001) | 999998 | 489947064206166830167042650942 | 832042 | 67687720957357242027785749964 |
+| [832040, 1000001)\* | 999998 | 489947064206166830167042650942 | 832042 | 67687720957357242027785749964 |
+
+\*Truncated by `n_max`: the next Fibonacci place is `1346269`, so this row
+covers only `[832040, 1000000]`, not the full block `[832040, 1346269)`, and
+should not be read as a complete block like the rows above it.
 
 Progress on open problem 2 {claim:block-extremal-n}.
 
 **Limits.** Every result is a numerical observation over `N <= 10^6`. None is a
 theorem about all `N`, and none is recorded as one. The fluctuation finding
-selects Phase 5 Route B on the strength of what Phase 1 actually measured; it
-is not itself a theorem about `R_c` at arbitrary `N`.
+constrains Phase 5 Route B on the strength of what Phase 1 actually measured;
+it is not itself a theorem about `R_c` at arbitrary `N`.

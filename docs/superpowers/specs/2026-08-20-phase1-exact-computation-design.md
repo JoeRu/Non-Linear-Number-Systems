@@ -169,9 +169,11 @@ invariant only; see §3.2 for what it cannot detect.
 ### 4.3 `scripts/run_phase1.py`
 
 Orchestration only. `--n-max` (default `1_000_000`). The `dp` precondition costs ~5 min at that
-size; `--skip-crosscheck` exists **only** for development runs and makes the
-script stamp `crosscheck: skipped` into the manifest and refuse to write to the
-real artifact paths. Order of operations:
+size; `--skip-crosscheck` exists **only** for development runs. It runs the
+analyses but writes nothing at all — no data files, no figures, no manifest
+entry — which is safer than stamping a `crosscheck: skipped` marker into an
+artifact that could later be mistaken for validated data. Order of
+operations:
 
 1. Compute `gf.coefficients(n_max)` and `dp.counts(n_max)`.
 2. **Precondition:** compare pointwise. On mismatch, report the smallest
@@ -192,7 +194,7 @@ real artifact paths. Order of operations:
 | Path | Contents |
 |---|---|
 | `data/phase1_data.csv` | `N, R_c, log_R_c, log_N_sq, ratio, S_c, log_S_c` at every `N = round(10^(j/2))` for `j = 4 … 2·log10(n_max)` (decades and half-decades from 100), plus every distinct place value `F_k ≤ n_max`. Sorted, deduplicated. |
-| `data/phase1_summary.json` | Monotonicity census, block extrema, fluctuation quantiles, place jumps, checksum result |
+| `data/phase1_summary.json` | Monotonicity census, block extrema, fluctuation quantiles, place jumps. No checksum result — the script does not call `checksum_ok`; §3.1's pointwise cross-check is what licenses the numbers. |
 | `figures/phase1_growth.png` | `log R_c(N)` and `log S_c(N)` against `(log N)^2` |
 | `figures/phase1_fluctuation.png` | Local ratio of `R_c` against the relative increment of `S_c` — the visual form of the Route B argument |
 | `docs/phases/phase1_report.md` | The phase deliverable. **Written by hand, not by the script** — it is prose about the findings, and the script has no business generating it. Not recorded in the manifest. |
@@ -242,9 +244,12 @@ over what range** — not a trend inferred from samples.
 - `sc-monotone` — `theorem`. `S_c` is non-decreasing, immediately from
   `R_c ≥ 0`. Stated because Phase 5 Route B rests on it.
 
-The report must state that the fluctuation finding **selects** Phase 5 Route B,
-and equally that this is a numerical observation over `N ≤ 10^6`, not a theorem
-about all `N`. No numerical result is promoted to `theorem`.
+The report must state that the fluctuation finding **constrains** Phase 5
+Route B — makes it necessary to attack `S_c(N)` rather than `R_c(N)` directly
+in any Tauberian argument, without selecting Route B over Route A, which
+remains the primary route for the rigorous asymptotic theorem — and equally
+that this is a numerical observation over `N ≤ 10^6`, not a theorem about all
+`N`. No numerical result is promoted to `theorem`.
 
 ## 7. Testing
 

@@ -14,8 +14,8 @@ What licenses the numbers is the pointwise dp/gf cross-check. These tests hold
 both facts in place.
 """
 
+import capfib.gf as gf_module
 from capfib.dp import counts as dp_counts
-from capfib.fib import fibonacci
 from capfib.gf import checksum_ok, coefficients
 
 
@@ -24,34 +24,38 @@ def test_checksum_holds_for_small_n():
         assert checksum_ok(n), f"checksum failed at n={n}"
 
 
-def test_checksum_detects_a_changed_total():
-    F = fibonacci(10)
-    max_value = sum(f * f for f in F)
-    c = coefficients(max_value, places=F)
-    product = 1
-    for f in F:
-        product *= f + 1
-    assert sum(c) == product
-    c[7] += 1
-    assert sum(c) != product
+def test_checksum_detects_a_changed_total(monkeypatch):
+    """checksum_ok recomputes its own counts internally; corrupt exactly that
+    recomputation so the test exercises checksum_ok itself, not a reimplementation
+    of its logic."""
+    real_coefficients = gf_module.coefficients
+
+    def corrupted(n_max, places=None):
+        c = list(real_coefficients(n_max, places=places))
+        c[7] += 1           # changes the total: the checksum must catch it
+        return c
+
+    monkeypatch.setattr(gf_module, "coefficients", corrupted)
+    assert checksum_ok(10) is False
 
 
-def test_checksum_misses_sum_preserving_corruption():
+def test_checksum_misses_sum_preserving_corruption(monkeypatch):
     """The known blind spot, asserted so nobody over-trusts the invariant.
 
     Moving mass between two coefficients leaves the total identical. The
     checksum cannot see it.
     """
-    F = fibonacci(10)
-    max_value = sum(f * f for f in F)
-    c = coefficients(max_value, places=F)
-    product = 1
-    for f in F:
-        product *= f + 1
+    real_coefficients = gf_module.coefficients
 
-    c[7] += 1
-    c[9] -= 1              # sum preserved
-    assert sum(c) == product, "the checksum is blind to this corruption -- by design of the check, not of the code"
+    def corrupted(n_max, places=None):
+        c = list(real_coefficients(n_max, places=places))
+        c[7] += 1
+        c[9] -= 1            # sum preserved
+        return c
+
+    monkeypatch.setattr(gf_module, "coefficients", corrupted)
+    assert checksum_ok(10) is True, \
+        "the checksum is blind to this corruption -- by design of the check, not of the code"
 
 
 def test_crosscheck_catches_sum_preserving_corruption():

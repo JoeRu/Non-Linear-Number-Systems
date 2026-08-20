@@ -78,8 +78,11 @@ Erledigt:
 - [x] Extremale $N$ (offenes Problem 2) — `9ce15e9`
 - [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (49.6% fallende
       Schritte, aus `data/phase1_summary.json`), damit ist die in Phase 0
-      offengelassene Frage entschieden: **Phase 5 nutzt Route B** über die
-      summatorische Funktion `S_c(N)` — `8601426`
+      offengelassene Frage entschieden: der Befund **schränkt Route B ein**
+      (ist eine Randbedingung an sie, keine Auswahl gegen Route A) — jeder
+      Tauber-Angriff muss über die summatorische Funktion `S_c(N)` laufen,
+      nicht direkt über `R_c(N)`; Route A bleibt die primäre Route für den
+      strengen Asymptotik-Beweis (siehe Phase 5) — `8601426`
 
 ### Phase 2 — Elementare Schranken 🟡 Aussagen formuliert, Beweise offen
 
