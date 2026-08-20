@@ -27,6 +27,113 @@ Das Problem sitzt exakt zwischen zwei klassischen, gelösten Fällen:
 
 ---
 
+## Fortschritt
+
+Stand: 2026-08-20. Jede erledigte Teilaufgabe mit dem Commit, der sie abdeckt.
+Offene Punkte sind bewusst *nicht* abgehakt — auch dann nicht, wenn Infrastruktur
+dafür schon existiert.
+
+### Infrastruktur (querschnittlich, keine Roadmap-Phase)
+
+- [x] Benchmark-Gerüst entfernt, Repo auf das Forschungsprogramm umgebaut — `6095170`
+- [x] `capfib`-Paket: Platzwerte, Brute-Force-Orakel, zwei unabhängige schnelle Pfade — `425b503`, `0140c82`, `674058b`, `054f968`
+- [x] Log-Raum-Auswertung der erzeugenden Funktion, Legendre-Transformation, Regression — `3aeffa6`, `78ccc80`, `de735dc`
+- [x] Provenienz-Manifest für alle generierten Daten (Upsert statt Append) — `a688b99`, `9f3436d`
+- [x] Claim-Ledger `theory/claims.yaml` + Validator `scripts/check_claims.py` — `625ce82`, `1b4dca0`, `9f3436d`
+- [x] Projekt-Skills `rc-numerics`, `claim-ledger` — `0d377c1`, `7e83f82`
+- [x] Lean-Entwicklung kompiliert erstmals (elan, Mathlib v4.14.0, `lake-manifest.json` versioniert) — `543c8b0`
+- [x] Lean auf das *richtige* Objekt umgestellt: positionsabhängige Schranke statt konstanter Kapazität — `53f8030`
+
+### Phase 0 — Präzisierung ✅
+
+- [x] Fibonacci-Konvention festgelegt: $F_1=F_2=1$, $F_3=2$, $F_4=3$, $F_5=5$ — `425b503`, `860dd5b`
+- [x] $R_c$, $R_u$, $b$ präzise definiert; $R_c$ über **alle** Stellen $F_k \le N$ — `625ce82`
+- [x] Forschungsfragen (A), (B), (C) formuliert — `625ce82`
+- [x] Deliverable `theory/00-definitions.md` — `625ce82`
+- [x] Bekannt / Konjektur / offen im Ledger getrennt — `625ce82`
+
+### Phase 0.5 — Konstanten-Gate ✅
+
+- [x] `scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png` — `1d218a6`
+- [x] Messung: lokale Steigung **0.518710** bei $N = 10^{3200}$ gegen $1/(4\log\varphi) = 0.519522$ — `1d218a6`
+- [x] Ergebnis korrekt als *obere* Schranke formuliert; $1/(8\log\varphi)$ nur unter Sattelpunkt-Straffheit ausgeschlossen — `1b4dca0`, `3c97822`
+- [x] Deliverable `docs/phases/phase0_5_gate.md` — `1d218a6`, `1b4dca0`, `3c97822`
+- [x] Roadmap an die revidierte Phasenfolge angepasst — `860dd5b`
+
+### Phase 1 — Exakte Berechnung 🟡 teilweise
+
+Erledigt:
+
+- [x] DP-Rekurrenz (naive Ziffernschleife) — `674058b`
+- [x] Unabhängige Zweitimplementierung über die geschlossene Produktform — `054f968`
+- [x] Brute-Force-Orakel (bewusst langsam, dient als Spezifikation) — `0140c82`
+- [x] **Korrektheits-Gate:** DP gegen Orakel für alle $N \le 200$, beide schnellen Pfade gegeneinander für alle $N \le 500$ — `054f968`
+- [x] Tabelle aus `theory/01-background.md` §4 exakt reproduziert für $n = 1..10$ — `674058b`
+- [x] Vollständigkeit numerisch bestätigt (keine Lücken in der Zählung) — `674058b`
+
+Offen:
+
+- [ ] Lauf bis $N \approx 10^6$–$10^7$ (benötigt den bewusst zurückgestellten Log-Domain-Pfad in `dp.py`)
+- [ ] `phase1_data.csv` mit Spalten $N$, $R_c(N)$, $\log R_c(N)$, $(\log N)^2$, Verhältnis
+- [ ] `phase1_plot.png` (Hauptterm + Residuen)
+- [ ] `phase1_report.md`
+- [ ] Deskriptive Statistik: Monotonie, lokale Fluktuation $R_c(N+1)/R_c(N)$
+- [ ] Extremale $N$ (offenes Problem 2 aus `theory/01-background.md` §14)
+
+### Phase 2 — Elementare Schranken 🟡 Aussagen formuliert, Beweise offen
+
+- [x] $\sum_{k \le n} F_k^2 = F_n F_{n+1}$ **in Lean bewiesen** (nicht in Mathlib vorhanden) — `53f8030`
+- [x] $R_c(N) \le R_u(N)$ als Lean-Aussage formuliert (`countReps_le_uncapped`, mit Beweisskizze) — `53f8030`
+- [x] Vollständigkeit als Lean-Aussage formuliert (`exists_numeral_of_le`, mit Beweisskizze) — `53f8030`
+- [x] Zusatz: „1 > 1“ formal bewiesen — zwei verschiedene Numerale mit gleichem Wert (`exists_two_numerals_same_value`) — `53f8030`
+- [ ] Obere Schranke aus Coons–Kristensen–Laursen zitierfähig ausformuliert
+- [ ] Untere Schranke: konstruktiver Beweis (Kern der Phase)
+- [ ] `phase2_bounds.md` mit beiden Sätzen und Fehlertermen
+- [ ] Zusammenführung: welcher Wert von $C'$ ergibt sich?
+
+### Phase 3 — Sattelpunkt-Heuristik ⬜ offen
+
+- [ ] Drei-Regime-Zerlegung sauber ausgearbeitet
+- [ ] Legendre-Transformation zur Konstante hergeleitet
+- [ ] `phase3_heuristic.md` mit expliziter Heuristik-Warnung
+- [ ] Sekundärterm-Entwicklung ($C_1$, $C_2$)
+
+Hinweis: Die Konstante ist durch Phase 0.5 bereits *gemessen*. Phase 3 muss sie
+nun *erklären*, nicht vorhersagen.
+
+### Phase 4 — Numerische Konfrontation ⬜ offen
+
+- [x] Direkte Produktauswertung $\log F_c(e^{-s})$ (Werkzeug vorhanden, gegen die exakte Reihe auf $10^{-16}$ verifiziert) — `3aeffa6`
+- [x] Vier-Term-Regression als Werkzeug vorhanden — `de735dc`
+- [ ] Fit an Phase-1-Daten (benötigt Phase 1)
+- [ ] Oszillationsdetektion: Residuen gegen $\{\log_\varphi N\}$, Fourieranalyse
+- [ ] `capfib/oscillation.py` (bewusst noch nicht angelegt — kein Testmaterial ohne Phase 1)
+- [ ] `phase4_numerical_report.md`
+
+### Phase 5 — Rigorisierung ⬜ offen
+
+- [ ] Route A: Mellin-Transformation und $\zeta_F^{(F+1)}$
+- [ ] Route B: Taubersätze für $S_c(N)$
+- [ ] Route C: Funktionalgleichung (explorativ)
+- [ ] **Sattelpunkt-Straffheit** beweisen — erst dann schließt die Phase-0.5-Messung auch $1/(8\log\varphi)$ aus (siehe `theory/claims.yaml`, `saddle-tightness`)
+
+### Phase 6 — Oszillationen ⬜ offen
+
+- [ ] Pol-Spektrum aus Phase 5
+- [ ] Fourierkoeffizienten von $\Psi(\log_\varphi N)$
+- [ ] Explizite Fehlerschranken
+- [ ] `phase6_oscillations.md`
+
+### Phase 7 — Verallgemeinerung und Writeup ⬜ offen
+
+- [x] `paper/main.tex` und `paper/refs.bib` angelegt, damit Zitate ab Tag 1 in BibTeX auflaufen — `6095170`
+- [ ] Verallgemeinerung auf $d_k \le c F_k^\alpha$
+- [ ] Allgemeine lineare Rekurrenzen (Pisot-Basis)
+- [ ] Paper
+- [ ] arXiv-Preprint
+
+---
+
 ## Phase 0 — Präzisierung
 
 **Zeithorizont:** 1–2 Tage  
