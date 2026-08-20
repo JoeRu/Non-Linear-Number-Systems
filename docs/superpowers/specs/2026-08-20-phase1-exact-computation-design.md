@@ -57,15 +57,17 @@ Phase 0 says:
 > Taubersätze (Phase 5B). Falls `R_c(N)` glatt ist → direkter Attack auf
 > `R_c(N)` selbst.
 
-`R_c(N)` fluctuates heavily: of the first 100,000 steps, **48,446 strictly
-decrease** and only 11 are flat. Phase 5 therefore needs `S_c(N)`, and since
-`S_c` is a cumulative sum of the array Phase 1 already builds, computing it here
-costs almost nothing.
+`R_c(N)` fluctuates heavily -- the exact census this design decision rests on
+is what Phase 1 itself measures and records (`data/phase1_summary.json`,
+`census`; see `docs/phases/phase1_report.md`, Result 1); no committed
+invocation reproduces a number at this design stage, so none is quoted here.
+Phase 5 therefore needs `S_c(N)`, and since `S_c` is a cumulative sum of the
+array Phase 1 already builds, computing it here costs almost nothing.
 
 **D3 — Tested analysis module, thin parameterised script, no cache.** The
 descriptive analyses live in `capfib/stats.py` as pure functions with unit
 tests; `scripts/run_phase1.py` orchestrates and takes `--n-max` so iteration
-happens at `10^4` (0.07 s) and the full run happens once. An on-disk cache of
+happens at a small `n_max` and the full run happens once. An on-disk cache of
 the counts array was considered and rejected: `--n-max` recovers most of the
 iteration speed without introducing an artifact format or a staleness question.
 
@@ -98,21 +100,17 @@ is therefore an independent check **conditional on that shared place set**,
 not an unconditional one: a wrong or truncated place set would be applied
 identically to both algorithms and would be invisible to the comparison (see
 `tests/test_fib.py` for the boundary tests that pin `places_up_to` instead).
-It is not a sampled check, and it is affordable:
+It is not a sampled check, and it is affordable at production scale:
 
 | N | `dp` | `gf` | pointwise agreement |
 |---|---|---|---|
-| 40,000\* | 2.3 s | 0.3 s | ✅ all coefficients |
 | **1,000,000** | **298 s** | **9–12 s** | ✅ **all coefficients** |
 
-\*The `40,000` row is an ad-hoc design-time probe run while scoping the
-feasibility of a full-scale cross-check; `scripts/run_phase1.py` only ever
-runs the comparison at `n_max`, so this row is not re-derived by any
-committed invocation and is not a reproducible artifact — only the
-`1,000,000` row (at the script's default `n_max`) is. An earlier draft of
-this table also carried a second, intermediate-`N` row sourced from the same
-kind of design-time probe; it has been dropped rather than merely flagged,
-for the same reason.
+This is the script's default `n_max`, so the row is manifest-backed: it is
+what `scripts/run_phase1.py` actually re-derives and records, not an
+ad-hoc design-time probe. Earlier drafts of this table also carried
+smaller-`N` rows from such probes; they have been dropped rather than
+flagged, since no committed invocation re-derives them.
 
 `scripts/run_phase1.py` runs this comparison at `n_max` as its **precondition**.
 Five minutes of `dp` is the price of quoting a million coefficients, and it is
@@ -122,8 +120,8 @@ writes nothing.
 ### 3.2 What the global checksum is, and what it is not
 
 In the *fixed-length* system on places `F_1 … F_n`, every digit tuple has
-exactly one value, so `Σ_N counts[N] = ∏_k (F_k + 1)` exactly. Verified during
-design at n = 10, 14, 18 and 20 (the last spanning 7.4 × 10^7 coefficients).
+exactly one value, so `Σ_N counts[N] = ∏_k (F_k + 1)` exactly -- proved in
+`theory/03-invariants.md` (`gf-global-checksum`), not merely observed.
 
 **An earlier draft of this spec claimed this identity licensed reporting at
 `10^6`. That was wrong, in two independent ways, and the claim is withdrawn.**

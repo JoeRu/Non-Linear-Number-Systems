@@ -73,7 +73,18 @@ def _lean_declaration_exists(root: Path, decl: str) -> bool:
     """Honest check for a Lean declaration reference: does some project
     `.lean` file actually declare a `theorem`/`lemma`/`def` with this name?
     Uses the last dotted segment, since the file text is unlikely to spell
-    out the full namespace-qualified name at the declaration site."""
+    out the full namespace-qualified name at the declaration site.
+
+    KNOWN LIMITATION, dormant: this is a text grep, not a Lean query. It does
+    not exclude comments or string literals, so a commented-out
+    `theorem foo`, a declaration under the wrong namespace, or a stale
+    unbuilt file would all validate. No claim in theory/claims.yaml uses this
+    route today (all current `theorem` claims cite a `theory/` path instead),
+    so the gap is not blocking, but do not start relying on this path without
+    fixing it first. Doing so properly means asking Lean itself (e.g. via
+    `lake env lean --print-axioms` or an environment query), not grepping
+    text -- that is its own design, not a quick patch here.
+    """
     last = decl.rsplit(".", 1)[-1]
     pattern = re.compile(
         r"\b(?:" + "|".join(LEAN_DECL_KEYWORDS) + r")\s+" + re.escape(last) + r"\b"
