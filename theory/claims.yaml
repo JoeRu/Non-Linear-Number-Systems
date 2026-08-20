@@ -39,3 +39,39 @@
   status: heuristic
   evidence: "Standard for generating functions of this type; not established here. Required before the Phase 0.5 measurement can bound C_c from below as well as above."
   source: "Phase 5 rigorisation target"
+
+- id: dp-gf-agree-to-nmax
+  statement: "capfib.dp and capfib.gf agree on every coefficient of R_c(N) for N <= 1000000."
+  status: verified-numeric
+  evidence: "data/phase1_summary.json (crosscheck field), produced by scripts/run_phase1.py"
+  source: "this project, Phase 1"
+
+- id: rc-not-monotone
+  statement: "R_c(N) is not monotone: over N <= 1000000 the census records 504441 increasing steps, 11 flat steps and 495548 decreasing steps out of 1000000, i.e. 49.6% of steps are decreasing."
+  status: verified-numeric
+  evidence: "data/phase1_summary.json (census field)"
+  source: "this project, Phase 1"
+
+- id: place-jump-decay
+  statement: "R_c(F)/R_c(F-1) at distinct place values equals exactly 1.0 at F=2, rises at F=3 and F=8, and decays monotonically toward 1 only from F=13 onward. It does NOT exceed 1 at every place, and is NOT monotone overall."
+  status: verified-numeric
+  evidence: "data/phase1_summary.json (place_jumps field), checked exhaustively over every distinct place F <= 1000000"
+  source: "this project, Phase 1"
+
+- id: block-extremal-n
+  statement: "Argmax and argmin of R_c within each Fibonacci block [F, F') over N <= 1000000, ties broken toward the smallest N."
+  status: verified-numeric
+  evidence: "data/phase1_summary.json (block_extrema field)"
+  source: "open problem 2, theory/01-background.md section 14"
+
+- id: gf-global-checksum
+  statement: "For the fixed-length system on F_1..F_n, sum(counts) equals prod(F_k+1). Reproducible from the test suite for n <= 14. This invariant is insensitive to sum-preserving corruption and does not exercise the production place set; it is not a licence to report values."
+  status: verified-numeric
+  evidence: "tests/test_checksum.py, which asserts the identity for n <= 14 and its sum-preserving blind spot (test_checksum_misses_sum_preserving_corruption); the artifact that actually licenses reported values is data/phase1_summary.json (crosscheck field), not this checksum -- see claim dp-gf-agree-to-nmax"
+  source: "this project, Phase 1"
+
+- id: sc-monotone
+  statement: "S_c(N) = sum_{n<=N} R_c(n) is non-decreasing."
+  status: theorem
+  evidence: "Immediate from R_c(n) >= 0. Corroborated in tests/test_stats.py::test_summatory_is_exact_ints_and_monotone."
+  source: "this project"
