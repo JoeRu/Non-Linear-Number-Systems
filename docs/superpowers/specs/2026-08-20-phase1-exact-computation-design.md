@@ -18,10 +18,16 @@ not: `R_c(10^6)` is **99 bits** — roughly `10^30` — and extrapolation puts
 bottleneck is Python allocation overhead, not number size, and the deferred
 log-domain path is not needed for this phase.
 
-| N | time | peak memory | `R_c(N)` | `log R_c(N)` |
+| N | `gf` time | peak RSS | `R_c(N)` | `log R_c(N)` |
 |---|---|---|---|---|
-| 200,000 | 1.3 s | 7 MB | 76 bits | 52.1 |
-| 1,000,000 | 178 s | 145 MB | 99 bits | 68.4 |
+| 200,000 | 1.6 s | — | 76 bits | 52.1 |
+| 1,000,000 | 12.3 s | 179 MB | 99 bits | 68.4 |
+
+Measured on commit `9074d3b` with `.venv/bin/python`, uninstrumented. An earlier
+draft of this spec reported 178 s at `N = 10^6`; that figure was `tracemalloc`
+overhead, not computation, and is corrected here. §9 requires the Phase 1 run to
+re-derive these numbers and record them in the manifest, so no figure quoted in
+this document rests on an unrecorded ad-hoc measurement.
 
 **Phase 1 is not where the constant gets measured.** Phase 0.5 already pinned
 the leading coefficient at `N = 10^3200`. At `N = 10^6` the ratio
@@ -38,7 +44,7 @@ the summatory function. These need exactness far more than they need reach.
 ## 2. Decisions taken
 
 **D1 — Exact integers to `N = 10^6`.** No log-domain path, no fast kernel. The
-existing `capfib.gf.coefficients` is used as-is: ~3 minutes, 145 MB, exact.
+existing `capfib.gf.coefficients` is used as-is: ~12 s, 179 MB, exact.
 
 **D2 — Roadmap deliverables plus the summatory function.** A measurement taken
 during design settles a question the roadmap explicitly left open. Roadmap
@@ -60,11 +66,14 @@ happens at `10^4` (0.07 s) and the full run happens once. An on-disk cache of
 the counts array was considered and rejected: `--n-max` recovers most of the
 iteration speed without introducing an artifact format or a staleness question.
 
-**Explicitly not done:** optimising the 178-second run. A modular-arithmetic
-kernel (counts mod several 31-bit primes, vectorised `cumsum` per residue class,
-CRT reconstruction) would cut it to seconds, but it is a subsystem with its own
-correctness burden, and Phase 1 does not need it. Building it now would be
-tooling mistaken for a result.
+**Explicitly not done:** optimising either path. `gf` takes ~12 s, so there is
+nothing to optimise there. `dp` takes ~5 min at `n_max`, but that cost buys the
+verification in §3.1 and is paid once per data run — speeding it up would remove
+the one check that licenses the phase's numbers. A modular-arithmetic kernel
+(counts mod several 31-bit primes, vectorised `cumsum` per residue class, CRT
+reconstruction) was considered and rejected: it is a subsystem with its own
+correctness burden, and it would make the fast path faster while leaving the
+slow path — the one that matters — untouched.
 
 ---
 
@@ -76,33 +85,66 @@ other for all `N ≤ 500`. Phase 1 reports values at `10^6`, three orders of
 magnitude past that. A previous review already caught a report quoting `gf` at
 `N = 600` as a gate violation, so this must be resolved rather than waved past.
 
-**The resolution is a global checksum.** In the *fixed-length* system on places
-`F_1 … F_n`, every digit tuple has exactly one value, so
+### 3.1 What licenses the numbers: a full-scale pointwise cross-check
 
-    Σ_N counts[N]  =  ∏_{k=1..n} (F_k + 1)
+`capfib.dp` (naive digit loop) and `capfib.gf` (closed-form
+multiply-by-`(1-x^M)`, divide-by-`(1-x^f)` recurrence) are structurally
+different algorithms over the *same* place set. Running both at `n_max` and
+comparing every coefficient is therefore a genuine independent check, not a
+sampled one, and it is affordable:
 
-exactly. This is an independent, scale-free identity: it does not sample, and
-any error in the recurrence would almost certainly break it. Verified during
-design:
+| N | `dp` | `gf` | pointwise agreement |
+|---|---|---|---|
+| 40,000 | 2.3 s | 0.3 s | ✅ all coefficients |
+| 200,000 | 28.8 s | 1.6 s | ✅ all coefficients |
+| **1,000,000** | **298 s** | **9–12 s** | ✅ **all coefficients** |
 
-| n | max value | result |
-|---|---|---|
-| 10 | 4,895 | ✓ |
-| 14 | 229,970 | ✓ (0.8 s) |
-| 18 | 10,803,704 | ✓ (50 s) |
-| 20 | **74,049,690** | ✓ (410 s) |
+`scripts/run_phase1.py` runs this comparison at `n_max` as its **precondition**.
+Five minutes of `dp` is the price of quoting a million coefficients, and it is
+worth paying. On mismatch the script reports the smallest disagreeing `N` and
+writes nothing.
 
-At `n = 20` an exact 39-digit identity holds across 7.4 × 10^7 coefficients —
-two orders of magnitude beyond Phase 1's reporting range.
+### 3.2 What the global checksum is, and what it is not
 
-**Consequences for the gate.** `capfib.gf` gains `checksum_ok(n) -> bool`. The
-test suite runs it to `n = 14`. `scripts/run_phase1.py` runs it at `n = 18` as a
-**precondition** — if it fails, the script writes nothing. The gate clause in
-`CLAUDE.md` and in the `rc-numerics` skill gains a third requirement: reporting
-values beyond the pointwise-verified range additionally requires the global
-checksum to pass at a scale exceeding the reporting range.
+In the *fixed-length* system on places `F_1 … F_n`, every digit tuple has
+exactly one value, so `Σ_N counts[N] = ∏_k (F_k + 1)` exactly. Verified during
+design at n = 10, 14, 18 and 20 (the last spanning 7.4 × 10^7 coefficients).
 
----
+**An earlier draft of this spec claimed this identity licensed reporting at
+`10^6`. That was wrong, in two independent ways, and the claim is withdrawn.**
+
+1. **It is one scalar.** A single sum constrains one number about an array of
+   millions. Any sum-preserving corruption passes: add `e` to one coefficient
+   and subtract `e` from another, permute the array, or place the right number
+   of monomials at the wrong exponents — the total is identical. The earlier
+   draft's "an error would almost certainly break it" was a hand-wave with no
+   error model behind it.
+2. **It does not exercise the production places.** `checksum_ok(18)` uses only
+   `F_1 … F_18` (largest 2584). The production run uses `places_up_to(10^6)` —
+   30 places, largest 832040. **Twelve of the thirty production places are never
+   touched.** Worse, the n=18 fixed-length array stops equalling `R_c(N)` at
+   `N = F_19 = 4181`. Coverage must be counted in *places exercised*, never in
+   maximum coefficient index — and a covering checksum is impossible in
+   principle: n = 30 would need an array of 1.12 × 10^12 entries.
+
+So the checksum stays, demoted to what it honestly is: **a cheap regression
+invariant** over the factor structure, run in the test suite to n = 14. It is
+not a licence to report anything.
+
+### 3.3 Considered and rejected
+
+Random modular evaluation of the generating polynomial at points other than
+`x = 1` would be far more sensitive than the checksum, being positional. It is
+rejected because §3.1 is deterministic, covers every coefficient, and already
+fits the budget; adding probabilistic evidence on top would be tooling for its
+own sake.
+
+### 3.4 Consequence for the gate
+
+The gate clause in `CLAUDE.md` and in the `rc-numerics` skill gains a third
+requirement: **reporting values beyond the pointwise-verified range requires
+`dp` and `gf` to agree pointwise over the whole reported range**, in the same
+run that produces the data. The global checksum is explicitly *not* sufficient.
 
 ## 4. Components
 
@@ -114,26 +156,34 @@ Pure functions over a counts array. No I/O, no plotting, no globals.
 |---|---|
 | `monotonicity_census(counts)` | `{"increasing": int, "flat": int, "decreasing": int, "steps": int}` over `n = 1..N_max`, comparing `counts[n]` to `counts[n-1]`. The three counts must sum to `steps`. |
 | `summatory(counts)` | `list[int]`, `S[N] = Σ_{n ≤ N} counts[n]`, exact. |
-| `local_ratios(counts)` | `list[float]`, `r[n] = counts[n+1] / counts[n]`. Completeness guarantees `counts[n] ≥ 1` over the range, so no division by zero. |
-| `block_extrema(counts)` | For each place value `F_k ≤ N_max`, the argmax/argmin of `R_c` over the block `[F_k, min(F_{k+1}, N_max+1))`, as a list of records. |
+| `local_ratios(counts)` | `list[float]` of length `n_max`; `r[n] = counts[n+1] / counts[n]` for `n = 0 … n_max-1`. Division by zero is guarded by an explicit runtime assertion `min(counts) >= 1` — **not** by appealing to completeness, which is still a `sorry` in Lean. Measured: `min(counts) == 1` at `n_max = 10^6`. |
+| `block_extrema(counts)` | Over **distinct** place values only — `F_1 = F_2 = 1` would otherwise produce a degenerate duplicate first block. For consecutive distinct places `F < F'`, the block is `[F, min(F', n_max+1))`. Returns argmax/argmin per block; **ties broken by smallest `N`**, stated so results are reproducible. |
 | `place_jumps(counts)` | For each **distinct** place value `F ≥ 2`, the ratio `counts[F] / counts[F-1]`. Distinctness matters: `F_1 = F_2 = 1`, and `F = 1` has no `F-1` in range. |
 
 ### 4.2 `capfib/gf.py` (addition)
 
 `checksum_ok(n: int) -> bool` — computes the fixed-length counts on places
-`F_1..F_n` and returns whether their sum equals `∏(F_k + 1)`.
+`F_1..F_n` and returns whether their sum equals `∏(F_k + 1)`. A regression
+invariant only; see §3.2 for what it cannot detect.
 
 ### 4.3 `scripts/run_phase1.py`
 
-Orchestration only. `--n-max` (default `1_000_000`), `--checksum-n` (default `18`, ~50 s — the
-precondition is deliberately expensive because it is what licenses reporting
-values at `10^6`). Order of operations:
+Orchestration only. `--n-max` (default `1_000_000`). The `dp` precondition costs ~5 min at that
+size; `--skip-crosscheck` exists **only** for development runs and makes the
+script stamp `crosscheck: skipped` into the manifest and refuse to write to the
+real artifact paths. Order of operations:
 
-1. Run `checksum_ok(checksum_n)`. **On failure: print the failure and exit
-   non-zero, writing nothing.**
-2. Compute `coefficients(n_max)` once.
-3. Call each analysis in `capfib.stats`.
-4. Write artifacts; record each in `data/manifest.json` via `capfib.manifest`.
+1. Compute `gf.coefficients(n_max)` and `dp.counts(n_max)`.
+2. **Precondition:** compare pointwise. On mismatch, report the smallest
+   disagreeing `N` and exit non-zero, writing nothing.
+3. Assert `min(counts) >= 1` (guards `local_ratios`).
+4. Call each analysis in `capfib.stats`.
+5. Write artifacts to temporary paths, then **atomically rename** into place —
+   all-or-nothing, so a failure part-way cannot leave a half-written artifact
+   that later looks validated. Stale artifacts from earlier runs are replaced,
+   not merged.
+6. Record each artifact in `data/manifest.json` via `capfib.manifest`, together
+   with `n_max`, the git revision, and the cross-check result.
 
 ---
 
@@ -155,28 +205,37 @@ default blue; that is a known defect not to repeat.)
 
 ## 6. Ledger claims
 
-Added to `theory/claims.yaml`, each `verified-numeric` entry naming a file
-recorded in `data/manifest.json`:
+Added to `theory/claims.yaml`. Every `verified-numeric` entry names a file
+recorded in `data/manifest.json`, and each states **exactly what was checked
+over what range** — not a trend inferred from samples.
 
-- `rc-not-monotone` — `verified-numeric`. `R_c(N)` is not monotone; the census
-  gives the exact counts of increasing, flat and decreasing steps to `N_max`.
-- `place-jump-decay` — `verified-numeric`. `R_c(F_k)/R_c(F_k − 1) > 1` at every
-  place value, decaying monotonically toward 1 (1.154 at `F = 13`, 1.0015 at
-  `F = 75025`).
-- `block-extremal-n` — `verified-numeric`. The argmax/argmin of `R_c` within
-  each Fibonacci block. This is progress on open problem 2 of
+- `rc-not-monotone` — `verified-numeric`. `R_c(N)` is not monotone. The census
+  gives exact counts of increasing, flat and decreasing steps over `N ≤ n_max`.
+- `place-jump-decay` — `verified-numeric`. Computed **exhaustively over every
+  distinct place value `F ≤ n_max`**, not sampled: the ratio
+  `R_c(F)/R_c(F−1)` and whether it exceeds 1 and decreases monotonically across
+  consecutive places. The claim records the range and the number of places
+  checked, and asserts nothing beyond it. If monotonicity fails anywhere in
+  range, the claim states that instead — the check reports what it finds.
+- `block-extremal-n` — `verified-numeric`. Argmax/argmin of `R_c` within each
+  Fibonacci block, ties to smallest `N`. Progress on open problem 2 of
   `theory/01-background.md` §14.
+- `dp-gf-agree-to-nmax` — `verified-numeric`. `dp` and `gf` agree on **every**
+  coefficient to `n_max`. This is the claim that licenses the phase's numbers;
+  §3.1 is its method.
+- `gf-global-checksum` — `verified-numeric`. `Σ counts = ∏(F_k+1)` for the
+  fixed-length system. The claim states the range that is **reproducible from
+  the test suite** (`n ≤ 14`) and records the one-off n = 18 and n = 20 runs
+  separately as manifest-backed evidence rather than folding them into a figure
+  nothing re-derives. The claim text must state the limitation from §3.2: this
+  identity is insensitive to sum-preserving corruption and does not exercise the
+  production place set.
 - `sc-monotone` — `theorem`. `S_c` is non-decreasing, immediately from
   `R_c ≥ 0`. Stated because Phase 5 Route B rests on it.
-- `gf-global-checksum` — `verified-numeric`. `Σ counts = ∏(F_k+1)` verified to
-  `n = 20`, i.e. across 7.4 × 10^7 coefficients.
 
 The report must state that the fluctuation finding **selects** Phase 5 Route B,
 and equally that this is a numerical observation over `N ≤ 10^6`, not a theorem
-about all `N`. `rc-not-monotone` stays `verified-numeric`; no numerical result
-is promoted to `theorem`.
-
----
+about all `N`. No numerical result is promoted to `theorem`.
 
 ## 7. Testing
 
@@ -185,14 +244,15 @@ is promoted to `theorem`.
 | `test_census_partitions_steps` | increasing + flat + decreasing == steps, on random and hand-built sequences |
 | `test_census_hand_checked` | Exact census of `R_c(0..20)`, whose values are hand-verified in `tests/test_brute.py` |
 | `test_summatory_vs_brute` | `summatory` against cumulative `brute.count` for `N ≤ 60` |
-| `test_block_extrema_small` | Exhaustive check against a direct scan for `N ≤ 2000` |
+| `test_block_extrema_small` | Exhaustive check against a direct scan for `N ≤ 2000`, including the tie-to-smallest-`N` rule and the absence of a degenerate `F_1`/`F_2` duplicate block |
+| `test_local_ratios_length_and_bounds` | Length is exactly `n_max`; indices `0 … n_max-1`; every ratio finite |
 | `test_place_jumps_distinct` | Distinct place values only; no entry for `F = 1`; matches direct computation |
-| `test_local_ratios_no_zero_division` | `counts[n] ≥ 1` across the range, so every ratio is finite |
-| `test_checksum_ok` | `checksum_ok(n)` true for `n ≤ 14`; a deliberately corrupted array makes it false |
+| `test_checksum_ok` | True for `n ≤ 14`; a corrupted array that **changes the total** makes it false |
+| `test_checksum_misses_sum_preserving_corruption` | **Asserts the known blind spot:** moving `e` from `counts[a]` to `counts[b]` leaves `checksum_ok` true. The test documents the limitation in executable form so no future reader over-trusts the invariant. |
+| `test_crosscheck_catches_sum_preserving_corruption` | The *same* corruption that defeats the checksum is caught by pointwise `dp`/`gf` comparison. This pair is the point: it shows why §3.1 is the licence and §3.2 is not. |
 
-The last test matters most: a checksum that cannot fail is not a check.
-
----
+The last two tests matter most. A checksum that cannot fail is not a check, and
+a checksum whose blind spot is undocumented is worse than none.
 
 ## 8. Out of scope
 
@@ -208,15 +268,49 @@ The last test matters most: a checksum that cannot fail is not a check.
 
 ## 9. Success criteria
 
-1. `checksum_ok(18)` passes, and `scripts/run_phase1.py` refuses to emit data if
-   it fails.
-2. `pytest` passes, including every test in §7.
+1. `dp` and `gf` agree pointwise over all of `0 … n_max`, verified in the same
+   run that produces the data, and `scripts/run_phase1.py` refuses to emit
+   anything if they do not.
+2. `pytest` passes, including every test in §7 — in particular the pair showing
+   that a sum-preserving corruption defeats the checksum but is caught by the
+   cross-check.
 3. `scripts/run_phase1.py --n-max 1000000` produces the four generated artifacts
-   of §5 (CSV, JSON, two figures), each recorded in `data/manifest.json`. The
+   of §5 (CSV, JSON, two figures), written atomically, each recorded in
+   `data/manifest.json` with `n_max`, git revision and cross-check result. The
    report is written separately.
-4. `theory/claims.yaml` carries the five §6 claims and
+4. The manifest records re-derived values for every measurement this spec quotes
+   in §1 — runtime, peak RSS, `R_c(10^6)` bit length, `min(counts)` — so no
+   figure in the design rests on an unrecorded ad-hoc run.
+5. `theory/claims.yaml` carries the six §6 claims and
    `scripts/check_claims.py` reports `claims.yaml OK`.
-5. `docs/phases/phase1_report.md` states the fluctuation finding, its
+6. `docs/phases/phase1_report.md` states the fluctuation finding, its
    consequence for Phase 5 Route B, and its limits.
-6. `docs/roadmap.md`'s Phase 1 checklist is updated: the completed items checked
+7. `CLAUDE.md` and `.claude/skills/rc-numerics/SKILL.md` carry the §3.4 gate
+   clause: reporting beyond the pointwise-verified range requires a full-range
+   `dp`/`gf` agreement, and the global checksum does not substitute for it.
+8. `docs/roadmap.md`'s Phase 1 checklist is updated: completed items checked
    with their commit, the phase marked ✅.
+
+---
+
+## Appendix — review history
+
+This spec was reviewed by Codex (`gpt-5.4-codex`) on 2026-08-20. The review
+rejected the original §3 argument, correctly, on two grounds: a single sum
+cannot certify millions of coefficients, and `checksum_ok(18)` does not exercise
+the production place set. Both were verified before rewriting — twelve of thirty
+production places are untouched by the n=18 checksum, and a covering checksum
+would need 1.12 × 10^12 entries.
+
+The rewrite replaces the licence with the full-scale pointwise cross-check
+(§3.1), demotes the checksum to a regression invariant with its blind spot
+documented in executable form (§3.2, §7), and tightens boundary, tie-breaking,
+provenance and atomicity semantics throughout.
+
+Also corrected as a consequence of re-measuring: the original §1 reported 178 s
+for `gf` at `N = 10^6`. The true figure is ~12 s; 178 s was `tracemalloc`
+overhead.
+
+One recommendation was declined: random modular evaluation at points other than
+`x = 1`. It is sound and more sensitive than the checksum, but the deterministic
+full-range cross-check subsumes it.
