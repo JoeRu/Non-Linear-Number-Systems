@@ -40,6 +40,14 @@ results and a Python numerics package to generate and cross-check the underlying
 - **The Fibonacci convention is F_1 = 1, F_2 = 1, F_3 = 2, F_4 = 3, F_5 = 5, …** (spec D2). Place values are constructed in `capfib/fib.py` and **nowhere else**. Every other module imports from there. The duplicated 1-place is load-bearing — it is the source of the "1 > 1" phenomenon, and dropping it also breaks the identity `sum_{k<=n} F_k^2 = F_n * F_{n+1}`.
 - `R_c(N)` counts digit tuples over **all** places `F_k <= N`, never a fixed length `n`. Fixing the length undercounts (spec §4.3, Trap 1).
 - **The §4.2 gate:** no output of `capfib.dp` or `capfib.gf` may appear in any report, figure, or claim until it has matched `capfib.brute` for all N <= 200 and the two fast paths have matched each other for all N <= 500.
+- **Beyond the verified range:** reporting any `capfib.dp`/`capfib.gf` value
+  outside the pointwise-verified range additionally requires `dp` and `gf` to
+  agree pointwise **over the whole reported range, in the same run that
+  produces the data** (`scripts/run_phase1.py` does this). The global checksum
+  `gf.checksum_ok` is a regression invariant and is explicitly **not**
+  sufficient: it is one scalar over millions of coefficients, so any
+  sum-preserving corruption passes, and it does not exercise the production
+  place set.
 - Never remove a Lean `sorry` without a real proof. A `sorry` is a statement; a wrong proof is worse than an open one.
 - Every generated dataset writes an entry to `data/manifest.json`.
 - Commit at the end of every task.

@@ -19,6 +19,12 @@ These verify the fast paths against the brute-force oracle to N=200 and against
 each other to N=500. If they fail, the numbers are not trustworthy — fix the
 failure, do not report around it.
 
+Reporting a value beyond the range those tests cover needs more: `dp` and `gf`
+must agree pointwise across the whole range you are reporting, computed in the
+same run. `scripts/run_phase1.py` enforces this as a precondition and writes
+nothing if it fails. Do not substitute `gf.checksum_ok` — it cannot see a
+sum-preserving corruption and does not touch the production places.
+
 ## Rules
 
 1. **Never hand-copy a number into a document.** Every figure and table is
