@@ -27,9 +27,8 @@ selects Route B.** `S_c` is non-decreasing {claim:sc-monotone}, and the
 fluctuation figure (`figures/phase1_fluctuation.png`) shows the contrast
 directly against the growth curve (`figures/phase1_growth.png`).
 
-*Structural note.* Exactly 11 flat steps occur in the whole range to `10^6`
-— and the same 11 already existed at `10^5`. The 900,000 further steps from
-`10^5` to `10^6` produced no new flat step. This is recorded as the
+*Structural note.* Exactly 11 flat steps occur over `N <= 10^6`
+(`data/phase1_summary.json`, census field). This is recorded as the
 observation it is; Phase 1 does not speculate about why.
 
 **Result 2 — structure at place values.** The ratio `R_c(F)/R_c(F-1)` at each

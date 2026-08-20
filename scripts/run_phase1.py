@@ -180,6 +180,7 @@ def main() -> int:
         "dp_seconds": None if dp_seconds is None else round(dp_seconds, 1),
         "peak_rss_mb": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024),
         "census": census,
+        "flat_step_positions": [n for n in range(1, n_max + 1) if c[n] == c[n - 1]],
         "min_count": min(c),
         "R_c_at_n_max": str(c[n_max]),
         "R_c_bit_length": c[n_max].bit_length(),

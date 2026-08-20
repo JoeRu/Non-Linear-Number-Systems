@@ -66,8 +66,8 @@
 
 - id: gf-global-checksum
   statement: "For the fixed-length system on F_1..F_n, sum(counts) equals prod(F_k+1). Reproducible from the test suite for n <= 14. This invariant is insensitive to sum-preserving corruption and does not exercise the production place set; it is not a licence to report values."
-  status: verified-numeric
-  evidence: "tests/test_checksum.py, which asserts the identity for n <= 14 and its sum-preserving blind spot (test_checksum_misses_sum_preserving_corruption); the artifact that actually licenses reported values is data/phase1_summary.json (crosscheck field), not this checksum -- see claim dp-gf-agree-to-nmax"
+  status: theorem
+  evidence: "Immediate from counting all fixed-length digit tuples: summing over N counts every tuple exactly once. Corroborated in tests/test_checksum.py for n <= 14, which also asserts the sum-preserving blind spot (test_checksum_misses_sum_preserving_corruption)."
   source: "this project, Phase 1"
 
 - id: sc-monotone

@@ -72,7 +72,7 @@ Erledigt:
 - [x] Vollständigkeit numerisch bestätigt (keine Lücken in der Zählung) — `674058b`
 - [x] Lauf bis $N = 10^6$ (exakt, nicht Log-Domain — der zurückgestellte Pfad wird nicht gebraucht) — `9ce15e9`
 - [x] `phase1_data.csv` — `9ce15e9`
-- [x] `phase1_plot.png` → delivered as `phase1_growth.png` und `phase1_fluctuation.png` — `9ce15e9`
+- [x] `phase1_plot.png` → geliefert als `phase1_growth.png` und `phase1_fluctuation.png` — `9ce15e9`
 - [x] `phase1_report.md` — `8601426`
 - [x] Deskriptive Statistik: Monotonie, lokale Fluktuation — `9ce15e9`
 - [x] Extremale $N$ (offenes Problem 2) — `9ce15e9`
@@ -644,6 +644,17 @@ $$\log R_c(N) = \frac{(\log N)^2}{4\log\varphi} + O\left(\frac{\log N \log\log N
 - **Primär:** Route A (Mellin + Dirichletreihen), da es Coons–Kristensen–Laursen parallisiert.  
 - **Sekundär:** Route B (Taubersätze) als Fallback oder Verifizierung.  
 - **Tertiary:** Route C (Funktionalgleichung) nur, falls Zeit/Energie vorhanden und explorative Ideen entstehen.
+
+**Klarstellung nach Phase 1:** Route A und Route B stehen nicht zur Wahl
+zwischen zwei Alternativen für dasselbe Ziel — sie beantworten verschiedene
+Fragen. Route A bleibt die primäre Route für das rigorose
+Asymptotik-Theorem über $\log R_c(N)$. Der Fluktuations-Befund aus Phase 1
+(`docs/phases/phase1_report.md`) zeigt aber, dass $R_c(N)$ selbst über
+$N \le 10^6$ zu unregelmäßig ist (49.6% fallende Schritte), um direkt als
+Taubersatz-Objekt zu dienen — jeder Tauberian-Angriff (Route B) *muss* daher
+über die summatorische Funktion $S_c(N)$ laufen, nicht über $R_c(N)$ selbst.
+Das ist keine Abschwächung von Route A, sondern eine Randbedingung an Route B,
+sobald sie verfolgt wird.
 
 ---
 
