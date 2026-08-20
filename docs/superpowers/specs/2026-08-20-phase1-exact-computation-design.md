@@ -212,11 +212,20 @@ over what range** — not a trend inferred from samples.
 - `rc-not-monotone` — `verified-numeric`. `R_c(N)` is not monotone. The census
   gives exact counts of increasing, flat and decreasing steps over `N ≤ n_max`.
 - `place-jump-decay` — `verified-numeric`. Computed **exhaustively over every
-  distinct place value `F ≤ n_max`**, not sampled: the ratio
-  `R_c(F)/R_c(F−1)` and whether it exceeds 1 and decreases monotonically across
-  consecutive places. The claim records the range and the number of places
-  checked, and asserts nothing beyond it. If monotonicity fails anywhere in
-  range, the claim states that instead — the check reports what it finds.
+  distinct place value `F ≤ n_max`**, not sampled.
+
+  **The exhaustive check was run during planning and the naive form of this
+  claim is false.** `R_c(F)/R_c(F−1)` equals exactly `1.0` at `F = 2`, so it
+  does not exceed 1 at *every* place; and monotone decay breaks twice, at
+  `F = 3` (1.0 → 1.5) and `F = 8` (1.25 → 1.333). The behaviour is clean only
+  from `F = 13` onward, where the ratio exceeds 1 and decays monotonically to
+  1.0015 at `F = 75025`.
+
+  An earlier draft asserted decay at every place. That came from a sample that
+  happened to start at `F = 13` — the exact failure mode this bullet was
+  rewritten to prevent, caught by actually running the exhaustive check. The
+  claim states the measured behaviour with its two exceptions named, and the
+  test asserts the exceptions so a future change cannot quietly "fix" them.
 - `block-extremal-n` — `verified-numeric`. Argmax/argmin of `R_c` within each
   Fibonacci block, ties to smallest `N`. Progress on open problem 2 of
   `theory/01-background.md` §14.
