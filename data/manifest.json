@@ -34,5 +34,49 @@
     "git_rev": "625ce8270aaf595bc5ac8551e853e392572bf695",
     "sha256": "14f88d77b602a8cf0e1db1fa79e5800666d44845ecfb61e2f584a512a4ff70aa",
     "timestamp": "2026-08-19T20:35:16Z"
+  },
+  {
+    "file": "phase1_data.csv",
+    "script": "scripts/run_phase1.py",
+    "params": {
+      "n_max": 1000000,
+      "crosscheck": "dp==gf pointwise for all N <= 1000000"
+    },
+    "git_rev": "310d030aa7df3b0fff491168526aa7e5bae1b5b4",
+    "sha256": "996fe95e0646af367e10321c1e02a5375372a018972f85727e782a85a74cde68",
+    "timestamp": "2026-08-20T18:56:36Z"
+  },
+  {
+    "file": "phase1_summary.json",
+    "script": "scripts/run_phase1.py",
+    "params": {
+      "n_max": 1000000,
+      "crosscheck": "dp==gf pointwise for all N <= 1000000"
+    },
+    "git_rev": "310d030aa7df3b0fff491168526aa7e5bae1b5b4",
+    "sha256": "ee0f92f2a9e27e50e12a42648400e453ab53dff899cb81f13891e313041e91c6",
+    "timestamp": "2026-08-20T18:56:36Z"
+  },
+  {
+    "file": "phase1_growth.png",
+    "script": "scripts/run_phase1.py",
+    "params": {
+      "n_max": 1000000,
+      "crosscheck": "dp==gf pointwise for all N <= 1000000"
+    },
+    "git_rev": "310d030aa7df3b0fff491168526aa7e5bae1b5b4",
+    "sha256": "601381fb8bed25d9364b14459ef3cbcb8b595ccd95ac11751f468d1d5ea92489",
+    "timestamp": "2026-08-20T18:56:36Z"
+  },
+  {
+    "file": "phase1_fluctuation.png",
+    "script": "scripts/run_phase1.py",
+    "params": {
+      "n_max": 1000000,
+      "crosscheck": "dp==gf pointwise for all N <= 1000000"
+    },
+    "git_rev": "310d030aa7df3b0fff491168526aa7e5bae1b5b4",
+    "sha256": "aeffad6df340b918b635ce0ebd1011cecbc991573f4eedd49a0b6808f6327ed4",
+    "timestamp": "2026-08-20T18:56:36Z"
   }
 ]
