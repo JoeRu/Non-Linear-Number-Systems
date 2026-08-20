@@ -9,10 +9,6 @@
   Reference: theory/00-definitions.md
 -/
 
-/- NOTE: This file has not been compiled. `elan`/`lake` were unavailable in the
-   environment where it was written, so its syntax and Mathlib API usage are
-   unverified. Run `lake build` before relying on it. -/
-
 import Mathlib.Tactic
 import Mathlib.Combinatorics.Enumerative.Partition
 

@@ -39,10 +39,13 @@ theorem reprCount_closed_form_conjecture :
   than leaving the claim as a comment. The bijection remains open.
 -/
 
-/--
-  **Theorem (trivial upper bound).**
+/-
+  **Trivial upper bound.**
   reprCount n c ≤ reprCount n (c + 1)  (already stated as `reprCount_mono`).
   This bound is tight only for specific (n, c).
+
+  A `/-- … -/` doc comment must attach to a declaration; `#check` is a command,
+  so this is a plain `/- … -/` comment.
 -/
 #check @reprCount_mono
 

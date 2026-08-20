@@ -10,10 +10,6 @@
     variants and their counting functions.
 -/
 
-/- NOTE: This file has not been compiled. `elan`/`lake` were unavailable in the
-   environment where it was written, so its syntax and Mathlib API usage are
-   unverified. Run `lake build` before relying on it. -/
-
 import NonLinearNumberSystems.Basic
 import Mathlib.Tactic
 
@@ -44,9 +40,12 @@ theorem zeckendorf_unique (n : ℕ) (r₁ r₂ : Representation n 1)
 
 /-! ## Capacity-Constrained Representations -/
 
-/-- The *representation number* R(n, c) counts distinct multisets of Fibonacci
+/-! The *representation number* R(n, c) counts distinct multisets of Fibonacci
     indices (with capacity ≤ c) that sum to n.
-    This satisfies recurrences analogous to the Fibonacci sequence itself. -/
+    This satisfies recurrences analogous to the Fibonacci sequence itself.
+
+    (A `/-- … -/` doc comment must attach to a declaration; this is prose about
+    the section, so it is a `/-! … -/` section comment.) -/
 
 /-- Base cases: R(0, c) = 1 for all c ≥ 1 (the empty representation). -/
 theorem reprCount_zero (c : ℕ) (hc : 0 < c) : reprCount 0 c = 1 := by
@@ -74,6 +73,10 @@ theorem fib_recurrence (n : ℕ) (hn : 2 ≤ n) :
     cases m with
     | zero => omega
     | succ k =>
-      simp [fib_add_two]
+      -- `k+1+1-1` and `k+1+1-2` reduce definitionally to `k+1` and `k`
+      show fib (k + 2) = fib (k + 1) + fib k
+      -- the recurrence gives `fib k + fib (k+1)`; the goal wants the other order
+      rw [fib_add_two]
+      omega
 
 end NonLinearNumberSystems

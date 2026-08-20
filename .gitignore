@@ -1,6 +1,8 @@
 # Lean / Lake build artifacts
 lean/.lake/
-lean/lake-manifest.json
+# lean/lake-manifest.json is deliberately TRACKED: it pins the exact Mathlib
+# and toolchain revisions the build was verified against, so `lake build` is
+# reproducible rather than resolving fresh each time.
 **/.olean
 **/.ilean
 

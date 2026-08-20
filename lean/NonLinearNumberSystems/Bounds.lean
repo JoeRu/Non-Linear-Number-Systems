@@ -8,10 +8,6 @@
   makes practical. Those live in paper/.
 -/
 
-/- NOTE: This file has not been compiled. `elan`/`lake` were unavailable in the
-   environment where it was written, so its syntax and Mathlib API usage are
-   unverified. Run `lake build` before relying on it. -/
-
 import NonLinearNumberSystems.Numeration
 
 namespace NonLinearNumberSystems

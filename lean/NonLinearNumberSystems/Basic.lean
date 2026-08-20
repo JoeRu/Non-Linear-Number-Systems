@@ -12,7 +12,9 @@
   the unique such representation is the *Zeckendorf representation*.
 -/
 
-import Mathlib.Data.Nat.Basic
+-- `Mathlib.Data.Nat.Basic` no longer exists at the pinned Mathlib (v4.14.0);
+-- the basic `Nat` lemmas used below live in `Mathlib.Data.Nat.Defs`.
+import Mathlib.Data.Nat.Defs
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.List.Basic
 

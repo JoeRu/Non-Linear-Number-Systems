@@ -7,10 +7,6 @@
   theory/01-background.md §3.
 -/
 
-/- NOTE: This file has not been compiled. `elan`/`lake` were unavailable in the
-   environment where it was written, so its syntax and Mathlib API usage are
-   unverified. Run `lake build` before relying on it. -/
-
 import NonLinearNumberSystems.Numeration
 
 namespace NonLinearNumberSystems
