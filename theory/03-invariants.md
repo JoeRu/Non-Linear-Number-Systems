@@ -26,8 +26,9 @@ This is the classical identity; it is stated here only because the
 **Proof.** A digit tuple `(d_1, ..., d_n)` with `0 <= d_k <= F_k` is drawn
 from a product of `n` finite ranges, so there are exactly
 `prod_k (F_k + 1)` such tuples. The map `(d_1, ..., d_n) -> sum_k d_k F_k`
-sends each tuple to the single value `N = counts` is built to enumerate, and
-`counts[N]` is defined as the number of tuples landing on `N`. Since every
+sends each tuple to the single value `N` that `counts` is built to
+enumerate, and `counts[N]` is defined as the number of tuples landing on
+`N`. Since every
 tuple lands on exactly one `N` (the sum is a function of the tuple, not a
 relation), summing `counts[N]` over all `N` counts every tuple exactly
 once — no tuple is omitted (every tuple has a well-defined sum) and none is

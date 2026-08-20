@@ -20,18 +20,17 @@ log-domain path is not needed for this phase.
 
 | N | `gf` time | peak RSS | `R_c(N)` | `log R_c(N)` |
 |---|---|---|---|---|
-| 200,000\* | 1.6 s | — | 76 bits | 52.1 |
 | 1,000,000 | 12.3 s | 179 MB | 99 bits | 68.4 |
 
 Measured on commit `9074d3b` with `.venv/bin/python`, uninstrumented. An earlier
 draft of this spec reported 178 s at `N = 10^6`; that figure was `tracemalloc`
 overhead, not computation, and is corrected here. §9 requires the Phase 1 run to
-re-derive these numbers and record them in the manifest; this holds for the
-`N = 1,000,000` row, since `scripts/run_phase1.py` records `gf_seconds` and
-`peak_rss_mb` only at `n_max`. \*The `200,000` row is not re-derived by any
-Phase 1 invocation — the script's default ladder does not stop timing there —
-so it stays what it was: an ad-hoc design-time probe, kept for the pre-phase
-"the coefficients are small" argument, not a reproducible artifact.
+re-derive these numbers and record them in the manifest, which holds here:
+`scripts/run_phase1.py` records `gf_seconds` and `peak_rss_mb` at `n_max`. An
+earlier draft of this table also carried a second, smaller-`N` row sourced
+from an ad-hoc design-time probe; it has been dropped rather than merely
+flagged, since no committed invocation re-derives it and this project's rule
+is that a number in a document traces to a recorded artifact.
 
 **Phase 1 is not where the constant gets measured.** Phase 0.5 already pinned
 the leading coefficient at `N = 10^3200`. At `N = 10^6` the ratio
@@ -104,14 +103,16 @@ It is not a sampled check, and it is affordable:
 | N | `dp` | `gf` | pointwise agreement |
 |---|---|---|---|
 | 40,000\* | 2.3 s | 0.3 s | ✅ all coefficients |
-| 200,000\* | 28.8 s | 1.6 s | ✅ all coefficients |
 | **1,000,000** | **298 s** | **9–12 s** | ✅ **all coefficients** |
 
-\*The `40,000` and `200,000` rows are ad-hoc design-time probes run while
-scoping the feasibility of a full-scale cross-check; `scripts/run_phase1.py`
-only ever runs the comparison at `n_max`, so these two rows are not
-re-derived by any committed invocation and are not reproducible artifacts —
-only the `1,000,000` row (at the script's default `n_max`) is.
+\*The `40,000` row is an ad-hoc design-time probe run while scoping the
+feasibility of a full-scale cross-check; `scripts/run_phase1.py` only ever
+runs the comparison at `n_max`, so this row is not re-derived by any
+committed invocation and is not a reproducible artifact — only the
+`1,000,000` row (at the script's default `n_max`) is. An earlier draft of
+this table also carried a second, intermediate-`N` row sourced from the same
+kind of design-time probe; it has been dropped rather than merely flagged,
+for the same reason.
 
 `scripts/run_phase1.py` runs this comparison at `n_max` as its **precondition**.
 Five minutes of `dp` is the price of quoting a million coefficients, and it is

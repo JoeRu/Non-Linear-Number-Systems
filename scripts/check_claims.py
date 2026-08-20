@@ -23,17 +23,17 @@ FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
 DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
 
 # A `theorem` claim's evidence must point at something checkable: a path
-# under one of these directories, or a Lean declaration name.
-THEOREM_LOCATION_DIRS = ("theory/", "paper/", "lean/")
-THEOREM_LOCATION_RE = re.compile(
-    r"(?:^|[\s(\"'`])(?:theory|paper|lean)/[\w./-]*\w"
-)
+# under one of these directories, or a Lean declaration name -- and the
+# location has to actually exist, not merely look like one (shape alone lets
+# a fabricated `theory/nonexistent.md` or an invented Lean name pass).
+THEOREM_PATH_TOKEN_RE = re.compile(r"(?:theory|paper|lean)/[\w./-]+")
 # A dotted, namespaced identifier such as `NonLinearNumberSystems.Fibonacci.foo`
 # -- the shape of a Lean declaration name, as distinct from a file path (no
 # slash) or an ordinary sentence (no dots between words).
 LEAN_DECL_RE = re.compile(
     r"\b[A-Z][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*){1,}\b"
 )
+LEAN_DECL_KEYWORDS = ("theorem", "lemma", "def")
 
 # Statuses that must not be asserted as established without a hedge.
 UNSETTLED_STATUS = {"conjecture", "heuristic"}
@@ -46,6 +46,80 @@ HEDGE_MARKERS = (
     "assumption", "konjektur", "heuristik", "nicht bewiesen", "erwartet",
     "stütze", "vermutung",
 )
+
+
+def _extract_theorem_path_tokens(evidence: str) -> list[str]:
+    """Extract theory/, paper/, lean/-prefixed path tokens from evidence text,
+    stripping trailing sentence punctuation a regex match would otherwise
+    swallow (e.g. "...theory/x.md." at the end of a sentence)."""
+    tokens = []
+    for m in THEOREM_PATH_TOKEN_RE.finditer(evidence):
+        tok = m.group(0).rstrip(").,;:'\"")
+        if tok:
+            tokens.append(tok)
+    return tokens
+
+
+def _lean_project_files(root: Path) -> list[Path]:
+    """`.lean` files under `lean/`, excluding `lean/.lake/` (vendored
+    dependencies -- a declaration only "found" there is not this project's)."""
+    lean_dir = root / "lean"
+    if not lean_dir.exists():
+        return []
+    return [p for p in lean_dir.rglob("*.lean") if ".lake" not in p.parts]
+
+
+def _lean_declaration_exists(root: Path, decl: str) -> bool:
+    """Honest check for a Lean declaration reference: does some project
+    `.lean` file actually declare a `theorem`/`lemma`/`def` with this name?
+    Uses the last dotted segment, since the file text is unlikely to spell
+    out the full namespace-qualified name at the declaration site."""
+    last = decl.rsplit(".", 1)[-1]
+    pattern = re.compile(
+        r"\b(?:" + "|".join(LEAN_DECL_KEYWORDS) + r")\s+" + re.escape(last) + r"\b"
+    )
+    for f in _lean_project_files(root):
+        try:
+            text = f.read_text()
+        except (OSError, UnicodeDecodeError):
+            continue
+        if pattern.search(text):
+            return True
+    return False
+
+
+def _theorem_evidence_problem(root: Path, cid: str, evidence: str) -> str | None:
+    """Return a problem string for a `theorem` claim's evidence, or None if
+    it checks out. A `theory/`, `paper/`, or `lean/` path must exist on disk;
+    a bare Lean declaration name must be found declared in a project `.lean`
+    file. Shape alone (matching the pattern) is not enough -- both the
+    pattern and the referent must hold."""
+    path_tokens = _extract_theorem_path_tokens(evidence)
+    if path_tokens:
+        for tok in path_tokens:
+            if not (root / tok).is_file():
+                return (
+                    f"claim '{cid}': status theorem but its evidence references "
+                    f"'{tok}', which does not exist under the repo root"
+                )
+        return None
+
+    decls = LEAN_DECL_RE.findall(evidence)
+    if decls:
+        if any(_lean_declaration_exists(root, d) for d in decls):
+            return None
+        return (
+            f"claim '{cid}': status theorem but its evidence names a Lean "
+            f"declaration that no file under lean/ (excluding lean/.lake) "
+            f"actually declares"
+        )
+
+    return (
+        f"claim '{cid}': status theorem but its evidence does not reference "
+        f"a checkable proof location (an existing path under theory/, paper/, "
+        f"or lean/, or a Lean declaration name found in lean/) -- a test "
+        f"file or prose alone is not enough"
+    )
 
 
 def validate(root: Path) -> list[str]:
@@ -94,14 +168,11 @@ def validate(root: Path) -> list[str]:
                     f"evidence names a data artifact not recorded in data/manifest.json"
                 )
         if claim.get("status") == "theorem":
-            evidence = claim.get("evidence", "")
-            if not (THEOREM_LOCATION_RE.search(evidence) or LEAN_DECL_RE.search(evidence)):
-                problems.append(
-                    f"claim '{claim.get('id')}': status theorem but its evidence "
-                    f"does not reference a checkable proof location (a path under "
-                    f"theory/, paper/, or lean/, or a Lean declaration name) -- "
-                    f"a test file or prose alone is not enough"
-                )
+            problem = _theorem_evidence_problem(
+                root, claim.get("id"), claim.get("evidence", "")
+            )
+            if problem:
+                problems.append(problem)
 
     status_by_id = {claim.get("id"): claim.get("status") for claim in claims}
 

@@ -107,23 +107,62 @@ def test_theorem_with_bare_prose_evidence_is_rejected(tmp_path):
 
 
 def test_theorem_citing_theory_path_is_accepted(tmp_path):
+    # The referenced file must actually exist -- shape alone (matching
+    # "theory/...") is not enough, so the positive case has to create it.
     claims = (
         '- id: delta\n  statement: "D."\n  status: theorem\n'
         '  evidence: "Proved in theory/03-invariants.md (delta)."\n'
         '  source: "s"\n'
     )
-    _write(tmp_path, claims)
+    docs = {"theory/03-invariants.md": "## delta\n\nA short real proof.\n"}
+    _write(tmp_path, claims, docs)
     assert validate(tmp_path) == []
 
 
+def test_theorem_citing_nonexistent_path_is_rejected(tmp_path):
+    # This is the case the shape-only check missed: a path that matches the
+    # theory/paper/lean pattern but names a file that was never created.
+    claims = (
+        '- id: zeta\n  statement: "Z."\n  status: theorem\n'
+        '  evidence: "Proved in theory/nonexistent.md (zeta)."\n'
+        '  source: "s"\n'
+    )
+    _write(tmp_path, claims)
+    problems = validate(tmp_path)
+    assert any("zeta" in p and "does not exist" in p for p in problems)
+
+
 def test_theorem_citing_lean_declaration_is_accepted(tmp_path):
+    # The declaration must actually be found in a project .lean file, not
+    # merely look like a namespaced Lean identifier.
     claims = (
         '- id: epsilon\n  statement: "E."\n  status: theorem\n'
         '  evidence: "See NonLinearNumberSystems.Fibonacci.sum_of_squares."\n'
         '  source: "s"\n'
     )
-    _write(tmp_path, claims)
+    docs = {
+        "lean/NonLinearNumberSystems/Fibonacci.lean":
+            "theorem sum_of_squares : True := trivial\n",
+    }
+    _write(tmp_path, claims, docs)
     assert validate(tmp_path) == []
+
+
+def test_theorem_citing_unfound_lean_declaration_is_rejected(tmp_path):
+    # A dotted identifier that looks like a Lean declaration but is not
+    # actually declared anywhere under lean/ must not pass.
+    claims = (
+        '- id: eta\n  statement: "H."\n  status: theorem\n'
+        '  evidence: "See NonLinearNumberSystems.Fibonacci.made_up_lemma."\n'
+        '  source: "s"\n'
+    )
+    docs = {
+        "lean/NonLinearNumberSystems/Fibonacci.lean":
+            "theorem sum_of_squares : True := trivial\n",
+    }
+    _write(tmp_path, claims, docs)
+    problems = validate(tmp_path)
+    assert any("eta" in p and "theorem" in p for p in problems)
 
 
 def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
