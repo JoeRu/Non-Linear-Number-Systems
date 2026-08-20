@@ -60,7 +60,7 @@ dafür schon existiert.
 - [x] Deliverable `docs/phases/phase0_5_gate.md` — `1d218a6`, `1b4dca0`, `3c97822`
 - [x] Roadmap an die revidierte Phasenfolge angepasst — `860dd5b`
 
-### Phase 1 — Exakte Berechnung 🟡 teilweise
+### Phase 1 — Exakte Berechnung ✅
 
 Erledigt:
 
@@ -70,15 +70,16 @@ Erledigt:
 - [x] **Korrektheits-Gate:** DP gegen Orakel für alle $N \le 200$, beide schnellen Pfade gegeneinander für alle $N \le 500$ — `054f968`
 - [x] Tabelle aus `theory/01-background.md` §4 exakt reproduziert für $n = 1..10$ — `674058b`
 - [x] Vollständigkeit numerisch bestätigt (keine Lücken in der Zählung) — `674058b`
-
-Offen:
-
-- [ ] Lauf bis $N \approx 10^6$–$10^7$ (benötigt den bewusst zurückgestellten Log-Domain-Pfad in `dp.py`)
-- [ ] `phase1_data.csv` mit Spalten $N$, $R_c(N)$, $\log R_c(N)$, $(\log N)^2$, Verhältnis
-- [ ] `phase1_plot.png` (Hauptterm + Residuen)
-- [ ] `phase1_report.md`
-- [ ] Deskriptive Statistik: Monotonie, lokale Fluktuation $R_c(N+1)/R_c(N)$
-- [ ] Extremale $N$ (offenes Problem 2 aus `theory/01-background.md` §14)
+- [x] Lauf bis $N = 10^6$ (exakt, nicht Log-Domain — der zurückgestellte Pfad wird nicht gebraucht) — `9ce15e9`
+- [x] `phase1_data.csv` — `9ce15e9`
+- [x] `phase1_plot.png` → delivered as `phase1_growth.png` und `phase1_fluctuation.png` — `9ce15e9`
+- [x] `phase1_report.md` — `8601426`
+- [x] Deskriptive Statistik: Monotonie, lokale Fluktuation — `9ce15e9`
+- [x] Extremale $N$ (offenes Problem 2) — `9ce15e9`
+- [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (49.6% fallende
+      Schritte, aus `data/phase1_summary.json`), damit ist die in Phase 0
+      offengelassene Frage entschieden: **Phase 5 nutzt Route B** über die
+      summatorische Funktion `S_c(N)` — `8601426`
 
 ### Phase 2 — Elementare Schranken 🟡 Aussagen formuliert, Beweise offen
 
