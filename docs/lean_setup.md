@@ -45,6 +45,26 @@ A successful build will type-check all theorems (with `sorry` placeholders for
 open problems).  Any `sorry` is intentional — it marks an open theorem that
 needs a proof.
 
+## Verified build state
+
+The Lean development builds cleanly against the pinned toolchain. Verified with:
+
+| | |
+|---|---|
+| elan | 4.2.3 |
+| Lean | `leanprover/lean4:v4.14.0` (from `lean/lean-toolchain`) |
+| Mathlib | `v4.14.0`, rev `4bbdccd9` (pinned in `lean/lake-manifest.json`) |
+
+`lake build` succeeds with **no errors** and exactly **2 `declaration uses 'sorry'`
+warnings** — `exists_numeral_of_le` in `Completeness.lean` and
+`countReps_le_uncapped` in `Bounds.lean`. Both are genuine Phase 2 targets.
+
+That count is the invariant to check against: every `sorry` is an open
+statement, and a drop without a corresponding proof means something was closed
+dishonestly.
+
+`lean/lake-manifest.json` is tracked on purpose so this build is reproducible.
+
 ## Useful Commands
 
 | Command | Effect |

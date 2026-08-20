@@ -2,7 +2,8 @@ import Lake
 open Lake DSL
 
 package «NonLinearNumberSystems» where
-  name := "NonLinearNumberSystems"
+  -- the package name comes from the «...» above; an explicit `name :=` field
+  -- expects a `Lean.Name`, not a `String`, and is redundant here
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.14.0"
