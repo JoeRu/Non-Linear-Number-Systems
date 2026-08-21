@@ -99,9 +99,10 @@ produce no plateau at all {claim:flat-steps-end-early}.
 `min(counts) = 1` across the whole range — every `N ≤ 10^6` has at least one
 representation, which is the Kempner–Fraenkel completeness condition holding in
 practice {claim:completeness-empirical}. This is a measurement over the
-computed range, not the general statement: the Lean theorem
-`exists_numeral_of_le` remains a `sorry`. It is evidence toward that theorem,
-not a substitute for it.
+computed range `N ≤ 10^6`, not the general statement. It was evidence toward the
+Lean theorem `exists_numeral_of_le`, which Phase 2 has since **proved**, with no
+`sorry` (`613da4f`); the measurement remains a check on the computation, not a
+substitute for the proof.
 
 ---
 

@@ -83,7 +83,25 @@
   source: "this project, Phase 1"
 
 - id: completeness-empirical
-  statement: "min(counts) = 1 over N <= 1000000: every N in this range has at least one representation. This is a measurement over the computed range, not the general completeness statement -- the Lean theorem exists_numeral_of_le (see claim completeness-no-gaps) remains a `sorry`. This claim is evidence toward that theorem, not a substitute for it."
+  statement: "min(counts) = 1 over N <= 1000000: every N in this range has at least one representation. This is a measurement over the computed range, not the general completeness statement. It was evidence toward the Lean theorem exists_numeral_of_le (see claim completeness-no-gaps), which Phase 2 proved with no `sorry`; it is not a substitute for that proof."
   status: verified-numeric
   evidence: "data/phase1_summary.json (min_count field)"
   source: "this project, Phase 1"
+
+- id: sandwich-bounds
+  statement: "1/(8 log phi) <= liminf log R_c(N)/(log N)^2 <= limsup log R_c(N)/(log N)^2 <= 1/(4 log phi). This bounds the liminf and limsup only; it does not assert that the limit C_c exists."
+  status: theorem
+  evidence: "Proved in docs/phases/phase2_bounds.md (T1, T2, T3, C4); the fixup step is formalised in Lean as exists_numeral_of_le in lean/NonLinearNumberSystems/Completeness.lean"
+  source: "this project, Phase 2"
+
+- id: chernoff-effective-verified
+  statement: "The certified Chernoff bound log R_c(N) <= s N + log F_c(e^-s) was checked against the exact value at each of the 37 sampled N in data/phase1_data.csv, which span 2 to 1000000, and held -- strictly -- at each of them. The smallest slack over the sample is 1.94, at N = 2. This is a check at 37 points, not at every N <= 1000000."
+  status: verified-numeric
+  evidence: "data/phase2_bounds.csv via scripts/run_phase2.py, gated on the float and certified evaluations agreeing to 1e-12 in the same run"
+  source: "this project, Phase 2"
+
+- id: product-residual-sampled
+  statement: "The residual log F_c(e^-s) - (log(1/s))^2/(4 log phi) was evaluated at eight sampled values of t = log(1/s) in [10, 1280]. Over the full sweep its spread is 0.018236, driven by the single pre-asymptotic point t = 10, where it reads 3.209239; over the seven samples with t >= 20 it sits at 3.227397 with a spread of 1.78e-4. This is a sampled observation at those eight points: it is not a proved O(1) error term (T2 establishes O(T), and nothing here upgrades that), and it says nothing about s between or beyond the samples."
+  status: verified-numeric
+  evidence: "data/phase2_residual.csv via scripts/run_phase2.py, each sampled point gated on the float and certified evaluations agreeing to 1e-12"
+  source: "this project, Phase 2"

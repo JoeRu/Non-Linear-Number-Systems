@@ -90,16 +90,28 @@ Erledigt:
       Route A bleibt die primäre Route für den strengen Asymptotik-Beweis
       (siehe Phase 5) — `8601426`
 
-### Phase 2 — Elementare Schranken 🟡 Aussagen formuliert, Beweise offen
+### Phase 2 — Elementare Schranken ✅ Sandwich bewiesen, Lücke Faktor 2
 
 - [x] $\sum_{k \le n} F_k^2 = F_n F_{n+1}$ **in Lean bewiesen** (nicht in Mathlib vorhanden) — `53f8030`
-- [x] $R_c(N) \le R_u(N)$ als Lean-Aussage formuliert (`countReps_le_uncapped`, mit Beweisskizze) — `53f8030`
-- [x] Vollständigkeit als Lean-Aussage formuliert (`exists_numeral_of_le`, mit Beweisskizze) — `53f8030`
+- [x] $R_c(N) \le R_u(N)$ **in Lean bewiesen**, ohne `sorry` (`countReps_le_uncapped`) — `53f8030`, `3a1b8c1`.
+      Der Satz ist **nicht tragend**: T1/T2 beweisen die obere Schranke direkt und ohne CKL-Zitat,
+      die Ungleichung stützt nur die qualitative CKL-Bemerkung in `phase2_bounds.md` §7.
+- [x] Vollständigkeit **in Lean bewiesen**, ohne `sorry` (`exists_numeral_of_le`, gieriger Abstieg) — `53f8030`, `613da4f`
 - [x] Zusatz: „1 > 1“ formal bewiesen — zwei verschiedene Numerale mit gleichem Wert (`exists_two_numerals_same_value`) — `53f8030`
-- [ ] Obere Schranke aus Coons–Kristensen–Laursen zitierfähig ausformuliert
-- [ ] Untere Schranke: konstruktiver Beweis (Kern der Phase)
-- [ ] `phase2_bounds.md` mit beiden Sätzen und Fehlertermen
-- [ ] Zusammenführung: welcher Wert von $C'$ ergibt sich?
+- [x] Obere Schranke **ohne** Coons–Kristensen–Laursen: T1 (effektive Chernoff-Schranke) und T2
+      (asymptotisch), Koeffizient $1/(4\log\varphi)$ — `9d282c1`
+- [x] Untere Schranke: konstruktiver Beweis T3 (Zwei-Block-Konstruktion L1), Koeffizient
+      $1/(8\log\varphi)$ für $N \ge 10000$, mit $(C, N_0) = (2, 10000)$ — `9d282c1`
+- [x] `phase2_bounds.md` mit T1, T2, T3, C4 und expliziten Fehlertermen — `9d282c1`, `4f93517`, `48cb082`
+- [x] Zertifizierte numerische Konfrontation (Intervallarithmetik, Gate 1e-12) an den
+      37 Stichprobenwerten aus `data/phase1_data.csv` — `2a5ee43`, `9ac2198`, `199d7dd`
+- [x] Zusammenführung: C4 liefert — **falls** $C_c$ überhaupt existiert — $C' \in [4,8]$;
+      C4 selbst behauptet die Existenz nicht — `9d282c1`
+- [x] Zusammenfassung `docs/phase2.md`, Ledger-Einträge `sandwich-bounds`,
+      `chernoff-effective-verified`, `product-residual-sampled` — `PENDINGHASH`
+- [ ] Sandwich schließen: eine untere Schranke, die nicht die halbe Stellenmenge als Fixup-Block
+      reserviert (Routen L2a / L2b, `phase2_bounds.md` §4.4)
+- [ ] Existenz von $C_c$ — Forschungsfrage (A), von C4 nicht berührt
 
 ### Phase 3 — Sattelpunkt-Heuristik ⬜ offen
 
@@ -329,6 +341,12 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    
    Dies ist sofort zitierbar und benötigt keinen Beweis.
 
+   **Korrektur (Phase 2):** Diese Route wurde nicht genommen. T1 und T2 in
+   [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) beweisen den schärferen
+   Koeffizienten $1/(4\log\varphi)$ direkt aus der erzeugenden Funktion, ohne CKL und ohne
+   $R_c \le R_u$. Die Identifikation unseres $R_u$ mit dem $p_F$ von Coons–Kristensen–Laursen
+   ist in `theory/00-definitions.md` weiterhin als *pending verification* geführt.
+
 2. **Untere Schranke — konstruktive Methode:**  
    Partitioniere die Positionen $k$ in zwei Klassen:
    - **Bindet-Klasse $\mathcal{B}$:** $F_k \le N^{1/4}$ (hier kann der Cap die Verfügbarkeit ernsthaft einschränken).  
@@ -339,19 +357,45 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    
    Untere Schranke aus expliziter Injektion:  
    Für beliebiges $M \in \mathcal{B}$ zähle alle $(d_k)_{k\in\mathcal{B}}$ mit $\sum_{k\in\mathcal{B}}d_k F_k = N - M$.  
-   Dies gibt mindestens $R_u(N-M)$ Möglichkeiten, und wir können $M$ modulo $|\mathcal{B}|$ variieren, um Injektivität zu sichern.  
+
+   **Korrektur (Phase 2):** Der ursprünglich hier stehende Schritt — „dies gibt mindestens
+   $R_u(N-M)$ Möglichkeiten" — läuft in die falsche Richtung und steht so nicht zur Verfügung.
+   Das Kappen entfernt Darstellungen, liefert also $R_c \le R_u$; $R_u$ kann $R_c$ daher nicht
+   von unten beschränken. Die Konstruktion, die trägt, ist die Zwei-Block-Konstruktion L1 in
+   [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) §4: ein Fixup-Block $[1,a]$ mit
+   $F_a F_{a+1} \ge N$ plus eine rechteckige freie Familie auf den übrigen Stellen.
    
    Feinere Analyse: Nutze spezielle Struktur von $\mathcal{N}$ (geometrisches Wachstum der Fibonacci), um zu zeigen:
    $$\log R_c(N) \ge \frac{(\log N)^2}{4\log\varphi}(1-o(1)) + O(\log N).$$
    
    **Detaillierter Beweis erforderlich**, aber konzeptionell machbar mit Standard-Bijektionen.
 
+   **Korrektur (Phase 2):** Erreicht wurde $1/(8\log\varphi)$, nicht $1/(4\log\varphi)$ — L1
+   verbraucht die kappenbindenden Stellen im Fixup-Block. Der Faktor 2 ist für L1 in der
+   angegebenen Form strukturell; ihn zurückzugewinnen erfordert eine andere Blockaufteilung
+   (L2a / L2b, `phase2_bounds.md` §4.4), nicht schärfere Abschätzungen. Ob
+   $1/(4\log\varphi)$ von unten erreichbar ist, bleibt offen.
+
 3. **Konvergenz der Schranken:**  
    Falls obere und untere Schranke auf denselben Hauptterm hindeuten, hast du:
-   $$C_c = \frac{(\log N)^2}{C'\log\varphi} \quad \text{für explizites } C' \in [2,4].$$
-   Falls $C'=2$: Cap hat keinen Effekt auf die Führungsordnung (überraschend!).  
-   Falls $C'=4$: Cap halbiert die Konstante (vermutete Heuristik aus Phase 3).  
-   Falls $C'\in(2,4)$: Subtilere Effekt-Messung erforderlich.
+   $$C_c = \frac{1}{C'\log\varphi} \quad \text{für explizites } C'.$$
+
+   **Korrektur (Phase 2), zwei Punkte.** Erstens stand hier
+   $C_c = (\log N)^2/(C'\log\varphi)$ — ein $(\log N)^2$ gehört nicht in eine Konstante.
+   Zweitens ist das erwartete Intervall $C' \in [2,4]$ durch C4 ersetzt: **falls** $C_c$
+   existiert, gilt $C' \in [4,8]$. Die Parametrisierung setzt die Existenz voraus; C4
+   beschränkt nur Limes inferior und Limes superior und sagt über die Existenz nichts aus.
+
+   Das ist **keine** Verschärfung von $[2,4]$: der obere Koeffizient wurde von
+   $1/(2\log\varphi)$ (aus CKL zitiert) auf $1/(4\log\varphi)$ verschärft, der untere von
+   $1/(4\log\varphi)$ (aus der obigen Skizze) auf $1/(8\log\varphi)$ abgeschwächt. Die
+   beiden Intervalle sind nicht ineinander enthalten — sie berühren sich bei $C' = 4$ und
+   sind sonst disjunkt.
+
+   Falls $C'=4$: der obere Endpunkt des bewiesenen Intervalls wird angenommen — genau die
+   Phase-3-Konjektur $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$.  
+   Falls $C'=8$: der untere Endpunkt wird angenommen, L1 wäre also bereits scharf.  
+   Falls $C'\in(4,8)$: Subtilere Effekt-Messung erforderlich.
 
 ### Deliverables
 
