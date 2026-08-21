@@ -86,9 +86,14 @@ tuples. Hence for `x = e^{-s}` in `(0,1)`,
 R_c(N) x^N <= sum_{n>=0} R_c(n) x^n = F_c(x),
 ```
 
-the middle sum converging for every `s > 0`: the product's logarithm is
-`sum_k a_k(s)`, whose tail is bounded in §3.5 by `1.167` beyond the finitely many places
-with `s F_k <= 1`. Taking logarithms and substituting `x = e^{-s}` gives the claim. ∎
+the middle sum converging for every `s > 0`. That needs no reference to the cutoffs of
+§3.2, which are not even defined for large `s`: the product's logarithm is
+`sum_k a_k(s)` with `0 < a_k(s) <= h(u_k)`, and by `(F2)` `F_k >= (3/2)^{k-2}` for
+`k >= 2`, so `u_k = s F_k -> infinity` at a geometric rate. Hence `u_k >= 1` for all `k`
+beyond some finite `K(s)`, where (H2) of §3.1 gives
+`a_k <= e^{-u_k}/(1 - e^{-1})` and the tail is dominated by a convergent geometric-exponent
+series; the finitely many earlier terms are each finite because `u_k > 0`. Taking
+logarithms and substituting `x = e^{-s}` gives the claim. ∎
 
 Three remarks.
 
@@ -143,12 +148,19 @@ is small; (H2) is only useful for `x >= 1`, where `e^{-x}` is small.
 ### 3.2 Exact cutoffs
 
 ```
-p = max{ k : v_k <= 1 },        q = max{ k : u_k <= 1 }.
+p = max({0} ∪ { k >= 1 : v_k <= 1 }),        q = max({0} ∪ { k >= 1 : u_k <= 1 }).
 ```
 
-Both are finite for each `s > 0` and both tend to infinity as `s -> 0+`; `u_k <= v_k`
-gives `p <= q`. Their location follows from `(F1)`, and — this is the point — only
-their location is needed, never a pointwise approximation to `a_k`.
+The `{0}` is not decoration: `{k : v_k <= 1}` is empty once `s > 1/2` and
+`{k : u_k <= 1}` once `s > 1`, so without it the `max` has no argument there. Adjoining
+`0` makes both well defined at every `s > 0`, and both sets are finite because
+`u_k <= v_k` and `u_k -> infinity`, so both `p` and `q` are finite. `u_k <= v_k` gives
+`p <= q`.
+
+T2 is an `s -> 0+` statement, so assume from here on that `s <= 1/2`. Then
+`v_1 = v_2 = 2s <= 1`, hence `p >= 2` and a fortiori `q >= 2`; both tend to infinity as
+`s -> 0+`. Their location follows from `(F1)`, and — this is the point — only their
+location is needed, never a pointwise approximation to `a_k`.
 
 For `q`: `F_q <= 1/s` with `(F1)` gives `phi^{q-2} <= e^{T}`, so `q <= T/lambda + 2`;
 and `F_{q+1} > 1/s` with `(F1)` gives `phi^{q} >= F_{q+1} > e^{T}`, so `q > T/lambda`.
@@ -172,13 +184,14 @@ a_k = log(v_k/u_k) + r(u_k) - r(v_k) = log(F_k + 1) + r(u_k) - r(v_k),
 with `|r(u_k) - r(v_k)| <= max(r(u_k), r(v_k)) <= v_k`. The total error is bounded by
 `sum_{k<=p} v_k`, and that sum is `O(1)` **uniformly in `s`**: by `(F1)`,
 `v_k / v_p = F_k(F_k+1) / (F_p(F_p+1)) <= 2 phi^{2k-2} / phi^{2p-4} = 2 phi^{2(k-p)+2}`,
-so
+and `v_p <= 1` by the definition of `p`. Both facts are used in the display, so it is a
+bound on the sum itself and not on a ratio:
 
 ```
-sum_{k<=p} v_k <= v_p * 2 phi^2 * sum_{j>=0} phi^{-2j} = v_p * 2 phi^2/(1 - phi^{-2}) <= 8.473,
+sum_{k<=p} v_k <= v_p * 2 phi^2 * sum_{j>=0} phi^{-2j} = v_p * 2 phi^2/(1 - phi^{-2}) <= 8.473.
 ```
 
-using `v_p <= 1`. For the main term, `(F1)` and `F_k <= F_k + 1 <= 2 F_k` give
+For the main term, `(F1)` and `F_k <= F_k + 1 <= 2 F_k` give
 `(k-2) lambda <= log(F_k + 1) <= (k-1) lambda + log 2`, so
 
 ```
@@ -219,8 +232,9 @@ There are infinitely many such places, and their total contribution is `O(1)`. F
 0 < a_k <= h(u_k) <= e^{-u_k}/(1 - e^{-1}).
 ```
 
-By `(F2)`, `u_{q+1+j} >= (3/2)^j u_{q+1} > (3/2)^j` for `j >= 0` (the indices involved
-are all `>= 2`, where `(F2)` holds), hence
+By `(F2)`, `u_{q+1+j} >= (3/2)^j u_{q+1} > (3/2)^j` for `j >= 0` — the ratio steps
+involved run from index `q+1 >= 3`, and `(F2)` holds from index `2` on, so none of them is
+the exceptional step `F_2/F_1 = 1`. Hence
 
 ```
 sum_{k>q} a_k <= (1 - e^{-1})^{-1} sum_{j>=0} exp(-(3/2)^j) <= 1.167.
@@ -244,6 +258,9 @@ and
 ```
 T = log(1/s) = t - log t + log(2 lambda),   T^2 = t^2 - 2 t log t + O(t),
 ```
+
+(expanding `(t - log t + log 2 lambda)^2` also produces `(log t)^2`, `-2 log(2 lambda) log t`
+and a constant, all of which are absorbed into the `O(t)`),
 
 so T1 and the display above give the **effective form**
 
@@ -331,9 +348,13 @@ genuinely is a fixed finite block of length `a` (spec §4.5). Note that
 famously non-unique (`theory/01-background.md` §5) and L1 discards that multiplicity —
 see §4.5.
 
-**(2) Free family.** On the counting block set `m_k = floor(N/(M F_k))` for
-`a < k <= c`, and let the free family be all tuples `(d_k)_{a<k<=c}` with
-`0 <= d_k <= m_k`. Two things have to be checked.
+**(2) Free family.** The counting block is non-empty: §4.2's table gives
+`a <= (L+5)/2` and `c > L`, so `M = c - a > (L-5)/2`, and `N >= 10000` gives
+`L >= 19.13` and hence `M >= 8`. (That table is derived from `(F1)` and the definitions
+of `a` and `c` alone — nothing in it uses this step, so the forward reference is not
+circular.) On the counting block set `m_k = floor(N/(M F_k))` for `a < k <= c`, and let
+the free family be all tuples `(d_k)_{a<k<=c}` with `0 <= d_k <= m_k`. Two things have to
+be checked.
 
 *The caps are respected.* For `k > a`, using `a >= 2` so that `F_a < F_{a+1}`,
 
@@ -458,11 +479,11 @@ pushed toward `1/(2 lambda) = 1.0390434...` at the cost of a larger `N_0`.
 
 **`C = 1` is not available, and finite-range data cannot supply it.** The secondary
 coefficient of this construction is `1/(2 log phi) = 1.0390434...`, above `1`. Evaluating
-the construction directly at the decades `10^3` to `10^6` gives an implied `C` rising
-from about `0.79` to about `0.88` (design spec Appendix A), which is smaller — and that
-is a statement about a pre-asymptotic range with the `O(t)` term still dominant, not a
-bound on `C`. The implied value is larger at the top of that range than at the bottom;
-the proved coefficient governs.
+the construction directly at the decades `10^3` to `10^6` gives an implied `C` of about
+`0.79`, `0.78`, `0.87`, `0.88` — smaller than `1.0390434...`, and **not** monotone in
+between. That is a statement about a pre-asymptotic range with the `O(t)` term still
+dominant, not a bound on `C`. The implied value is larger at the top of that range than
+at the bottom; the proved coefficient governs.
 
 **The stated bound is vacuous at computable `N`.** `t^2/(8 lambda) - 2 t log t` is
 negative until `t ≈ 24.69`, i.e. `N ≈ 5.3 * 10^{10}`, far beyond the range where
@@ -579,15 +600,30 @@ checks ran at those 37 points, and no statement below reaches beyond them.
 **T1, certified.** At the largest verified value, `N` = 1000000 {fig:n-max-verified},
 the exact `log R_c(N)` is 68.3632 {fig:log-rc-nmax} and the certified Chernoff bound is
 81.9137 {fig:chernoff-certified-nmax}, a slack of 13.5505 {fig:chernoff-slack-nmax}.
-The bound held at each of the 37 sampled `N`, with no violation. Each evaluation was
-gated in the same run on the float and certified paths agreeing to `1e-12`.
+The bound held at each of the 37 sampled `N`, with no violation, and unlike the lower
+bound below it was strict at each of them — the smallest slack anywhere in the sample is
+`1.94`, at `N = 2`. Each evaluation was gated in the same run on the float and certified
+paths agreeing to `1e-12`.
 
 **T3's construction, evaluated directly.** At the same `N` the construction of §4.1
 gives 17.774 {fig:t3-lower-nmax}, with a fixup block ending at place 16
 {fig:fixup-block-nmax} and 14 {fig:counting-places-nmax} counting places. It stayed
-below the exact `log R_c(N)` at each of the 37 sampled `N`, and the cap and budget
-conditions of §4.1(2) held at each of them. This confronts the *construction*; the
-inequality stated as T3 is vacuous here (§4.2).
+at or below the exact `log R_c(N)` at each of the 37 sampled `N` — it exceeded it at
+none of them — and the cap and budget conditions of §4.1(2) held at each of them. At 36
+of the 37 it is strictly below. At `N = 2` the two are **exactly equal**, both
+`0.6931471805599453`.
+
+That equality is expected, not alarming, and it is the one place in the sampled range
+where L1 is lossless. At `N = 2` the blocks are `[1,2]` and `{3}`, so `M = 1` and
+`m_3 = floor(2/2) = 1`: the free family is `d_3 in {0,1}` and the construction produces
+exactly two numerals. §4.5 names L1's two sources of undercount, and at `N = 2` neither
+is present. The fixup block `[1,2]` has capacity `F_2 F_3 = 2` and represents each of the
+two residues it is asked for — `0` as `(0,0)` and `2` as `(1,1)` — in exactly one way, so
+choosing "one completion per residue" discards nothing; and there are no cap-binding
+places outside the reserved block to lose. Hence the construction enumerates all of
+`R_c(2) = 2`. Note that `N = 2` is far below `N_0 = 10000`, so T3 as stated claims nothing
+here in any case. This confronts the *construction*; the inequality stated as T3 is
+vacuous at these `N` (§4.2).
 
 **The ratio.** The observed `log R_c(N)/(log N)^2` is 0.3582 {fig:ratio-nmax} at that
 `N` — between the proved constants 0.2598 {fig:lower-constant} and 0.5195
