@@ -38,7 +38,7 @@ def working_dps(t: float, guard: int = 40) -> int:
     Returns:
         Decimal digits of precision, at least 30.
     """
-    return max(30, int(t / math.log(10)) + guard)
+    return max(30, math.ceil(t / math.log(10)) + guard)
 
 
 def _log1m_exp_neg(z):
@@ -82,14 +82,21 @@ def _tail_bound(u):
 
     Returns:
         The upper endpoint of the bound, as an mpmath number.
+
+    Raises:
+        ValueError: if u.a < 1, since the geometric-decay precondition
+            F_k >= (3/2)^(k-K) F_K underlying the bound is only established
+            for u = s*F_K >= 1.
     """
+    if u.a < 1:
+        raise ValueError(f"_tail_bound requires u.a >= 1, got {float(u.a)}")
     ua = iv.mpf(u.a)
     numerator = iv.exp(-ua) * iv.exp(-ua / 2)
     denominator = iv.mpf(1) - iv.exp(-ua / 2)
     return (numerator / denominator / iv.mpf("0.632")).b
 
 
-def log_F_c_interval(t: float, guard: int = 40):
+def log_F_c_interval(t: float, guard: int = 40) -> tuple[iv.mpf, iv.mpf, int]:
     """Return a certified enclosure of log F_c(e^-s) where s = e^-t.
 
     Args:
@@ -98,7 +105,9 @@ def log_F_c_interval(t: float, guard: int = 40):
 
     Returns:
         A tuple (lo, hi, terms): the enclosure's endpoints as mpmath numbers,
-        and the number of places summed exactly before the tail bound applied.
+        and the number of places k = 1..terms summed exactly (the break index
+        K = terms is included in the exact sum) before `_tail_bound` covers
+        the remainder sum_{k>K} a_k(s).
 
     Raises:
         ValueError: if t is not positive.
@@ -112,13 +121,13 @@ def log_F_c_interval(t: float, guard: int = 40):
     k = 1
     while True:
         u = s * f
+        total = total + (_log1m_exp_neg(u * (f + 1)) - _log1m_exp_neg(u))
         if k >= 3 and u.a >= TAIL_U_MIN:
             total = iv.mpf([total.a, total.b + _tail_bound(u)])
             break
-        total = total + (_log1m_exp_neg(u * (f + 1)) - _log1m_exp_neg(u))
         f_prev, f = f, (f_prev + f if k >= 2 else 1)  # F_2 = 1, then F_{k+1}
         k += 1
-    return total.a, total.b, k - 1
+    return total.a, total.b, k
 
 
 def certified_upper(t: float, guard: int = 40) -> float:

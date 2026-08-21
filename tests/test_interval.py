@@ -91,3 +91,49 @@ def test_certified_upper_is_an_upper_bound():
 def test_non_positive_t_is_rejected():
     with pytest.raises(ValueError, match="must be positive"):
         log_F_c_interval(0.0)
+
+
+def test_enclosure_contains_an_independently_summed_reference():
+    """The assembled total must enclose the true value, not merely be narrow.
+
+    Regression test for a dropped term at the tail-bound break index: the
+    enclosure was 2.9e-27 below the true value at t = 10 while reporting a
+    width of 4e-40, so every width- and agreement-based test passed.
+
+    The reference sum is computed at far higher precision than the
+    production `working_dps(t)`: at matching precision, the reference's own
+    rounding noise (accumulated over ~60 operations) is the same order of
+    magnitude as the true increment from summing 29 extra negligible terms
+    past K, which makes a straight `lo <= reference.a` comparison flaky
+    (observed to fail both ways by ~1e-44 at t = 10, versus the ~1e-27 bug
+    this test targets). Computing the reference at `working_dps(t) + 150`
+    pushes its own noise floor far below both that increment and the bug's
+    magnitude, so containment becomes a robust check again.
+    """
+    from mpmath import mp
+
+    from capfib.interval import _log1m_exp_neg  # noqa: F401
+
+    t = 10.0
+    lo, hi, _ = log_F_c_interval(t)
+
+    iv.dps = working_dps(t) + 150
+    s = iv.exp(iv.mpf(-t))
+    reference = iv.mpf(0)
+    f_prev, f, k = 0, 1, 1
+    while k <= 60:
+        u = s * f
+        reference = reference + (_log1m_exp_neg(u * (f + 1)) - _log1m_exp_neg(u))
+        f_prev, f = f, (f_prev + f if k >= 2 else 1)
+        k += 1
+
+    mp.dps = 200
+    assert mp.mpf(lo) <= mp.mpf(reference.a)
+    assert mp.mpf(hi) >= mp.mpf(reference.b)
+
+
+def test_tail_bound_rejects_u_below_one():
+    """The bound's geometric-decay precondition requires u.a >= 1."""
+    iv.dps = working_dps(5.0)
+    with pytest.raises(ValueError, match="u.a >= 1"):
+        _tail_bound(iv.mpf(0.5))
