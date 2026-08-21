@@ -26,9 +26,9 @@ loop — and compares every single coefficient** before it will write anything.
 dp==gf pointwise for all N <= 1000000
 ```
 
-Two structurally different algorithms agreeing on all 10^6 coefficients is the
-claim {claim:dp-gf-agree-to-nmax}. The comparison is not sampled and not tolerance-
-based, and the script writes nothing at all if it fails.
+Two structurally different algorithms agreeing pointwise for every `N ≤ 10^6`
+is the claim {claim:dp-gf-agree-to-nmax}. The comparison is not sampled and not
+tolerance-based, and the script writes nothing at all if it fails.
 
 **What it does not cover:** `dp`, `gf` and `brute` all take their place values
 from `capfib.fib.places_up_to`, so a wrong *place set* would be invisible to the
@@ -48,8 +48,9 @@ cross-check. That shared dependency is pinned separately by boundary tests in
 not close to it — it is nearly a coin flip whether `R_c(N+1)` exceeds `R_c(N)`.
 
 Roadmap Phase 0 left this question open and made the choice of attack depend on
-it: a smooth `R_c` could be attacked directly, a fluctuating one needs the
-summatory function `S_c(N) = ∑_{n≤N} R_c(n)`. The measurement settles which
+it: a smooth `R_c` could be attacked directly; a fluctuation this pronounced
+over the measured range `N ≤ 10^6` favors working with the summatory function
+`S_c(N) = ∑_{n≤N} R_c(n)` instead. The measurement settles which
 situation we are in and **motivates `S_c` as the object a Tauberian argument
 should target** {claim:rc-not-monotone}. `S_c` is non-decreasing by
 construction, since `R_c ≥ 0` ({claim:sc-monotone}, proved in
@@ -66,8 +67,9 @@ The local ratio `R_c(N+1)/R_c(N)` has these recorded order statistics:
 
 ## Result 2 — structure at the place values
 
-`R_c` jumps at every Fibonacci place. The naive law is false, and this is worth
-stating carefully because an earlier draft got it wrong:
+`R_c` jumps at every Fibonacci place observed, i.e. every distinct place
+`F_k ≤ 10^6`. The naive law is false, and this is worth stating carefully
+because an earlier draft got it wrong:
 
 - at `F = 2` the ratio `R_c(F)/R_c(F−1)` is **exactly 1.0** — it does not exceed 1
 - it **rises** at `F = 3` (1.5) and again at `F = 8` (1.333)
@@ -75,9 +77,10 @@ stating carefully because an earlier draft got it wrong:
   `F = 832040`
 
 The earlier draft claimed clean decay everywhere, on the strength of a sample
-that happened to begin at `F = 13`. The exhaustive check over every distinct
-place found the two exceptions, and `tests/test_stats.py` now pins them so they
-cannot be quietly smoothed away {claim:place-jump-decay}.
+that happened to begin at `F = 13`. The exhaustive check, run over the
+measured range, found the two exceptions across every distinct place, and
+`tests/test_stats.py` now pins them so they cannot be quietly smoothed away
+{claim:place-jump-decay}.
 
 ## Result 3 — extremal `N`, and a plateau that stops early
 
@@ -87,14 +90,14 @@ in the summary {claim:block-extremal-n} — progress on open problem 2 of
 `[832040, 1000001)` is truncated by `n_max` rather than by the next place.
 
 A structural observation with no explanation offered: there are **exactly 11
-flat steps** in the entire range, at
+flat steps** over the measured range `N ≤ 10^6`, at
 
 ```
 N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78
 ```
 
-all of them below `N = 79`. Nearly a million further steps produce no plateau at
-all.
+all of them below `N = 79`. Nearly a million further steps over `N ≤ 10^6`
+produce no plateau at all {claim:flat-steps-end-early}.
 
 ## Completeness
 

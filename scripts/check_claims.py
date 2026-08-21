@@ -47,6 +47,29 @@ HEDGE_MARKERS = (
     "stütze", "vermutung",
 )
 
+# Unqualified universal quantifiers/modals. A `verified-numeric` claim is a
+# measurement over a finite computed range; a paragraph citing one may report
+# what was measured, but wording like "every"/"all"/"must" reads as a
+# statement about all N, which the census this project runs never
+# establishes. This is the recurring overclaim pattern (docs/risks.md R-005):
+# it has recurred enough times, corrected by hand each time, that catching it
+# needs to be mechanical rather than another manual pass.
+UNIVERSAL_QUANTIFIER_WORDS = (
+    "any", "every", "all", "never", "always", "must", "unavailable", "impossible",
+    "jeder", "jede", "alle", "nie", "immer", "muss", "unmöglich",
+)
+_UNIVERSAL_QUANTIFIER_RE = re.compile(
+    r"\b(" + "|".join(re.escape(w) for w in UNIVERSAL_QUANTIFIER_WORDS) + r")\b",
+    re.IGNORECASE,
+)
+
+# A paragraph carrying one of these is exempt: it has scoped its universal-
+# sounding wording to the range that was actually measured.
+RANGE_QUALIFIER_MARKERS = (
+    "n <=", "n ≤", "over the measured range", "im gemessenen bereich",
+    "in range", "observed", "gemessen",
+)
+
 
 def _extract_theorem_path_tokens(evidence: str) -> list[str]:
     """Extract theory/, paper/, lean/-prefixed path tokens from evidence text,
@@ -107,7 +130,15 @@ def _theorem_evidence_problem(root: Path, cid: str, evidence: str) -> str | None
     pattern and the referent must hold."""
     path_tokens = _extract_theorem_path_tokens(evidence)
     if path_tokens:
-        allowed_roots = [(root / d).resolve() for d in ("theory", "paper", "lean")]
+        root_resolved = root.resolve()
+        # A candidate allowed root only counts if it is itself contained in
+        # the repo -- otherwise theory/, paper/, or lean/ being a symlink to
+        # somewhere outside the repository would make that outside location
+        # an "allowed root" and let an external file pass.
+        allowed_roots = [
+            r for r in ((root / d).resolve() for d in ("theory", "paper", "lean"))
+            if r.is_relative_to(root_resolved)
+        ]
         for tok in path_tokens:
             target = (root / tok).resolve()
             if not any(target.is_relative_to(a) for a in allowed_roots):
@@ -210,7 +241,47 @@ def validate(root: Path) -> list[str]:
             if ref not in ids:
                 problems.append(f"{md}: reference to unknown claim '{ref}'")
         problems.extend(_check_hedging(md, text, status_by_id))
+        problems.extend(_check_universal_claims(md, text, status_by_id))
 
+    return problems
+
+
+def _check_universal_claims(md: Path, text: str, status_by_id: dict) -> list[str]:
+    """Flag paragraphs that cite a `verified-numeric` claim with an
+    unqualified universal quantifier/modal and no explicit range
+    qualification.
+
+    Hedging (`_check_hedging`) only fires for `conjecture`/`heuristic`
+    claims, so a `verified-numeric` claim -- a measurement over a finite
+    range -- can carry universal wording ("every", "must", ...) right past
+    it. This catches that case. It cannot catch a paragraph with no
+    `{claim:...}` token at all, which is why an untethered empirical
+    statement should get a ledger entry and a citation in the first place.
+    """
+    problems: list[str] = []
+    for paragraph in re.split(r"\n\s*\n", text):
+        cited_verified = [
+            ref for ref in REFERENCE.findall(paragraph)
+            if status_by_id.get(ref) == "verified-numeric"
+        ]
+        if not cited_verified:
+            continue
+        # Collapse hard line-wraps to spaces before matching a multi-word
+        # marker: a paragraph's prose is wrapped across source lines, so a
+        # phrase like "over the measured range" can have a newline where the
+        # rendered text has a space.
+        lower = re.sub(r"\s+", " ", paragraph.lower())
+        if any(marker in lower for marker in RANGE_QUALIFIER_MARKERS):
+            continue
+        match = _UNIVERSAL_QUANTIFIER_RE.search(paragraph)
+        if not match:
+            continue
+        for ref in cited_verified:
+            problems.append(
+                f"{md}: paragraph cites claim '{ref}' (status verified-numeric) "
+                f"with unqualified universal word '{match.group(0)}' and no "
+                f"range qualification"
+            )
     return problems
 
 

@@ -51,9 +51,9 @@ def summatory(counts: Sequence[int]) -> list[int]:
 def local_ratios(counts: Sequence[int]) -> list[float]:
     """r[n] = counts[n+1] / counts[n] for n = 0 .. len-2.
 
-    The division is guarded by an explicit assertion rather than by appealing
-    to completeness: completeness is still a `sorry` in the Lean development,
-    so it is not something this code may lean on.
+    The division is guarded by an explicit check (raising `ValueError`) rather
+    than by appealing to completeness: completeness is still a `sorry` in the
+    Lean development, so it is not something this code may lean on.
     """
     if min(counts) < 1:
         raise ValueError("counts must be positive; local_ratios would divide by zero")

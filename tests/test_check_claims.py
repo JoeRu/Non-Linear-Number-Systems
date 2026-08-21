@@ -180,6 +180,59 @@ def test_theorem_citing_path_traversal_is_rejected(tmp_path):
     assert any("theta" in p and "outside" in p for p in problems)
 
 
+def test_theorem_citing_symlinked_allowed_root_escaping_repo_is_rejected(tmp_path):
+    # theory/ is itself a symlink pointing outside the repository. Its
+    # resolved destination must not become an allowed root -- otherwise a
+    # file entirely outside the repo would pass just because the evidence
+    # token happens to start with "theory/".
+    outside = tmp_path.parent / f"{tmp_path.name}-outside-theory"
+    outside.mkdir()
+    (outside / "evil.md").write_text("not part of this repo\n")
+    (outside / "claims.yaml").write_text(
+        '- id: iota\n  statement: "I."\n  status: theorem\n'
+        '  evidence: "Proved in theory/evil.md (iota)."\n'
+        '  source: "s"\n'
+    )
+    (tmp_path / "theory").symlink_to(outside, target_is_directory=True)
+
+    problems = validate(tmp_path)
+    assert any("iota" in p and "outside" in p for p in problems)
+
+
+VERIFIED_NUMERIC = """- id: kappa
+  statement: "K."
+  status: verified-numeric
+  evidence: "data/results.csv"
+  source: "s"
+"""
+
+
+def test_unqualified_universal_word_citing_verified_numeric_is_rejected(tmp_path):
+    # "every" attached to a verified-numeric claim, with no range
+    # qualification anywhere in the paragraph -- this is the recurring
+    # finite-measurement-restated-as-universal-claim pattern (docs/risks.md
+    # R-005), which hedging alone does not catch because the claim's status
+    # is verified-numeric, not conjecture/heuristic.
+    docs = {
+        "theory/x.md": "Every N satisfies this property {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_range_qualified_universal_word_citing_verified_numeric_passes(tmp_path):
+    # The same "every" is fine once the paragraph states the range it was
+    # actually measured over.
+    docs = {
+        "theory/x.md": "Every N <= 1000 satisfies this property {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    assert validate(tmp_path) == []
+
+
 def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
     # Naming one recorded artifact alongside one unrecorded artifact must not
     # be enough to pass -- every data-artifact token must be recorded.
