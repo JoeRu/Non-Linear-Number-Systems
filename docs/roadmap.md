@@ -108,7 +108,7 @@ Erledigt:
 - [x] Zusammenführung: C4 liefert — **falls** $C_c$ überhaupt existiert — $C' \in [4,8]$;
       C4 selbst behauptet die Existenz nicht — `9d282c1`
 - [x] Zusammenfassung `docs/phase2.md`, Ledger-Einträge `sandwich-bounds`,
-      `chernoff-effective-verified`, `product-residual-sampled` — `PENDINGHASH`
+      `chernoff-effective-verified`, `product-residual-sampled` — `c4743bc`
 - [ ] Sandwich schließen: eine untere Schranke, die nicht die halbe Stellenmenge als Fixup-Block
       reserviert (Routen L2a / L2b, `phase2_bounds.md` §4.4)
 - [ ] Existenz von $C_c$ — Forschungsfrage (A), von C4 nicht berührt
