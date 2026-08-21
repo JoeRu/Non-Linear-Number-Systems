@@ -55,7 +55,8 @@ def local_ratios(counts: Sequence[int]) -> list[float]:
     to completeness: completeness is still a `sorry` in the Lean development,
     so it is not something this code may lean on.
     """
-    assert min(counts) >= 1, "counts must be positive; local_ratios would divide by zero"
+    if min(counts) < 1:
+        raise ValueError("counts must be positive; local_ratios would divide by zero")
     return [counts[n + 1] / counts[n] for n in range(len(counts) - 1)]
 
 

@@ -82,10 +82,11 @@ Erledigt:
 - [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (49.6% fallende
       Schritte, aus `data/phase1_summary.json`), damit ist die in Phase 0
       offengelassene Frage entschieden: der Befund **schränkt Route B ein**
-      (ist eine Randbedingung an sie, keine Auswahl gegen Route A) — jeder
-      Tauber-Angriff muss über die summatorische Funktion `S_c(N)` laufen,
-      nicht direkt über `R_c(N)`; Route A bleibt die primäre Route für den
-      strengen Asymptotik-Beweis (siehe Phase 5) — `8601426`
+      (ist eine Randbedingung an sie, keine Auswahl gegen Route A) — er macht
+      es ratsam, einen Tauber-Angriff über die summatorische Funktion
+      `S_c(N)` zu führen statt direkt über `R_c(N)`; Route A bleibt die
+      primäre Route für den strengen Asymptotik-Beweis (siehe Phase 5) —
+      `8601426`
 
 ### Phase 2 — Elementare Schranken 🟡 Aussagen formuliert, Beweise offen
 

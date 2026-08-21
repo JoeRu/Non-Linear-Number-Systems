@@ -18,7 +18,7 @@ VALID_STATUS = {"cited", "verified-numeric", "heuristic", "conjecture", "theorem
 REQUIRED_FIELDS = ("id", "statement", "status", "evidence", "source")
 REFERENCE = re.compile(r"\{claim:([a-z0-9-]+)\}")
 SEARCH_DIRS = ("theory", "docs/phases", "paper")
-SEARCH_FILES = ("docs/roadmap.md", "README.md", "CLAUDE.md")
+SEARCH_FILES = ("docs/roadmap.md", "README.md", "CLAUDE.md", "docs/phase1.md")
 FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
 DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
 
@@ -107,8 +107,15 @@ def _theorem_evidence_problem(root: Path, cid: str, evidence: str) -> str | None
     pattern and the referent must hold."""
     path_tokens = _extract_theorem_path_tokens(evidence)
     if path_tokens:
+        allowed_roots = [(root / d).resolve() for d in ("theory", "paper", "lean")]
         for tok in path_tokens:
-            if not (root / tok).is_file():
+            target = (root / tok).resolve()
+            if not any(target.is_relative_to(a) for a in allowed_roots):
+                return (
+                    f"claim '{cid}': status theorem but its evidence references "
+                    f"'{tok}', which resolves outside theory/, paper/ and lean/"
+                )
+            if not target.is_file():
                 return (
                     f"claim '{cid}': status theorem but its evidence references "
                     f"'{tok}', which does not exist under the repo root"

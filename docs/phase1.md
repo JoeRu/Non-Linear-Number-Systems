@@ -27,7 +27,7 @@ dp==gf pointwise for all N <= 1000000
 ```
 
 Two structurally different algorithms agreeing on all 10^6 coefficients is the
-claim `dp-gf-agree-to-nmax`. The comparison is not sampled and not tolerance-
+claim {claim:dp-gf-agree-to-nmax}. The comparison is not sampled and not tolerance-
 based, and the script writes nothing at all if it fails.
 
 **What it does not cover:** `dp`, `gf` and `brute` all take their place values
@@ -51,8 +51,8 @@ Roadmap Phase 0 left this question open and made the choice of attack depend on
 it: a smooth `R_c` could be attacked directly, a fluctuating one needs the
 summatory function `S_c(N) = ∑_{n≤N} R_c(n)`. The measurement settles which
 situation we are in and **motivates `S_c` as the object a Tauberian argument
-should target** (claim `rc-not-monotone`). `S_c` is non-decreasing by
-construction, since `R_c ≥ 0` (claim `sc-monotone`, proved in
+should target** {claim:rc-not-monotone}. `S_c` is non-decreasing by
+construction, since `R_c ≥ 0` ({claim:sc-monotone}, proved in
 [`theory/03-invariants.md`](../theory/03-invariants.md)).
 
 This is a numerical observation over `N ≤ 10^6`. It is not a theorem about all
@@ -77,12 +77,12 @@ stating carefully because an earlier draft got it wrong:
 The earlier draft claimed clean decay everywhere, on the strength of a sample
 that happened to begin at `F = 13`. The exhaustive check over every distinct
 place found the two exceptions, and `tests/test_stats.py` now pins them so they
-cannot be quietly smoothed away (claim `place-jump-decay`).
+cannot be quietly smoothed away {claim:place-jump-decay}.
 
 ## Result 3 — extremal `N`, and a plateau that stops early
 
 Argmax and argmin of `R_c` within each of the 29 Fibonacci blocks are recorded
-in the summary (claim `block-extremal-n`) — progress on open problem 2 of
+in the summary {claim:block-extremal-n} — progress on open problem 2 of
 [`theory/01-background.md`](../theory/01-background.md) §14. Note the final block
 `[832040, 1000001)` is truncated by `n_max` rather than by the next place.
 
@@ -100,8 +100,10 @@ all.
 
 `min(counts) = 1` across the whole range — every `N ≤ 10^6` has at least one
 representation, which is the Kempner–Fraenkel completeness condition holding in
-practice. The Lean statement `exists_numeral_of_le` remains a `sorry`; this is
-evidence, not a proof.
+practice {claim:completeness-empirical}. This is a measurement over the
+computed range, not the general statement: the Lean theorem
+`exists_numeral_of_le` remains a `sorry`. It is evidence toward that theorem,
+not a substitute for it.
 
 ---
 

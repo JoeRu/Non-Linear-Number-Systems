@@ -165,6 +165,21 @@ def test_theorem_citing_unfound_lean_declaration_is_rejected(tmp_path):
     assert any("eta" in p and "theorem" in p for p in problems)
 
 
+def test_theorem_citing_path_traversal_is_rejected(tmp_path):
+    # "theory/../README.md" matches the theory/ prefix pattern and resolves
+    # to an existing file, but it resolves outside theory/, paper/, and
+    # lean/ -- the traversal must be caught, not just existence.
+    (tmp_path / "README.md").write_text("root readme\n")
+    claims = (
+        '- id: theta\n  statement: "T."\n  status: theorem\n'
+        '  evidence: "Proved in theory/../README.md (theta)."\n'
+        '  source: "s"\n'
+    )
+    _write(tmp_path, claims)
+    problems = validate(tmp_path)
+    assert any("theta" in p and "outside" in p for p in problems)
+
+
 def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
     # Naming one recorded artifact alongside one unrecorded artifact must not
     # be enough to pass -- every data-artifact token must be recorded.

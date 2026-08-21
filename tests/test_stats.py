@@ -72,7 +72,7 @@ def test_local_ratios_all_finite():
 
 
 def test_local_ratios_rejects_zero_count():
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         local_ratios([1, 0, 1])
 
 

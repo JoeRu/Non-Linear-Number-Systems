@@ -205,7 +205,7 @@ operations:
 
 | Path | Contents |
 |---|---|
-| `data/phase1_data.csv` | `N, R_c, log_R_c, log_N_sq, ratio, S_c, log_S_c` at every `N = round(10^(j/2))` for `j = 4 … 2·log10(n_max)` (decades and half-decades from 100), plus every distinct place value `F_k ≤ n_max`. Sorted, deduplicated. |
+| `data/phase1_data.csv` | `N, R_c, log_R_c, log_N_sq, ratio, S_c, log_S_c` at every `N = round(10^(j/2))` for `j = 4 … 2·log10(n_max)` (decades and half-decades from 100), plus every distinct place value `F_k ≤ n_max` **except `F = 1`** — `F_1 = F_2 = 1` is a degenerate duplicate place, and `log(1) = 0` would make the `ratio` column's denominator `(log N)^2` zero at `N = 1`. Sorted, deduplicated. |
 | `data/phase1_summary.json` | Monotonicity census, block extrema, fluctuation quantiles, place jumps. No checksum result — the script does not call `checksum_ok`; §3.1's pointwise cross-check is what licenses the numbers. |
 | `figures/phase1_growth.png` | `log R_c(N)` and `log S_c(N)` against `(log N)^2` |
 | `figures/phase1_fluctuation.png` | Local ratio of `R_c` against the relative increment of `S_c` — the visual form of the Route B argument |

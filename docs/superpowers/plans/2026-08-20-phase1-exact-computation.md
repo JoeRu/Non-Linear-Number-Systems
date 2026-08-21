@@ -987,8 +987,12 @@ Append to `theory/claims.yaml`, substituting the real numbers from `data/phase1_
 
 - id: gf-global-checksum
   statement: "For the fixed-length system on F_1..F_n, sum(counts) equals prod(F_k+1). Reproducible from the test suite for n <= 14. This invariant is insensitive to sum-preserving corruption and does not exercise the production place set; it is not a licence to report values."
-  status: verified-numeric
-  evidence: "tests/test_checksum.py; the limitation is asserted in test_checksum_misses_sum_preserving_corruption"
+  # status: theorem, not verified-numeric -- the identity is derived (each
+  # digit tuple has exactly one value, so summing counts over all values
+  # counts every tuple exactly once), not measured. The test suite
+  # corroborates it for n <= 14; it does not establish it.
+  status: theorem
+  evidence: "Proved in theory/03-invariants.md (gf-global-checksum): each digit tuple has exactly one value, so summing counts over all values counts every tuple exactly once. Corroborated in tests/test_checksum.py for n <= 14, which also asserts the sum-preserving blind spot (test_checksum_misses_sum_preserving_corruption)."
   source: "this project, Phase 1"
 
 - id: sc-monotone

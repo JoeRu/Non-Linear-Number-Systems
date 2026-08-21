@@ -83,6 +83,46 @@ def test_crosscheck_failure_exits_nonzero_and_writes_nothing(tmp_path, monkeypat
         "a failed cross-check must not create any figures"
 
 
+def _truncated_counts(real):
+    """Return values that agree with `real` on their shared prefix but are
+    shorter -- the shape that made `next(i for i in range(len(c)) if ...)`
+    raise StopIteration instead of reporting a length mismatch."""
+    def truncated(n_max, places=None):
+        c = list(real(n_max, places))
+        return c[:-5]
+    return truncated
+
+
+def test_crosscheck_length_mismatch_exits_nonzero_and_writes_nothing(tmp_path, monkeypatch):
+    # gf and dp agree pointwise on their shared prefix but dp's array is
+    # shorter -- `c != d` is true, but scanning for a differing index never
+    # finds one. This must be reported and exit 1, not raise StopIteration.
+    script_copy = _make_scratch_repo(tmp_path)
+
+    real = dp_module.counts
+    monkeypatch.setattr(dp_module, "counts", _truncated_counts(real))
+    monkeypatch.setattr(sys, "argv", ["run_phase1.py", "--n-max", "3000"])
+
+    exit_code = None
+    try:
+        runpy.run_path(str(script_copy), run_name="__main__")
+    except SystemExit as exc:
+        exit_code = exc.code
+
+    assert exit_code == 1, \
+        "a length-mismatched cross-check must exit non-zero, not raise"
+
+    data_dir = tmp_path / "data"
+    assert (data_dir / "phase1_summary.json").read_text() == SENTINEL_SUMMARY, \
+        "a failed cross-check must not modify an existing summary artifact"
+    assert (data_dir / "manifest.json").read_text() == SENTINEL_MANIFEST, \
+        "a failed cross-check must not modify the manifest"
+    assert not (data_dir / "phase1_data.csv").exists(), \
+        "a failed cross-check must not create the CSV artifact"
+    assert not (tmp_path / "figures").exists(), \
+        "a failed cross-check must not create any figures"
+
+
 @pytest.mark.parametrize("bad_n_max", [0, 1, -5])
 def test_n_max_below_2_is_rejected(bad_n_max):
     # argparse rejects this before any coefficient is computed or any file
