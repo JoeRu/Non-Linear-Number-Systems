@@ -141,7 +141,10 @@ lake env lean NonLinearNumberSystems/Redundancy.lean
    already passed an internal review loop. An outside reader with no stake in
    the reasoning catches what self-review structurally cannot.
 
-7. **Always check Copilot's PR review.** Standing decision (2026-08-21). Read
+7. **Always check Copilot's PR review — about five minutes after opening the
+   PR.** Standing decision (2026-08-21). The review is not there when
+   `gh pr create` returns; it lands minutes later. Wait for it, read it,
+   verify each finding, and adapt the PR before treating it as done. Check
    it on every pull request, **including after merge** — a merged PR is not
    closed until its review has been read and each finding verified.
 
@@ -156,13 +159,23 @@ lake env lean NonLinearNumberSystems/Redundancy.lean
    `.../pulls/{n}/comments` for the inline findings — read both, since the
    summary hides suppressed comments that contain real content.
 
-8. **Unresolved review disputes go in [`docs/risks.md`](docs/risks.md).** When a
+8. **Codex runs at `gpt-5.6-sol`, reasoning effort `ultra`**
+   (`~/.codex/config.toml`). Both values come from
+   `~/.codex/models_cache.json`, which enumerates every model slug with its
+   supported reasoning levels — **check there rather than answering from
+   memory**, since both change. `gpt-5.6-sol` ("latest frontier agentic coding
+   model") supports `low, medium, high, xhigh, max, ultra` and defaults to
+   `low`; `gpt-5.4` ("strong model for everyday coding") tops out at `xhigh`.
+   The effort setting is what actually changes behaviour, since the model's own
+   default is the lowest level.
+
+9. **Unresolved review disputes go in [`docs/risks.md`](docs/risks.md).** When a
    reviewer holds a position, the project holds another, and no further round
    will settle it, record it: an ID, the description, both positions stated
    fairly, and what it could cost the roadmap's objective if the project's
    position is wrong. That file is for decisions taken under disagreement — not
    for defects. A defect everyone agrees on gets fixed or tracked as an issue.
 
-9. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
+10. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
    de Bruijn, Coons–Kristensen–Laursen, Fraenkel) or from Mathlib, include the source
    reference in a comment.
