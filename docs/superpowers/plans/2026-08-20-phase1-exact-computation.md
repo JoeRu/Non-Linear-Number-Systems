@@ -717,10 +717,27 @@ def main() -> int:
         d = dp_counts(n_max)
         dp_seconds = time.time() - t0
         print(f"  dp took {dp_seconds:.1f}s")
+        # NOTE: scripts/run_phase1.py is authoritative for this block, not
+        # this plan. It additionally checks len(c) == len(d) == n_max + 1
+        # BEFORE comparing for equality: two identically-truncated arrays
+        # compare equal in Python (same elements, same -- too-short --
+        # length), so `c != d` alone would miss that case and defer the
+        # failure to a later out-of-range c[n] lookup. Keeping this synced
+        # here is not the point; the production script is.
+        if len(c) != n_max + 1 or len(d) != n_max + 1:
+            print(f"CROSS-CHECK FAILED: expected arrays of length {n_max + 1} "
+                  f"from both gf and dp, got gf={len(c)}, dp={len(d)}")
+            print("Writing nothing.")
+            return 1
         if c != d:
-            first = next(i for i in range(len(c)) if c[i] != d[i])
-            print(f"CROSS-CHECK FAILED: first disagreement at N={first}: "
-                  f"gf={c[first]} dp={d[first]}")
+            limit = min(len(c), len(d))
+            first = next((i for i in range(limit) if c[i] != d[i]), None)
+            if first is None:
+                print(f"CROSS-CHECK FAILED: arrays agree on their shared prefix but "
+                      f"differ in length (gf={len(c)}, dp={len(d)})")
+            else:
+                print(f"CROSS-CHECK FAILED: first disagreement at N={first}: "
+                      f"gf={c[first]} dp={d[first]}")
             print("Writing nothing.")
             return 1
         crosscheck = f"dp==gf pointwise for all N <= {n_max}"

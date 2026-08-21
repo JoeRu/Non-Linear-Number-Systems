@@ -65,8 +65,9 @@ def test_local_ratios_length_and_indices():
 
 
 def test_local_ratios_all_finite():
-    """Guarded by min(counts) >= 1, asserted at runtime -- not by appealing to
-    completeness, which is still a `sorry` in Lean."""
+    """Guarded by min(counts) >= 1, checked at runtime and raising ValueError
+    on failure -- not a bare assert (python -O strips those) and not by
+    appealing to completeness, which is still a `sorry` in Lean."""
     r = local_ratios(coefficients(2000))
     assert all(math.isfinite(x) for x in r)
 

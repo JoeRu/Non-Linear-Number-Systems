@@ -56,7 +56,9 @@ HEDGE_MARKERS = (
 # needs to be mechanical rather than another manual pass.
 UNIVERSAL_QUANTIFIER_WORDS = (
     "any", "every", "all", "never", "always", "must", "unavailable", "impossible",
-    "jeder", "jede", "jedes", "alle", "alles", "nie", "immer", "muss", "unmöglich",
+    "jeder", "jede", "jedes", "jeden", "jedem",
+    "alle", "alles", "allen",
+    "nie", "immer", "muss", "unmöglich",
 )
 _UNIVERSAL_QUANTIFIER_RE = re.compile(
     r"\b(" + "|".join(re.escape(w) for w in UNIVERSAL_QUANTIFIER_WORDS) + r")\b",
@@ -67,20 +69,28 @@ _UNIVERSAL_QUANTIFIER_RE = re.compile(
 # wording to the range that was actually measured. Two independent shapes
 # count, and both are boundary-aware -- neither is a bare substring test:
 #
-#   1. A bounded-range expression: a short variable (optionally subscripted,
-#      e.g. `F_k`) directly followed by `<=`/`≤` and a number -- "N <= 1000",
-#      "F ≤ 10^6". A raw substring test for "n <=" is satisfied by "a
-#      conditio-n <= 1000 applies", which has nothing to do with a measured
-#      range; requiring a variable-shaped token immediately before the
-#      operator rules that out.
-#   2. A whole-word/whole-phrase prose marker (`RANGE_PROSE_MARKERS`), matched
-#      with word boundaries so it cannot be satisfied by a substring inside an
-#      unrelated, larger word -- "the result was unobserved" must not be
-#      exempted by the substring "observed" inside it.
-RANGE_EXPR_RE = re.compile(r"\b[A-Za-z](?:_[A-Za-z0-9]+)?\s*(?:<=|≤)\s*\d")
+#   1. A bounded-range expression: N/n or a Fibonacci-place variable (F, or
+#      a subscripted form like `F_k`) -- the only variables this project
+#      actually bounds ranges by -- directly followed by `<=`, `≤`, or the
+#      LaTeX `\le`/`\leq` these documents also use, then a number: "N <= 1000",
+#      "F ≤ 10^6", "$N \le 10^6$". Restricted to those variables so an
+#      unrelated "a <= 1000" cannot qualify a nearby universal; a raw
+#      substring test for "n <=" was also satisfied by "a conditio-n <= 1000
+#      applies", which the variable-shaped-token requirement rules out too.
+#   2. A whole-word/whole-phrase prose marker (`RANGE_PROSE_MARKERS`) that
+#      itself names a bound, matched with word boundaries so it cannot be
+#      satisfied by a substring inside an unrelated, larger word -- "the
+#      result was unobserved" must not be exempted by the substring
+#      "observed" inside it. Bare "observed"/"gemessen" are deliberately NOT
+#      markers: neither names a finite range, so a sentence could carry a
+#      universal claim and be "observed" true without ever stating what was
+#      measured -- exactly how "`R_c` jumps at every Fibonacci place
+#      observed" slipped past before.
+RANGE_EXPR_RE = re.compile(
+    r"\b[NnFf](?:_[A-Za-z0-9]+)?\s*(?:<=|≤|\\leq|\\le)\s*\d"
+)
 RANGE_PROSE_MARKERS = (
-    "over the measured range", "im gemessenen bereich", "in range",
-    "observed", "gemessen",
+    "over the measured range", "im gemessenen bereich",
 )
 _RANGE_PROSE_RE = re.compile(
     r"\b(?:" + "|".join(re.escape(m) for m in RANGE_PROSE_MARKERS) + r")\b"

@@ -181,29 +181,29 @@ def test_theorem_citing_path_traversal_is_rejected(tmp_path):
 
 
 def test_theorem_citing_symlinked_allowed_root_escaping_repo_is_rejected(tmp_path):
-    # theory/ is itself a symlink pointing outside the repository. Its
-    # resolved destination must not become an allowed root -- otherwise a
-    # file entirely outside the repo would pass just because the evidence
-    # token happens to start with "theory/".
-    #
-    # This particular repro is now caught even earlier, by the ledger-path
-    # check in validate() (see test_ledger_symlinked_outside_repo_is_rejected
-    # below): theory/claims.yaml itself resolves outside the repo here, so it
-    # is rejected before any claim in it -- including 'iota' -- is parsed.
-    # That is a strictly stronger guarantee, so this test only checks for
-    # rejection, not for the specific claim id.
-    outside = tmp_path.parent / f"{tmp_path.name}-outside-theory"
+    # paper/ (an allowed root, NOT theory/) is itself a symlink pointing
+    # outside the repository. theory/claims.yaml is written as a REAL file
+    # directly under tmp_path -- deliberately not a symlink -- so the
+    # ledger-path check in validate() (see
+    # test_ledger_symlinked_outside_repo_is_rejected below) does not fire
+    # here and this test actually exercises the allowed_roots filter in
+    # _theorem_evidence_problem. If that filter were removed, "paper/evil.md"
+    # would resolve (via the symlink) to a real file and this test would
+    # pass incorrectly -- confirmed by temporarily removing the filter.
+    outside = tmp_path.parent / f"{tmp_path.name}-outside-paper"
     outside.mkdir()
     (outside / "evil.md").write_text("not part of this repo\n")
-    (outside / "claims.yaml").write_text(
+    (tmp_path / "paper").symlink_to(outside, target_is_directory=True)
+
+    claims = (
         '- id: iota\n  statement: "I."\n  status: theorem\n'
-        '  evidence: "Proved in theory/evil.md (iota)."\n'
+        '  evidence: "Proved in paper/evil.md (iota)."\n'
         '  source: "s"\n'
     )
-    (tmp_path / "theory").symlink_to(outside, target_is_directory=True)
+    _write(tmp_path, claims)
 
     problems = validate(tmp_path)
-    assert any("outside" in p.lower() for p in problems)
+    assert any("iota" in p and "outside" in p for p in problems)
 
 
 def test_ledger_symlinked_outside_repo_is_rejected(tmp_path):
@@ -345,6 +345,63 @@ def test_docs_phase1_is_scanned_via_search_files(tmp_path):
     _write(tmp_path, VALID, {"docs/phase1.md": "See {claim:missing}."})
     problems = validate(tmp_path)
     assert any("missing" in p for p in problems)
+
+
+def test_bare_observed_qualification_is_rejected(tmp_path):
+    # "observed" and "gemessen" no longer count as range qualifiers on their
+    # own -- neither names a finite bound, so a sentence carrying a universal
+    # claim and the bare word "observed" must still be rejected. This is
+    # exactly the shape that let "`R_c` jumps at every Fibonacci place
+    # observed" through before: the hedge word and the exemption word were
+    # the same word.
+    docs = {
+        "theory/x.md": (
+            "Every N satisfies this property; the result was observed "
+            "{claim:kappa}."
+        ),
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_unrelated_single_letter_variable_does_not_exempt(tmp_path):
+    # "a <= 1000" has the right shape (single letter, "<=", a number) but "a"
+    # is not one of the variables this project bounds ranges by (N/n, F).
+    # Restricting the regex to those variables must not accept this as a
+    # qualifier for an unrelated universal claim.
+    docs = {
+        "theory/x.md": "Every N satisfies this property; a <= 1000 {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_latex_le_range_expression_is_accepted(tmp_path):
+    # These are mathematical documents that write bounds in LaTeX, e.g.
+    # "$N \le 10^6$" -- not just ASCII "<=" or unicode "≤". That must be
+    # recognized as a real range qualifier, not rejected as unscoped prose.
+    docs = {
+        "theory/x.md": r"Every $N \le 10^6$ satisfies this property {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    assert validate(tmp_path) == []
+
+
+def test_jeden_is_recognized_as_universal(tmp_path):
+    # docs/roadmap.md-style prose can use "jeden" (accusative) as well as
+    # "jeder"/"jedes" -- another inflection that must trigger the guard.
+    docs = {
+        "theory/x.md": "Für jeden N gilt diese Eigenschaft {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
 
 
 def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
