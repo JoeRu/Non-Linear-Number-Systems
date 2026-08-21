@@ -1,4 +1,10 @@
-"""Evaluation of log F_c(e^-s) in pure log space.
+"""Evaluation of log F_c(e^-s) in pure log space -- NOT certified.
+
+This path truncates the infinite product, which *lowers* the value and so
+cannot certify the Chernoff bound T1, whose direction depends on the full
+product (spec 5.1). It is the fast path; `capfib.interval` is the oracle and
+carries the rigorous enclosure. Use `capfib.interval.agrees_with_float` to
+check the two against each other.
 
     log F_c(e^-s) = sum_k [ log(1 - e^{-s F_k (F_k+1)}) - log(1 - e^{-s F_k}) ]
 
