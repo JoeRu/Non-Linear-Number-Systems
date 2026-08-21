@@ -292,7 +292,7 @@ def log_F_c_interval(t: float, guard: int = 40):
 
     Returns:
         A tuple (lo, hi, terms): the enclosure's endpoints as mpmath numbers,
-        and the number of places summed exactly before the tail bound applied.
+        and the number of places summed exactly, inclusive of the break index.
 
     Raises:
         ValueError: if t is not positive.
@@ -306,13 +306,16 @@ def log_F_c_interval(t: float, guard: int = 40):
     k = 1
     while True:
         u = s * f
+        # The term is added unconditionally BEFORE the break test: _tail_bound
+        # covers only sum_{k > K}, so omitting a_K here would drop it from the
+        # sum entirely and the result would stop being an upper bound.
+        total = total + (_log1m_exp_neg(u * (f + 1)) - _log1m_exp_neg(u))
         if k >= 3 and u.a >= TAIL_U_MIN:
             total = iv.mpf([total.a, total.b + _tail_bound(u)])
             break
-        total = total + (_log1m_exp_neg(u * (f + 1)) - _log1m_exp_neg(u))
         f_prev, f = f, (f_prev + f if k >= 2 else 1)  # F_2 = 1, then F_{k+1}
         k += 1
-    return total.a, total.b, k - 1
+    return total.a, total.b, k
 
 
 def certified_upper(t: float, guard: int = 40) -> float:
@@ -355,7 +358,13 @@ def agrees_with_float(t: float, float_value: float, guard: int = 40) -> bool:
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `.venv/bin/python -m pytest tests/test_interval.py -v`
-Expected: PASS, all 11 tests (4 + 4 parametrised + 6 others).
+Expected: PASS, all 13 test cases (7 functions, two parametrised over 4 values each).
+
+Additionally, add a regression test asserting that the assembled enclosure **contains** an
+independently summed reference — one computed at much higher precision and carried well past
+the break index. None of the other tests can detect an endpoint shift that moves `lo` and `hi`
+together: the agreement gate's relative tolerance cannot see a `1e-27` absolute error on an
+`O(1)` value, and the width test only measures `hi - lo`.
 
 - [ ] **Step 6: Mark the float path as uncertified**
 
