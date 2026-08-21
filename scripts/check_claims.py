@@ -56,19 +56,68 @@ HEDGE_MARKERS = (
 # needs to be mechanical rather than another manual pass.
 UNIVERSAL_QUANTIFIER_WORDS = (
     "any", "every", "all", "never", "always", "must", "unavailable", "impossible",
-    "jeder", "jede", "alle", "nie", "immer", "muss", "unmöglich",
+    "jeder", "jede", "jedes", "alle", "alles", "nie", "immer", "muss", "unmöglich",
 )
 _UNIVERSAL_QUANTIFIER_RE = re.compile(
     r"\b(" + "|".join(re.escape(w) for w in UNIVERSAL_QUANTIFIER_WORDS) + r")\b",
     re.IGNORECASE,
 )
 
-# A paragraph carrying one of these is exempt: it has scoped its universal-
-# sounding wording to the range that was actually measured.
-RANGE_QUALIFIER_MARKERS = (
-    "n <=", "n ≤", "over the measured range", "im gemessenen bereich",
-    "in range", "observed", "gemessen",
+# A paragraph carrying a range qualification has scoped its universal-sounding
+# wording to the range that was actually measured. Two independent shapes
+# count, and both are boundary-aware -- neither is a bare substring test:
+#
+#   1. A bounded-range expression: a short variable (optionally subscripted,
+#      e.g. `F_k`) directly followed by `<=`/`≤` and a number -- "N <= 1000",
+#      "F ≤ 10^6". A raw substring test for "n <=" is satisfied by "a
+#      conditio-n <= 1000 applies", which has nothing to do with a measured
+#      range; requiring a variable-shaped token immediately before the
+#      operator rules that out.
+#   2. A whole-word/whole-phrase prose marker (`RANGE_PROSE_MARKERS`), matched
+#      with word boundaries so it cannot be satisfied by a substring inside an
+#      unrelated, larger word -- "the result was unobserved" must not be
+#      exempted by the substring "observed" inside it.
+RANGE_EXPR_RE = re.compile(r"\b[A-Za-z](?:_[A-Za-z0-9]+)?\s*(?:<=|≤)\s*\d")
+RANGE_PROSE_MARKERS = (
+    "over the measured range", "im gemessenen bereich", "in range",
+    "observed", "gemessen",
 )
+_RANGE_PROSE_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(m) for m in RANGE_PROSE_MARKERS) + r")\b"
+)
+
+# Markdown content here is often a tight bullet list: multiple "- [x] ..."
+# items with no blank line between them, each one a self-contained statement
+# about a different, unrelated piece of work. `re.split(r"\n\s*\n", text)`
+# (blank-line paragraphs) does not separate those items, so without this,
+# they would share one "paragraph" for citation purposes -- letting an
+# unrelated bullet's "alle"/"every" get blamed on a claim cited three bullets
+# away, or letting a range qualifier in one bullet exempt a bare universal in
+# another. Each list item is therefore its own citation scope.
+_LIST_ITEM_BOUNDARY_RE = re.compile(r"\n(?=\s*(?:[-*+]|\d+[.)])\s)")
+# Within one citation scope, sentence-ending punctuation further scopes the
+# range-qualifier check: a qualifier in one sentence of a multi-sentence
+# scope must not silence a bare universal in a different sentence of it.
+_SENTENCE_END_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _citation_scopes(paragraph: str) -> list[str]:
+    """Split a blank-line-delimited paragraph into per-list-item scopes (or
+    a single scope, if it is not a tight list)."""
+    return _LIST_ITEM_BOUNDARY_RE.split(paragraph)
+
+
+def _sentences(scope: str) -> list[str]:
+    """Split one citation scope into sentence-like units for range-qualifier
+    scoping."""
+    units = _SENTENCE_END_RE.split(scope)
+    return [re.sub(r"\s+", " ", u).strip() for u in units if u.strip()]
+
+
+def _has_range_qualifier(sentence: str) -> bool:
+    return bool(RANGE_EXPR_RE.search(sentence)) or bool(
+        _RANGE_PROSE_RE.search(sentence.lower())
+    )
 
 
 def _extract_theorem_path_tokens(evidence: str) -> list[str]:
@@ -178,6 +227,20 @@ def validate(root: Path) -> list[str]:
     if not ledger_path.exists():
         return [f"missing ledger: {ledger_path}"]
 
+    # `theory/` could itself be a symlink pointing outside the repository.
+    # Filtering `allowed_roots` in `_theorem_evidence_problem` only protects
+    # evidence *tokens* -- it does nothing if the ledger file being parsed is
+    # itself read through such a symlink. An external ledger that happens to
+    # cite a path that genuinely exists inside this repo (e.g. "paper/x.md")
+    # would then sail through untouched. Reject before parsing, not after.
+    root_resolved = root.resolve()
+    ledger_resolved = ledger_path.resolve()
+    if not ledger_resolved.is_relative_to(root_resolved):
+        return [
+            f"ledger path {ledger_path} resolves to {ledger_resolved}, outside "
+            f"the repo root {root_resolved} -- refusing to parse it"
+        ]
+
     claims = yaml.safe_load(ledger_path.read_text()) or []
     ids: set[str] = set()
     for i, claim in enumerate(claims):
@@ -257,31 +320,38 @@ def _check_universal_claims(md: Path, text: str, status_by_id: dict) -> list[str
     it. This catches that case. It cannot catch a paragraph with no
     `{claim:...}` token at all, which is why an untethered empirical
     statement should get a ledger entry and a citation in the first place.
+
+    Citation and range check are each scoped no wider than they need to be:
+    citation to the enclosing list item (a tight bullet list packs unrelated
+    statements into one blank-line paragraph, and a claim cited in one bullet
+    must not make an unrelated universal word in a different bullet look like
+    an overclaim about it), and the range check to the individual sentence
+    carrying the universal word within that (a range qualifier attached to
+    one sentence must not silence an unrelated bare universal in another
+    sentence of the same scope).
     """
     problems: list[str] = []
     for paragraph in re.split(r"\n\s*\n", text):
-        cited_verified = [
-            ref for ref in REFERENCE.findall(paragraph)
-            if status_by_id.get(ref) == "verified-numeric"
-        ]
-        if not cited_verified:
-            continue
-        # Collapse hard line-wraps to spaces before matching a multi-word
-        # marker: a paragraph's prose is wrapped across source lines, so a
-        # phrase like "over the measured range" can have a newline where the
-        # rendered text has a space.
-        lower = re.sub(r"\s+", " ", paragraph.lower())
-        if any(marker in lower for marker in RANGE_QUALIFIER_MARKERS):
-            continue
-        match = _UNIVERSAL_QUANTIFIER_RE.search(paragraph)
-        if not match:
-            continue
-        for ref in cited_verified:
-            problems.append(
-                f"{md}: paragraph cites claim '{ref}' (status verified-numeric) "
-                f"with unqualified universal word '{match.group(0)}' and no "
-                f"range qualification"
-            )
+        for scope in _citation_scopes(paragraph):
+            cited_verified = [
+                ref for ref in REFERENCE.findall(scope)
+                if status_by_id.get(ref) == "verified-numeric"
+            ]
+            if not cited_verified:
+                continue
+            for sentence in _sentences(scope):
+                match = _UNIVERSAL_QUANTIFIER_RE.search(sentence)
+                if not match:
+                    continue
+                if _has_range_qualifier(sentence):
+                    continue
+                for ref in cited_verified:
+                    problems.append(
+                        f"{md}: paragraph cites claim '{ref}' (status verified-numeric) "
+                        f"with unqualified universal word '{match.group(0)}' and no "
+                        f"range qualification"
+                    )
+                break
     return problems
 
 

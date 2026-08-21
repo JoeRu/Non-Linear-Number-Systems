@@ -145,6 +145,18 @@ def main() -> int:
         d = dp_counts(n_max)
         dp_seconds = time.time() - t0
         print(f"  dp took {dp_seconds:.1f}s")
+        # Length must be checked before equality: two identically-truncated
+        # arrays compare equal (Python list equality is pointwise AND
+        # length-sensitive, but "identically truncated" means both sides
+        # agree on every element they share, including their -- too-short --
+        # length), so `c != d` would be False and the cross-check would
+        # report success. The later `c[n]` lookups for n up to n_max would
+        # then raise IndexError instead of this being caught here.
+        if len(c) != n_max + 1 or len(d) != n_max + 1:
+            print(f"CROSS-CHECK FAILED: expected arrays of length {n_max + 1} "
+                  f"from both gf and dp, got gf={len(c)}, dp={len(d)}")
+            print("Writing nothing.")
+            return 1
         if c != d:
             limit = min(len(c), len(d))
             first = next((i for i in range(limit) if c[i] != d[i]), None)

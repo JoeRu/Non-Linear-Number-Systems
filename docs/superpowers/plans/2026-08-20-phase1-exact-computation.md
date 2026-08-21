@@ -217,14 +217,15 @@ def test_local_ratios_length_and_indices():
 
 
 def test_local_ratios_all_finite():
-    """Guarded by min(counts) >= 1, asserted at runtime -- not by appealing to
-    completeness, which is still a `sorry` in Lean."""
+    """Guarded by min(counts) >= 1, checked at runtime and raising
+    `ValueError` on failure -- not a bare `assert` (`python -O` strips those)
+    and not by appealing to completeness, which is still a `sorry` in Lean."""
     r = local_ratios(coefficients(2000))
     assert all(math.isfinite(x) for x in r)
 
 
 def test_local_ratios_rejects_zero_count():
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         local_ratios([1, 0, 1])
 
 
@@ -274,11 +275,14 @@ Expected: FAIL — `ImportError: cannot import name 'local_ratios' from 'capfib.
 def local_ratios(counts: Sequence[int]) -> list[float]:
     """r[n] = counts[n+1] / counts[n] for n = 0 .. len-2.
 
-    The division is guarded by an explicit assertion rather than by appealing
-    to completeness: completeness is still a `sorry` in the Lean development,
-    so it is not something this code may lean on.
+    The division is guarded by an explicit check that raises `ValueError`
+    rather than by appealing to completeness: completeness is still a
+    `sorry` in the Lean development, so it is not something this code may
+    lean on. This is deliberately not a bare `assert`, which `python -O`
+    would strip.
     """
-    assert min(counts) >= 1, "counts must be positive; local_ratios would divide by zero"
+    if min(counts) < 1:
+        raise ValueError("counts must be positive; local_ratios would divide by zero")
     return [counts[n + 1] / counts[n] for n in range(len(counts) - 1)]
 
 
@@ -722,7 +726,10 @@ def main() -> int:
         crosscheck = f"dp==gf pointwise for all N <= {n_max}"
         print(f"cross-check OK: {crosscheck}")
 
-    assert min(c) >= 1, "a zero count would break local_ratios"
+    if min(c) < 1:
+        print("PRECONDITION FAILED: a zero count would break local_ratios.")
+        print("Writing nothing.")
+        return 1
 
     census = monotonicity_census(c)
     sc = summatory(c)

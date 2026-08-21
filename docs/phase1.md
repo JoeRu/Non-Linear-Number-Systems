@@ -28,7 +28,7 @@ dp==gf pointwise for all N <= 1000000
 
 Two structurally different algorithms agreeing pointwise for every `N ≤ 10^6`
 is the claim {claim:dp-gf-agree-to-nmax}. The comparison is not sampled and not
-tolerance-based, and the script writes nothing at all if it fails.
+tolerance-based, and the script writes nothing if it fails.
 
 **What it does not cover:** `dp`, `gf` and `brute` all take their place values
 from `capfib.fib.places_up_to`, so a wrong *place set* would be invisible to the
@@ -67,20 +67,14 @@ The local ratio `R_c(N+1)/R_c(N)` has these recorded order statistics:
 
 ## Result 2 — structure at the place values
 
-`R_c` jumps at every Fibonacci place observed, i.e. every distinct place
-`F_k ≤ 10^6`. The naive law is false, and this is worth stating carefully
-because an earlier draft got it wrong:
-
-- at `F = 2` the ratio `R_c(F)/R_c(F−1)` is **exactly 1.0** — it does not exceed 1
-- it **rises** at `F = 3` (1.5) and again at `F = 8` (1.333)
-- only from `F = 13` onward does it decay monotonically, reaching 1.000653 at
-  `F = 832040`
-
-The earlier draft claimed clean decay everywhere, on the strength of a sample
-that happened to begin at `F = 13`. The exhaustive check, run over the
-measured range, found the two exceptions across every distinct place, and
-`tests/test_stats.py` now pins them so they cannot be quietly smoothed away
-{claim:place-jump-decay}.
+The ratio `R_c(F)/R_c(F−1)` was measured at every distinct place `F ≤ 10^6`:
+it is exactly 1.0 at `F = 2` (not a rise, and not a fall), above 1 and rising
+elsewhere below `F = 13` (1.5 at `F = 3`, 1.333 at `F = 8`), and monotonically
+decaying only from `F = 13` onward, reaching 1.000653 at `F = 832040`, the
+largest place in range. An earlier draft claimed decay everywhere, on the
+strength of a sample that happened to begin at `F = 13`; the exhaustive check
+above found the two exceptions, and `tests/test_stats.py` now pins them so
+they cannot be quietly smoothed away {claim:place-jump-decay}.
 
 ## Result 3 — extremal `N`, and a plateau that stops early
 
@@ -96,7 +90,7 @@ flat steps** over the measured range `N ≤ 10^6`, at
 N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78
 ```
 
-all of them below `N = 79`. Nearly a million further steps over `N ≤ 10^6`
+all of them below `N = 79` — nearly a million further steps over `N ≤ 10^6`
 produce no plateau at all {claim:flat-steps-end-early}.
 
 ## Completeness

@@ -3,9 +3,10 @@
 **Question.** What does `R_c(N)` actually look like at computable scale, and
 which of Phase 5's routes does its behaviour select?
 
-**Method.** Exact integer computation to `N = 10^6` via the closed-form
-generating-function recurrence, with every coefficient cross-checked against an
-independently implemented digit-loop DP — two independent counting algorithms
+**Method.** Exact integer computation for `N <= 10^6` via the closed-form
+generating-function recurrence, with every coefficient in that range
+cross-checked against an independently implemented digit-loop DP — two
+independent counting algorithms
 (`dp` and `gf`; `brute` too) run over a shared, separately-tested place set
 (`places_up_to` in `capfib/fib.py`, pinned by boundary tests in
 `tests/test_fib.py`). A wrong place set would be invisible to the cross-check
@@ -43,9 +44,9 @@ directly against the growth curve (`figures/phase1_growth.png`).
 
 *Structural note.* Exactly 11 flat steps occur over `N <= 10^6`
 (`data/phase1_summary.json`, `census` and `flat_step_positions` fields), at
-`N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78` -- the largest being `N = 78`.
-This is recorded as the observation it is; Phase 1 does not speculate about
-why.
+`N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78` -- the largest being `N = 78`
+{claim:flat-steps-end-early}. This is recorded as the observation it is;
+Phase 1 does not speculate about why.
 
 *Quantiles of the step ratio.* `data/phase1_summary.json` records
 `fluctuation_quantiles` for `R_c(N+1)/R_c(N)` over `N <= 10^6`: min `0.9853`,

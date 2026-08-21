@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 
 import capfib.dp as dp_module
+import capfib.gf as gf_module
 
 REAL_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "run_phase1.py"
 
@@ -111,6 +112,52 @@ def test_crosscheck_length_mismatch_exits_nonzero_and_writes_nothing(tmp_path, m
 
     assert exit_code == 1, \
         "a length-mismatched cross-check must exit non-zero, not raise"
+
+    data_dir = tmp_path / "data"
+    assert (data_dir / "phase1_summary.json").read_text() == SENTINEL_SUMMARY, \
+        "a failed cross-check must not modify an existing summary artifact"
+    assert (data_dir / "manifest.json").read_text() == SENTINEL_MANIFEST, \
+        "a failed cross-check must not modify the manifest"
+    assert not (data_dir / "phase1_data.csv").exists(), \
+        "a failed cross-check must not create the CSV artifact"
+    assert not (tmp_path / "figures").exists(), \
+        "a failed cross-check must not create any figures"
+
+
+def _same_truncation(real):
+    """Return values truncated the same way `_truncated_counts` truncates dp
+    -- so that gf and dp end up EQUAL to each other (same shorter length,
+    same elements), not just individually wrong. `c != d` is False in this
+    case; only an explicit length-vs-n_max check can catch it."""
+    def truncated(n_max, places=None):
+        c = list(real(n_max, places))
+        return c[:-5]
+    return truncated
+
+
+def test_crosscheck_identically_truncated_arrays_exits_nonzero_and_writes_nothing(
+    tmp_path, monkeypatch
+):
+    # Both gf and dp are truncated the same way, so they agree pointwise and
+    # `c != d` is False -- the old code would report "cross-check OK" and
+    # then raise IndexError trying to read c[n_max]. The fix requires both
+    # arrays to have length exactly n_max + 1 before accepting equality.
+    script_copy = _make_scratch_repo(tmp_path)
+
+    real_gf = gf_module.coefficients
+    real_dp = dp_module.counts
+    monkeypatch.setattr(gf_module, "coefficients", _same_truncation(real_gf))
+    monkeypatch.setattr(dp_module, "counts", _same_truncation(real_dp))
+    monkeypatch.setattr(sys, "argv", ["run_phase1.py", "--n-max", "3000"])
+
+    exit_code = None
+    try:
+        runpy.run_path(str(script_copy), run_name="__main__")
+    except SystemExit as exc:
+        exit_code = exc.code
+
+    assert exit_code == 1, \
+        "identically-truncated gf/dp arrays must exit non-zero, not IndexError"
 
     data_dir = tmp_path / "data"
     assert (data_dir / "phase1_summary.json").read_text() == SENTINEL_SUMMARY, \

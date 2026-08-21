@@ -185,6 +185,13 @@ def test_theorem_citing_symlinked_allowed_root_escaping_repo_is_rejected(tmp_pat
     # resolved destination must not become an allowed root -- otherwise a
     # file entirely outside the repo would pass just because the evidence
     # token happens to start with "theory/".
+    #
+    # This particular repro is now caught even earlier, by the ledger-path
+    # check in validate() (see test_ledger_symlinked_outside_repo_is_rejected
+    # below): theory/claims.yaml itself resolves outside the repo here, so it
+    # is rejected before any claim in it -- including 'iota' -- is parsed.
+    # That is a strictly stronger guarantee, so this test only checks for
+    # rejection, not for the specific claim id.
     outside = tmp_path.parent / f"{tmp_path.name}-outside-theory"
     outside.mkdir()
     (outside / "evil.md").write_text("not part of this repo\n")
@@ -196,7 +203,32 @@ def test_theorem_citing_symlinked_allowed_root_escaping_repo_is_rejected(tmp_pat
     (tmp_path / "theory").symlink_to(outside, target_is_directory=True)
 
     problems = validate(tmp_path)
-    assert any("iota" in p and "outside" in p for p in problems)
+    assert any("outside" in p.lower() for p in problems)
+
+
+def test_ledger_symlinked_outside_repo_is_rejected(tmp_path):
+    # theory/ is a symlink pointing outside the repo, and the external ledger
+    # cites evidence that genuinely exists INSIDE this repo (paper/proof.md).
+    # Filtering allowed_roots in _theorem_evidence_problem does not stop this:
+    # "paper/proof.md" resolves inside the repo, so that check alone would
+    # accept it. The ledger's own path must be rejected before it is parsed
+    # at all.
+    outside = tmp_path.parent / f"{tmp_path.name}-outside-ledger"
+    outside.mkdir()
+    (outside / "claims.yaml").write_text(
+        '- id: mu\n  statement: "M."\n  status: theorem\n'
+        '  evidence: "Proved in paper/proof.md (mu)."\n'
+        '  source: "s"\n'
+    )
+    (tmp_path / "theory").symlink_to(outside, target_is_directory=True)
+    (tmp_path / "paper").mkdir()
+    (tmp_path / "paper" / "proof.md").write_text("A real proof, genuinely in-repo.\n")
+
+    problems = validate(tmp_path)
+    assert any("outside" in p.lower() and "repo" in p.lower() for p in problems)
+    assert not any("claim 'mu'" in p for p in problems), (
+        "the ledger must be rejected before any claim in it is parsed"
+    )
 
 
 VERIFIED_NUMERIC = """- id: kappa
@@ -231,6 +263,88 @@ def test_range_qualified_universal_word_citing_verified_numeric_passes(tmp_path)
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     assert validate(tmp_path) == []
+
+
+def test_unobserved_is_not_a_false_exemption(tmp_path):
+    # "the result was unobserved" contains "observed" as a raw substring, but
+    # is not the whole word "observed" -- a bare substring test wrongly
+    # exempted it before. Same sentence as the universal, so this isolates
+    # the marker-matching bug from the paragraph-vs-sentence scoping bug.
+    docs = {
+        "theory/x.md": (
+            "Every N satisfies this property; the result was unobserved "
+            "{claim:kappa}."
+        ),
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_unrelated_lte_is_not_a_false_exemption(tmp_path):
+    # "a condition <= 1000 applies" contains the raw substring "n <=" (the
+    # tail of "conditio-n" plus " <="), which wrongly exempted it before.
+    docs = {
+        "theory/x.md": (
+            "Every N satisfies this property; a condition <= 1000 applies "
+            "{claim:kappa}."
+        ),
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_range_marker_in_different_sentence_does_not_exempt(tmp_path):
+    # Sentence one carries the bare universal and the citation; sentence two
+    # carries an unrelated range marker. The exemption must not leak across
+    # sentence boundaries within the same paragraph.
+    docs = {
+        "theory/x.md": (
+            "Every N satisfies this property {claim:kappa}. "
+            "A different measurement used n <= 500 elsewhere."
+        ),
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_jedes_is_recognized_as_universal(tmp_path):
+    # docs/roadmap.md already contains "jedes N" -- the inflected form was
+    # missing from UNIVERSAL_QUANTIFIER_WORDS even though "jeder"/"jede" were
+    # both listed.
+    docs = {
+        "theory/x.md": "Jedes N erfüllt diese Eigenschaft {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_alles_is_recognized_as_universal(tmp_path):
+    docs = {
+        "theory/x.md": "Alles daran bestätigt sich {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_docs_phase1_is_scanned_via_search_files(tmp_path):
+    # docs/phase1.md is reachable only via SEARCH_FILES, not SEARCH_DIRS
+    # (theory/, docs/phases/, paper/). A fixture placed only under theory/
+    # would pass even if "docs/phase1.md" were silently dropped from
+    # SEARCH_FILES; this fixture lives at that exact root-level path, so
+    # removing the entry would make this test fail.
+    _write(tmp_path, VALID, {"docs/phase1.md": "See {claim:missing}."})
+    problems = validate(tmp_path)
+    assert any("missing" in p for p in problems)
 
 
 def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
