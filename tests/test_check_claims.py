@@ -404,6 +404,33 @@ def test_jeden_is_recognized_as_universal(tmp_path):
     assert any("kappa" in p and "universal" in p for p in problems)
 
 
+def test_each_is_recognized_as_universal(tmp_path):
+    # "each" is a synonym for "every" that slipped through unnoticed --
+    # docs/phases/phase1_report.md said "R_c jumps at each Fibonacci place",
+    # an overclaim the guard could not see because "each" was not in
+    # UNIVERSAL_QUANTIFIER_WORDS.
+    docs = {
+        "theory/x.md": "The result holds at each place {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
+def test_muessen_is_recognized_as_universal(tmp_path):
+    # Only the singular "muss" was listed; "müssen" (infinitive/plural, as
+    # in "Die Werte müssen positiv sein") is just as common in this
+    # project's German prose and must trigger the guard too.
+    docs = {
+        "theory/x.md": "Die Werte müssen positiv sein {claim:kappa}.",
+        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+    }
+    _write(tmp_path, VERIFIED_NUMERIC, docs)
+    problems = validate(tmp_path)
+    assert any("kappa" in p and "universal" in p for p in problems)
+
+
 def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
     # Naming one recorded artifact alongside one unrecorded artifact must not
     # be enough to pass -- every data-artifact token must be recorded.

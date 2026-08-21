@@ -94,11 +94,12 @@ distinct Fibonacci place `F <= 1000000`:
 | 514229 | 1.000792 |
 | 832040 | 1.000653 |
 
-`R_c` jumps at each Fibonacci place, but the naive law is false: the ratio is
-exactly 1.0 at `F = 2` and rises at `F = 3` and again at `F = 8`, decaying
-monotonically only from `F = 13` onward, reaching 1.000653 at the largest
-place in range {claim:place-jump-decay}. An earlier draft asserted decay
-everywhere on the strength of a sample that began at `F = 13`.
+The ratio `R_c(F)/R_c(F-1)` was measured at every distinct place `F <= 10^6`:
+it is exactly 1.0 at `F = 2` -- not a jump -- rises at `F = 3` and again at
+`F = 8`, and decays monotonically only from `F = 13` onward, reaching
+1.000653 at the largest place in that range {claim:place-jump-decay}. An
+earlier draft asserted decay everywhere on the strength of a sample that
+began at `F = 13`.
 
 **Result 3 — extremal N.** Argmax and argmin of `R_c` within each Fibonacci
 block `[F, F')`, ties broken toward the smallest `N`:

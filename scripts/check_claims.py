@@ -55,10 +55,11 @@ HEDGE_MARKERS = (
 # it has recurred enough times, corrected by hand each time, that catching it
 # needs to be mechanical rather than another manual pass.
 UNIVERSAL_QUANTIFIER_WORDS = (
-    "any", "every", "all", "never", "always", "must", "unavailable", "impossible",
+    "any", "every", "each", "all", "never", "always", "must",
+    "unavailable", "impossible",
     "jeder", "jede", "jedes", "jeden", "jedem",
-    "alle", "alles", "allen",
-    "nie", "immer", "muss", "unmöglich",
+    "alle", "alles", "allen", "sämtliche",
+    "nie", "immer", "stets", "muss", "müssen", "unmöglich",
 )
 _UNIVERSAL_QUANTIFIER_RE = re.compile(
     r"\b(" + "|".join(re.escape(w) for w in UNIVERSAL_QUANTIFIER_WORDS) + r")\b",

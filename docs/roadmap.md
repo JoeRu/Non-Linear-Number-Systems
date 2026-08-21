@@ -72,7 +72,7 @@ Erledigt:
 - [x] Brute-Force-Orakel (bewusst langsam, dient als Spezifikation) — `0140c82`
 - [x] **Korrektheits-Gate:** DP gegen Orakel für alle $N \le 200$, beide schnellen Pfade gegeneinander für alle $N \le 500$ — `054f968`
 - [x] Tabelle aus `theory/01-background.md` §4 exakt reproduziert für $n = 1..10$ — `674058b`
-- [x] Vollständigkeit numerisch bestätigt (keine Lücken in der Zählung) — `674058b`
+- [x] Vollständigkeit numerisch bestätigt (Details: `docs/phase1.md` Abschnitt „Completeness") — `674058b`
 - [x] Lauf bis $N = 10^6$ (exakt, nicht Log-Domain — der zurückgestellte Pfad wird nicht gebraucht) — `9ce15e9`
 - [x] `phase1_data.csv` — `9ce15e9`
 - [x] `phase1_plot.png` → geliefert als `phase1_growth.png` und `phase1_fluctuation.png` — `9ce15e9`

@@ -158,21 +158,21 @@ def main() -> int:
             print("Writing nothing.")
             return 1
         if c != d:
-            limit = min(len(c), len(d))
-            first = next((i for i in range(limit) if c[i] != d[i]), None)
-            if first is None:
-                print(f"CROSS-CHECK FAILED: arrays agree on their shared prefix but "
-                      f"differ in length (gf={len(c)}, dp={len(d)})")
-            else:
-                print(f"CROSS-CHECK FAILED: first disagreement at N={first}: "
-                      f"gf={c[first]} dp={d[first]}")
+            # The length check above guarantees len(c) == len(d) == n_max + 1
+            # here, so c and d being unequal guarantees some index in
+            # range(n_max + 1) differs -- this can never exhaust the range
+            # without finding one, so there is no "differ in length" case
+            # left to report at this point.
+            first = next(i for i in range(n_max + 1) if c[i] != d[i])
+            print(f"CROSS-CHECK FAILED: first disagreement at N={first}: "
+                  f"gf={c[first]} dp={d[first]}")
             print("Writing nothing.")
             return 1
         crosscheck = f"dp==gf pointwise for all N <= {n_max}"
         print(f"cross-check OK: {crosscheck}")
 
     if min(c) < 1:
-        print("PRECONDITION FAILED: a zero count would break local_ratios.")
+        print("PRECONDITION FAILED: a non-positive count would break local_ratios.")
         print("Writing nothing.")
         return 1
 

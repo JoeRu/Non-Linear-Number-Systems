@@ -78,8 +78,9 @@ they cannot be quietly smoothed away {claim:place-jump-decay}.
 
 ## Result 3 — extremal `N`, and a plateau that stops early
 
-Argmax and argmin of `R_c` within each of the 29 Fibonacci blocks are recorded
-in the summary {claim:block-extremal-n} — progress on open problem 2 of
+Argmax and argmin of `R_c` within each Fibonacci block over `N ≤ 10^6` (29
+blocks in that range) are recorded in the summary {claim:block-extremal-n} —
+progress on open problem 2 of
 [`theory/01-background.md`](../theory/01-background.md) §14. Note the final block
 `[832040, 1000001)` is truncated by `n_max` rather than by the next place.
 
