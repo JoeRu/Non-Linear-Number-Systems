@@ -15,12 +15,19 @@
   * `exists_two_numerals_same_value` — **"1 > 1"**: two distinct numerals share
                                 a value, because F 1 = F 2 = 1
   * `value_not_injective`    — the evaluation map is not injective
+  * `countReps_le_uncapped`  — `R_c(N) ≤ R_u(N)`: capping digits cannot create
+                                representations, so the capped count is bounded
+                                by the uncapped one. Not a step of the Phase 2
+                                upper bound, which is proved directly and is
+                                sharper; this supports only the comparison
+                                against Coons–Kristensen–Laursen.
 
   ## What is open
 
-  * `countReps_le_uncapped`  — `R_c(N) ≤ R_u(N)` (Phase 2)
+  Nothing. The Lean development contains no `sorry`.
 
-  Each open statement carries a `sorry` and a proof sketch. A `sorry` is a
+  Any statement added here without a proof carries a `sorry` and a proof
+  sketch, and is listed in this section until it is discharged. A `sorry` is a
   statement; replacing one with a wrong proof is worse than leaving it open.
 
   ## What is deliberately NOT here

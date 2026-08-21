@@ -41,9 +41,10 @@ cd lean/
 lake build
 ```
 
-A successful build will type-check all theorems (with `sorry` placeholders for
-open problems).  Any `sorry` is intentional — it marks an open theorem that
-needs a proof.
+A successful build type-checks every theorem in the development. There are
+currently no open statements: nothing is left standing on a `sorry`. If one is
+ever added, it is intentional — it marks an open theorem that needs a proof —
+and it is listed under "What is open" in `Theorems.lean`.
 
 ## Verified build state
 
@@ -55,13 +56,15 @@ The Lean development builds cleanly against the pinned toolchain. Verified with:
 | Lean | `leanprover/lean4:v4.14.0` (from `lean/lean-toolchain`) |
 | Mathlib | `v4.14.0`, rev `4bbdccd9` (pinned in `lean/lake-manifest.json`) |
 
-`lake build` succeeds with **no errors** and exactly **2 `declaration uses 'sorry'`
-warnings** — `exists_numeral_of_le` in `Completeness.lean` and
-`countReps_le_uncapped` in `Bounds.lean`. Both are genuine Phase 2 targets.
+`lake build` succeeds with **no errors** and **zero `declaration uses 'sorry'`
+warnings**. Phase 2 discharged the last two — `exists_numeral_of_le` in
+`Completeness.lean` and `countReps_le_uncapped` in `Bounds.lean`.
 
-That count is the invariant to check against: every `sorry` is an open
-statement, and a drop without a corresponding proof means something was closed
-dishonestly.
+Zero is the invariant to check against. It may rise again when a new statement
+is written down before it is proved; what must never happen is a count dropping
+without a corresponding proof, which would mean something was closed
+dishonestly. `#print axioms` on the theorem is the check: `sorryAx` must not
+appear among its axioms.
 
 `lean/lake-manifest.json` is tracked on purpose so this build is reproducible.
 
