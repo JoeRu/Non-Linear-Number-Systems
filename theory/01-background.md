@@ -123,12 +123,17 @@ and the residue `r = N − d_{n+1} F_{n+1}`. If `N ≥ F_{n+1}²` then `d_{n+1} 
 for `n ≥ 1` (and `r = 0` for `n = 0`, where the place value is 1). Either way the induction
 hypothesis applies to `r`.
 
-This is the Kempner–Fraenkel argument (Fraenkel 1985) in the form that does **not** require the
-place values to be strictly increasing — which matters here, because `F_1 = F_2 = 1` are equal.
-The usual statement of the condition, `u_k ≤ 1 + Σ_{j<k} m_j u_j` for `u_1 < u_2 < …`, does not
-apply verbatim to this convention. The overlapping-interval induction above needs only
-`F_n ≤ 1 + Σ_{j<n} F_j²`, which holds with enormous room to spare. That slack is exactly the
-redundancy.
+The overlapping-interval induction above is elementary and self-contained. The completeness
+condition for numeration systems more generally is due to Kempner and Fraenkel (Fraenkel 1985);
+the form usually stated, `u_k ≤ 1 + Σ_{j<k} m_j u_j` for `u_1 < u_2 < …`, assumes strictly
+increasing place values — which is why the induction is written out here rather than invoked,
+since `F_1 = F_2 = 1` does not satisfy that hypothesis.
+
+The condition the induction above actually needs, `F_n ≤ 1 + Σ_{j<n} F_j²`, holds for every `n`,
+but the slack is not uniform: at `n = 1` it is a tight equality, `F_1 = 1 ≤ 1 + 0 = 1`, since the
+capacity of zero preceding places is exactly 0 — that is the duplicated-1-place boundary this
+argument is built to cover. From `n = 2` onward the slack grows without bound. That slack,
+wherever it appears, is exactly the redundancy.
 
 This argument is formalised in Lean as `exists_numeral_of_le`
 (`lean/NonLinearNumberSystems/Completeness.lean`).

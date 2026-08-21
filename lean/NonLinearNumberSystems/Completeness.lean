@@ -10,13 +10,19 @@
     of Fibonacci theory (`Mathlib.Data.Nat.Fib.Basic`) but not this identity,
     so it is proved here. It holds only under the convention F 1 = F 2 = 1.
 
-  * `exists_numeral_of_le` — completeness itself. Follows from the
-    Kempner–Fraenkel condition `u_k ≤ 1 + ∑_{j<k} m_j u_j`, which here reads
-    `F_k ≤ 1 + F_{k-1} · F_k` and holds with enormous slack. That slack is
-    exactly the system's redundancy.
+  * `exists_numeral_of_le` — completeness itself, by greedy descent on the
+    number of places. At `n + 1` places the top digit `min (F_{n+1}) (N / F_{n+1})`
+    takes as much of `N` as the top place's cap allows, and `greedy_residue_le`
+    shows the residue always lies within the capacity of the remaining `n`
+    places, so the induction hypothesis represents it. This is a direct
+    induction, not an invocation of the classical Kempner–Fraenkel condition
+    `u_k ≤ 1 + ∑_{j<k} m_j u_j` — that condition's usual statement assumes
+    strictly increasing place values `u_1 < u_2 < …`, which `F_1 = F_2 = 1`
+    does not satisfy. See theory/01-background.md §3 for the prose version of
+    this argument.
 
-  Reference: Fraenkel, "Systems of Numeration", Amer. Math. Monthly 92 (1985);
-  theory/01-background.md §3.
+  Reference (for the general completeness condition, not for this proof):
+  Fraenkel, "Systems of Numeration", Amer. Math. Monthly 92 (1985).
 -/
 
 import NonLinearNumberSystems.Numeration
