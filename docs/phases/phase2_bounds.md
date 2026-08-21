@@ -433,17 +433,28 @@ the requirement harder. Writing `beta(t) = 1/(2 lambda) + 3/(2t)`, so that
 for every `t`, so the left side exceeds `(1/(2 lambda)) log t` always: no
 `C <= 1/(2 lambda)` can work, and every `C > 1/(2 lambda)` works once `t` is large enough.
 
-Take `C = 2` and `t >= log 10000 = 9.2103`. Then `beta(t) <= 1.0390435 + 0.1628584 =
-1.2019039` and `log beta(t) <= 0.1839069`, so (using `log t > 0`) the left side is at
-most `3/2 + 1.2019039 log t + 0.2210393`, and the requirement reduces to
+Take `C = 2` and `t >= log 10000 = 9.21034...`, so `t >= 9.2103`. Every rounding below is taken in the
+direction that weakens the conclusion, so the chain may be checked with a calculator at
+five decimals and nothing depends on the digits beyond them. Since `3/(2t)` is largest
+at the left endpoint, `3/(2t) <= 1.5/9.2103 <= 0.16287`, and `1/(2 lambda) <= 1.03905`,
+so
 
 ```
-(2 - 1.2019039) log t >= 1.7210393,   i.e.   log t >= 2.1564300,   i.e.   t >= 8.6403,
+beta(t) <= 1.03905 + 0.16287 = 1.20192,      log beta(t) <= log 1.20192 <= 0.18393.
 ```
 
-which `t >= 9.2103` satisfies. Hence the pair `(C, N_0) = (2, 10000)` proved above. It
+Using `log t > 0`, the left side is then at most
+`3/2 + 1.20192 log t + 1.20192 * 0.18393 <= 1.72107 + 1.20192 log t`. So it is enough
+that `1.72107 + 1.20192 log t <= 2 log t`, i.e. that
+
+```
+0.79808 log t >= 1.72107.
+```
+
+Since `1.72107/0.79808 <= 2.15652` and `e^{2.15652} <= 8.6411`, it is enough that
+`t >= 8.6411` — and `t >= 9.2103`. Hence the pair `(C, N_0) = (2, 10000)`, proved. It
 was chosen for a hand-checkable chain and a round `N_0`, not for sharpness: `C` may be
-pushed toward `1.0390434...` at the cost of a larger `N_0`.
+pushed toward `1/(2 lambda) = 1.0390434...` at the cost of a larger `N_0`.
 
 **`C = 1` is not available, and finite-range data cannot supply it.** The secondary
 coefficient of this construction is `1/(2 log phi) = 1.0390434...`, above `1`. Evaluating
@@ -454,7 +465,7 @@ bound on `C`. The implied value is larger at the top of that range than at the b
 the proved coefficient governs.
 
 **The stated bound is vacuous at computable `N`.** `t^2/(8 lambda) - 2 t log t` is
-negative until `t ≈ 24.7`, i.e. `N ≈ 5.4 * 10^{10}`, far beyond the range where
+negative until `t ≈ 24.69`, i.e. `N ≈ 5.3 * 10^{10}`, far beyond the range where
 `R_c(N)` has been computed exactly. T3 is an asymptotic statement and §6 confronts the
 *construction*, not this inequality, with the exact values.
 
@@ -471,8 +482,12 @@ The fixup block has to absorb residues as large as `N`, which forces
 `F_a F_{a+1} >= N`, i.e. `a = L/2 + O(1)`. To leading order those are exactly the
 cap-binding places of regime A in §3.3, which carry half of `log F_c(e^{-s})`. L1 spends
 that half on making the construction land on `N` at all, and counts only the other half.
-(The identification with regime A is leading-order only: at the `s` chosen in §3.6 the
-regime-A boundary sits at `(L - log_phi log N)/2 + O(1)`.)
+
+**This paragraph is motivation, not a step.** Nothing in §4.1 or §4.2 uses the
+identification with regime A; T3 is proved from `(F1)` and the completeness lemma alone,
+and would stand unchanged if the identification were wrong. It is offered only to explain
+*where* the missing factor of two goes, and it is leading-order at that: at the `s` chosen
+in §3.6 the regime-A boundary sits at `(L - log_phi log N)/2 + O(1)`, not at `a` exactly.
 
 **The factor of two is structural to L1 as specified** — a rectangular free family
 `prod (m_k + 1)` with one selected completion per residue. Re-estimating L1's sums more
@@ -580,9 +595,15 @@ inequality stated as T3 is vacuous here (§4.2).
 N <= 1000000 {fig:n-max-verified}; the ratio is far from either endpoint and is not
 monotone, falling to about `0.3245` near `N = 316` before rising to its value at the top
 of the sampled range. At the three smallest sampled points (`N = 2, 3, 5`) it exceeds
-the upper constant outright — which contradicts nothing, since C4 constrains the limsup
-and not any individual `N`. From `N = 8` upward it lies strictly inside `[0.2598,
-0.5195]` at each of the sampled points in that range.
+the upper constant outright. **This does not contradict C4, and a reader should not read
+it as data against the theorem.** C4 is a statement about the tail: it constrains the
+liminf and limsup of `log R_c(N)/(log N)^2`, both of which are unchanged by the values at
+any finite set of `N`. T2's consequence carries a `(1 + o(1))`, and T3 is stated only for
+`N >= 10000`, so neither bound claims anything whatsoever at `N = 2, 3, 5`. Small `N` sit
+above the interval for the obvious reason: `(log N)^2` is tiny there while `R_c(N) >= 1`
+forces `log R_c(N) >= 0`, so the ratio is inflated by the denominator. From `N = 8`
+upward it lies strictly inside `[0.2598, 0.5195]` at each of the sampled points in that
+range.
 
 **The product residual.** A separate sweep evaluates
 `log F_c(e^{-s}) - (log(1/s))^2/(4 lambda)` at eight values of `T = log(1/s)` between 10
