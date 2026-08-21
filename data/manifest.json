@@ -86,9 +86,9 @@
       "n_max": 1000000,
       "relative_tol": 1e-12
     },
-    "git_rev": "2a5ee43f43057e1a7b34ed192a421e5e470a460c",
-    "sha256": "d42c6150362ad3b1d16d396ceefb53098842718fee431b9dd867124c772ca106",
-    "timestamp": "2026-08-21T15:59:22Z"
+    "git_rev": "c0be22d641bb86a42250a85ed7956851a787e9a8",
+    "sha256": "f291192ca73a3baa5a44bc45f9d85460390b9f939622a635d0d14de84f59aca7",
+    "timestamp": "2026-08-21T17:37:18Z"
   },
   {
     "file": "phase2_residual.csv",
@@ -105,9 +105,9 @@
         1280.0
       ]
     },
-    "git_rev": "2a5ee43f43057e1a7b34ed192a421e5e470a460c",
+    "git_rev": "c0be22d641bb86a42250a85ed7956851a787e9a8",
     "sha256": "35450431fa51801b49fab8cdf36c963245a939d600f0583440c333401a7ee4dc",
-    "timestamp": "2026-08-21T15:59:22Z"
+    "timestamp": "2026-08-21T17:37:18Z"
   },
   {
     "file": "phase2_figures.json",
@@ -115,9 +115,9 @@
     "params": {
       "n_max": 1000000
     },
-    "git_rev": "2a5ee43f43057e1a7b34ed192a421e5e470a460c",
-    "sha256": "2c052c90695ee14b3b7d741310fec5100455d27ca7bd5e507cb31f81e68446cc",
-    "timestamp": "2026-08-21T15:59:22Z"
+    "git_rev": "c0be22d641bb86a42250a85ed7956851a787e9a8",
+    "sha256": "9c345dc4ab6c9a4379e231f6fbd706a725517712cb244590f7d7105f39c78f19",
+    "timestamp": "2026-08-21T17:37:18Z"
   },
   {
     "file": "phase2_sandwich.png",
@@ -125,8 +125,8 @@
     "params": {
       "n_max": 1000000
     },
-    "git_rev": "2a5ee43f43057e1a7b34ed192a421e5e470a460c",
+    "git_rev": "c0be22d641bb86a42250a85ed7956851a787e9a8",
     "sha256": "ca4aeed999bf6fe96add4378cbbf5cddc914eb37825401216ee7c185453f8744",
-    "timestamp": "2026-08-21T15:59:23Z"
+    "timestamp": "2026-08-21T17:37:19Z"
   }
 ]

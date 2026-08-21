@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from capfib.interval import RELATIVE_TOL, agrees_with_float
-from capfib.lower import t3_lower_bound
+from capfib.lower import t3_lower_bound, t5_lower_bound
 from capfib.manifest import record
 from capfib.product import log_F_c
 from capfib.saddle import argmin_log_s, log_R_bound_certified
@@ -179,11 +179,22 @@ def main() -> int:
                 "Writing nothing."
             )
             return 1
+        t5 = t5_lower_bound(n)
+        if t5.log_count > exact[n]:
+            print(
+                f"LOWER BOUND VIOLATED at N={n}: T5 {t5.log_count} > exact "
+                f"{exact[n]}. Writing nothing."
+            )
+            return 1
         rows.append(
             {
                 "N": n,
                 "log_R_c": exact[n],
                 "t3_lower": lower,
+                "t5_lower": t5.log_count,
+                "t5_log_free": t5.log_free,
+                "t5_log_block": t5.log_block,
+                "t5_block_a": t5.block,
                 "chernoff_certified": certified,
                 "asymptotic_upper": math.log(n) ** 2 / (4 * LOG_PHI),
                 "asymptotic_lower": math.log(n) ** 2 / (8 * LOG_PHI),
@@ -307,6 +318,24 @@ def main() -> int:
             "value": biggest["t3_lower"],
             "precision": 3,
             "description": "T3 construction evaluated at the largest N verified",
+        },
+        "t5-lower-nmax": {
+            "value": biggest["t5_lower"],
+            "precision": 3,
+            "description": "T5 construction evaluated at the largest N verified",
+        },
+        "t5-log-block-nmax": {
+            "value": biggest["t5_log_block"],
+            "precision": 3,
+            "description": (
+                "the T5 construction's block factor -- the proved flatness bound "
+                "on log B(a, m) -- at the largest N verified"
+            ),
+        },
+        "t5-block-nmax": {
+            "value": biggest["t5_block_a"],
+            "precision": 0,
+            "description": "T5 block boundary a at the largest N verified",
         },
         "fixup-block-nmax": {
             "value": biggest["fixup_block_a"],

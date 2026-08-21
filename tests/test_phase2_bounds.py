@@ -101,3 +101,116 @@ def test_t3_digits_respect_their_caps():
     places = places_up_to(n)
     for k in range(result.fixup_block + 1, result.top_place + 1):
         assert n // (result.counting_places * places[k - 1]) < places[k - 1]
+
+
+def _block_counts(a):
+    """Exact B(a, .) as a list indexed by m in [0, S_a], by DP over the places.
+
+    The inner loop is a sliding window of F_k + 1 terms along each residue
+    class mod F_k, which is what makes a = 12 (S_a = 33552) cheap enough for
+    the suite.
+    """
+    from capfib.fib import fibonacci
+
+    F = fibonacci(a)
+    current = [1]
+    for k in range(1, a + 1):
+        f = F[k - 1]
+        previous_top = len(current) - 1
+        top = previous_top + f * f
+        nxt = [0] * (top + 1)
+        for r in range(f):
+            window, running, m = [], 0, r
+            while m <= top:
+                value = current[m] if m <= previous_top else 0
+                window.append(value)
+                running += value
+                if len(window) > f + 1:
+                    running -= window.pop(0)
+                nxt[m] = running
+                m += f
+        current = nxt
+    return current
+
+
+@pytest.mark.parametrize("a", [8, 9, 10, 11, 12])
+def test_flatness_bound_holds_against_exact_block_counts(a):
+    """8.2. The proved product bound must not exceed the true band minimum."""
+    from capfib.lower import THETA_HI, THETA_LO, flatness_log_bound
+
+    counts = _block_counts(a)
+    capacity = len(counts) - 1
+    lo = math.ceil(THETA_LO * capacity)
+    hi = math.floor(THETA_HI * capacity)
+    band_min = min(counts[lo : hi + 1])
+    assert band_min > 0
+    assert flatness_log_bound(a) <= math.log(band_min) + 1e-9
+
+
+@pytest.mark.parametrize("a", range(2, 14))
+def test_flatness_choice_count_is_at_least_rho_fib(a):
+    """8.2, cases 1-4: the number of admissible top digits, checked exhaustively.
+
+    This is the step the whole of T5 rests on, so it is checked at every m in
+    the band rather than at sampled ones.
+    """
+    from capfib.fib import fibonacci
+    from capfib.lower import RHO, THETA_HI, THETA_LO
+
+    F = fibonacci(a + 1)
+    capacity = sum(f * f for f in F[:a])
+    below = capacity - F[a - 1] * F[a - 1]
+    for m in range(math.ceil(THETA_LO * capacity), math.floor(THETA_HI * capacity) + 1):
+        lo = max(0, math.ceil((m - THETA_HI * below) / F[a - 1]))
+        hi = min(F[a - 1], math.floor((m - THETA_LO * below) / F[a - 1]))
+        assert max(0, hi - lo + 1) >= RHO * F[a - 2] - 1
+
+
+@pytest.mark.parametrize("n", [1_000, 10_000, 100_000, 1_000_000])
+def test_t5_never_exceeds_the_exact_value(n):
+    """A lower bound above the true value would be a false theorem."""
+    from capfib.lower import t5_lower_bound
+
+    exact = _exact()
+    assert t5_lower_bound(n).log_count <= exact[n]
+
+
+@pytest.mark.parametrize("n", [1_597, 10_000, 100_000, 1_000_000])
+def test_t5_improves_on_t3(n):
+    """The point of T5: the block contributes a factor, not a 1."""
+    from capfib.lower import t5_lower_bound
+
+    assert t5_lower_bound(n).log_count > t3_lower_bound(n).log_count
+
+
+@pytest.mark.parametrize("n", [1_000, 10_000, 100_000, 1_000_000])
+def test_t5_residues_land_in_the_flat_band(n):
+    """8.3. Every residue N - sigma must lie in [THETA_LO S_a, THETA_HI S_a]."""
+    from capfib.fib import places_up_to
+    from capfib.lower import THETA_HI, THETA_LO, t5_lower_bound
+
+    result = t5_lower_bound(n)
+    places = places_up_to(n)
+    capacity = sum(f * f for f in places[: result.block])
+    budget = n - (capacity + 4) // 5
+    reached = sum(
+        (budget // (result.counting_places * places[k - 1])) * places[k - 1]
+        for k in range(result.block + 1, result.top_place + 1)
+    )
+    assert reached <= budget
+    assert n <= THETA_HI * capacity
+    assert n - reached >= THETA_LO * capacity
+
+
+@pytest.mark.parametrize("n", [1_000, 10_000, 100_000, 1_000_000])
+def test_t5_digits_respect_their_caps(n):
+    """m_k <= F_k must hold automatically on the counting block (8.3)."""
+    from capfib.fib import places_up_to
+    from capfib.lower import t5_lower_bound
+
+    result = t5_lower_bound(n)
+    places = places_up_to(n)
+    capacity = sum(f * f for f in places[: result.block])
+    budget = n - (capacity + 4) // 5
+    for k in range(result.block + 1, result.top_place + 1):
+        assert budget // (result.counting_places * places[k - 1]) <= places[k - 1]

@@ -79,6 +79,21 @@
     "precision": 3,
     "value": 17.774241561357528
   },
+  "t5-block-nmax": {
+    "description": "T5 block boundary a at the largest N verified",
+    "precision": 0,
+    "value": 16
+  },
+  "t5-log-block-nmax": {
+    "description": "the T5 construction's block factor -- the proved flatness bound on log B(a, m) -- at the largest N verified",
+    "precision": 3,
+    "value": 24.765166560659768
+  },
+  "t5-lower-nmax": {
+    "description": "T5 construction evaluated at the largest N verified",
+    "precision": 3,
+    "value": 39.80228549800129
+  },
   "upper-constant": {
     "description": "1 / (4 log phi), the T2 upper constant",
     "precision": 4,

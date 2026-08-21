@@ -3,10 +3,14 @@
 **Question.** How large is `R_c(N)`, to leading order in `(log N)^2`, and how much of
 that can be settled by elementary means?
 
-**Answer.** Between `(log N)^2/(8 log phi)` and `(log N)^2/(4 log phi)`, in the sense
-of C4 below. The sandwich does not close: the two constants differ by a factor of two,
-and the gap is not an artefact of loose estimates but of the lower-bound construction's
-block structure (§4).
+**Answer.** `log R_c(N) ~ (log N)^2/(4 log phi)`: the limit of
+`log R_c(N)/(log N)^2` exists and equals `1/(4 log phi)` (C5, §8). The route there runs
+through a weaker sandwich first — T2's upper constant `1/(4 log phi)` against T3's lower
+constant `1/(8 log phi)`, a factor of two apart (C4, §5) — because the factor of two is
+not an artefact of loose estimates but of T3's block structure (§4), and §8 closes it by
+counting the reserved block instead of reserving it. §§1–7 are left as they were proved:
+T5 is built on T3's machinery, and the factor of two is easier to follow with both halves
+in view.
 
 This note contains the statements and proofs. `docs/phase2.md` is the summary;
 `docs/superpowers/specs/2026-08-21-phase2-elementary-bounds-design.md` is the design
@@ -526,7 +530,7 @@ sandwich (spec §4.4):
   rather than the full `N`. The reserved places then carry a vanishing fraction of the
   count. *Failure mode:* the hierarchical carry has to terminate without pushing a digit
   past its cap `F_k`.
-- **L2b — count all completions, not one.** L1 keeps one completion per residue and
+- **L2b — count all completions, not one** (this is the one that closes; §8). L1 keeps one completion per residue and
   discards the rest. Keeping them replaces the product by
   `sum over free tuples of (number of representations of N - sigma on places [1, a])`,
   which is the same counting problem one scale down: the fixup block is itself a
@@ -536,6 +540,11 @@ sandwich (spec §4.4):
 That second failure mode is the one Phase 1's data speaks to directly: over
 `N <= 1000000` the census records 49.6% decreasing steps ({claim:rc-not-monotone}), so
 an inner bound holding on average need not hold at a given residue.
+
+*Outcome.* L2b closed; the uniform inner bound it needs is Lemma F of §8.2, which holds at
+every residue of a middle band and is coarse enough that fluctuations of the measured size
+pass under it. L2a did not, and §8.6 records where it stopped — not at the carry, which is
+where this paragraph expected it, but a step earlier.
 
 ### 4.5 What L1 throws away
 
@@ -576,7 +585,9 @@ The roadmap's lower sketch was in any case unavailable as written: it bounded `R
 below by `R_u`, and capping only removes representations, so the inequality runs the
 other way.
 
-**Where this leaves the Phase 3 conjecture.** The conjecture
+**Where this leaves the Phase 3 conjecture** — *as of T1–T3 alone; §8 goes further, and
+this paragraph is left as written because it states correctly what T1–T3 by themselves
+leave open.* The conjecture
 `log R_c(N) ~ (log N)^2/(4 log phi)` ({claim:leading-constant}) sits at the *upper*
 endpoint of the proved interval. Phase 2 therefore leaves it to be settled entirely from
 below: the upper bound is already at the conjectured value, and what is missing is a
@@ -683,9 +694,473 @@ nothing proved here depends on the identification being correct.
 
 ---
 
-## 8. The L2 attempt
+## 8. T5 — closing the sandwich (route L2b)
 
-Attempted after the main results; see the section added by the stretch task.
+Route **L2b** of §4.4 closes. Route L2a was attempted first, stopped, and is recorded in
+§8.6 — the reason it stopped is what pointed at L2b.
+
+> **T5.** For every integer `N >= 10000`, with `t = log N` and `lambda = log phi`,
+> ```
+> log R_c(N) >= t^2/(4 lambda) - (t log t)/(2 lambda) - 7.5 t.
+> ```
+> In particular `log R_c(N) >= (1 - o(1)) (log N)^2/(4 log phi)`.
+
+> **C5.** With `lambda = log phi`,
+> ```
+> lim_{N->infinity} log R_c(N)/(log N)^2  =  1/(4 lambda)  =  0.5195217...
+> ```
+> — the limit exists, and equals the upper endpoint of C4's interval.
+
+### 8.1 The one thing L1 was missing
+
+L1 reserves the block `[1, a]` and takes **one** completion per residue, so the block
+contributes a factor of `1` to the product and the whole cap-binding half of the count
+is thrown away (§4.5). Keeping every completion replaces the product by
+
+```
+R_c(N)  >=  sum over free tuples of  B(a, N - sigma),
+```
+
+where `B(a, m)` is the number of cap-respecting digit tuples on places `1..a` of value
+`m`. §4.4 named the obstacle: that inner count has to be bounded **uniformly in the
+residue**, and the residue is not under the construction's control.
+
+The obstacle dissolves once one notices how much room there is. `B(a, ·)` is supported on
+`[0, S_a]` with `S_a = sum_{k<=a} F_k^2 = F_a F_{a+1}` ({claim:sum-of-squares}); its total
+mass is `prod_{k<=a} (F_k + 1) = exp(lambda a^2/2 + O(a))`, spread over `S_a + 1` values,
+and `S_a = exp(2 lambda a + O(1))`. So the mean of `B(a, ·)` is `exp(lambda a^2/2 + O(a))`
+— the same as the maximum, to the precision that matters. A uniform lower bound on
+`B(a, m)` only has to be within `exp(o(a^2))` of the mean, and dividing by the whole
+range `S_a` costs `exp(-O(a))`, which is free at the `a^2` scale. What is needed is
+therefore not a local limit theorem but a crude flatness statement, and that is Lemma F.
+
+**This paragraph is motivation, not a step.** Nothing in §8.2 or §8.3 uses the mean of
+`B(a, ·)`, or the value of its total mass; Lemma F is proved from `(F1)`, the two
+identities `S_a = F_a F_{a+1}` and `S_a - S_{a-1} = F_a^2`, and completeness. The
+paragraph is offered only to explain why a bound this coarse can be enough.
+
+### 8.2 Lemma F — a block is flat on its middle band
+
+Write `S_a = sum_{k<=a} F_k^2 = F_a F_{a+1}` (`{claim:sum-of-squares}`, `S_0 = 0`), and
+
+```
+B(a, m)  =  #{ (d_1, ..., d_a) : 0 <= d_k <= F_k,  sum_{k<=a} d_k F_k = m },
+```
+
+with `B(a, m) = 0` for `m < 0` and for `m > S_a`. Fix once and for all
+
+```
+theta_1 = 1/5,   theta_2 = 3/4,   rho = min(theta_2 - theta_1, theta_1, 1 - theta_2) = 1/5,
+I_a = { m in Z : theta_1 S_a <= m <= theta_2 S_a }        (the band of the block [1, a]).
+```
+
+> **Lemma F.** For every `a >= 8` and every `m in I_a`,
+> ```
+> B(a, m)  >=  prod_{k=8}^{a} ( F_{k-1}/5 - 1 ),
+> ```
+> and consequently
+> ```
+> log B(a, m)  >=  lambda a^2/2  -  3.5057 a  +  12.749.
+> ```
+
+The constants `theta_1`, `theta_2` are not optimised. They are pinned by two unrelated
+requirements — §8.3 needs `theta_1/theta_2 < 1/3`, and `rho` must be positive — and
+every choice satisfying those gives the same leading term, because `rho` enters only
+through an `O(a)` correction.
+
+**Step 1 — conditioning on the top digit.** Splitting the count according to `d_a`,
+
+```
+B(a, m)  =  sum_{d=0}^{F_a} B(a-1, m - d F_a),                                    (8.1)
+```
+
+an identity, not an estimate: distinct `d` give disjoint sets of tuples, and every tuple
+has exactly one value of `d_a`. Discarding all but a subset `D` of the admissible `d`
+therefore leaves a lower bound.
+
+**Step 2 — the admissible digits.** For `a >= 2` put
+
+```
+D_a(m) = { d in Z : 0 <= d <= F_a,  m - d F_a in I_{a-1} }.
+```
+
+Unwinding the membership condition, `d in D_a(m)` iff `d` is an integer of the closed
+interval `[alpha, beta] ∩ [0, F_a]`, where
+
+```
+alpha = (m - theta_2 S_{a-1})/F_a,      beta = (m - theta_1 S_{a-1})/F_a.
+```
+
+Three exact identities of this place set do all the work. `S_{a-1} = F_{a-1} F_a`
+({claim:sum-of-squares}) gives
+
+```
+beta - alpha = (theta_2 - theta_1) S_{a-1}/F_a = (11/20) F_{a-1};                  (F3)
+```
+
+`S_a - S_{a-1} = F_a^2`, which is the definition of `S`, together with `m >= theta_1 S_a`
+gives
+
+```
+beta >= (theta_1 S_a - theta_1 S_{a-1})/F_a = theta_1 F_a;                          (F4)
+```
+
+and the same identity with `m <= theta_2 S_a` gives
+
+```
+alpha <= (theta_2 S_a - theta_2 S_{a-1})/F_a = theta_2 F_a.                         (F5)
+```
+
+The intersection `[alpha, beta] ∩ [0, F_a]` is a closed interval; its length is bounded
+below in each of the four cases, using `F_a >= F_{a-1}` throughout (the place values are
+non-decreasing):
+
+| case | which endpoint is active | length | bounded below by |
+|---|---|---|---|
+| 1 | `alpha >= 0`, `beta <= F_a` | `beta - alpha` | `(11/20) F_{a-1}` by (F3) |
+| 2 | `alpha < 0`, `beta <= F_a` | `beta` | `theta_1 F_a >= (1/5) F_{a-1}` by (F4) |
+| 3 | `alpha >= 0`, `beta > F_a` | `F_a - alpha` | `(1 - theta_2) F_a >= (1/4) F_{a-1}` by (F5) |
+| 4 | `alpha < 0`, `beta > F_a` | `F_a` | `F_{a-1}` |
+
+In every case the length is at least `rho F_{a-1} = F_{a-1}/5`. A closed real interval
+`[x, y]` contains `floor(y) - ceil(x) + 1 > (y - 1) - (x + 1) + 1 = y - x - 1` integers,
+so
+
+```
+|D_a(m)|  >  F_{a-1}/5 - 1     for every a >= 2 and every m in I_a.                (8.2)
+```
+
+Note what (8.2) does **not** say: it is not a statement about where `m` sits inside its
+band, and no case is excluded as unreachable. All four occur — cases 2 and 3 are exactly
+the residues near the two edges of the band, and they are the ones that would break a
+naive argument, which is why the table treats them separately instead of assuming
+`[alpha, beta] ⊆ [0, F_a]`.
+
+**Step 3 — the induction.** Let `a >= 8`. Then `F_{a-1} >= F_7 = 13`, so (8.2) gives
+`|D_a(m)| > 13/5 - 1 = 1.6`, in particular `D_a(m)` is non-empty; and since an element
+`d` of it exhibits the integer `m - d F_a` of `I_{a-1}`, the band `I_{a-1}` is non-empty
+too, so `min_{m' in I_{a-1}} B(a-1, m')` is a minimum over a non-empty set. Keeping only
+the terms of (8.1) with `d in D_a(m)`,
+
+```
+B(a, m)  >=  |D_a(m)| * min_{m' in I_{a-1}} B(a-1, m')  >=  (F_{a-1}/5 - 1) * min_{I_{a-1}} B(a-1, ·).
+```
+
+The right-hand side no longer depends on `m`, so the same bound holds for the minimum
+over `I_a`. Iterating from `a` down to `8` leaves the factors
+`prod_{k=8}^{a} (F_{k-1}/5 - 1)` multiplying `min_{m' in I_7} B(7, m')`, and that minimum
+is at least `1`: `I_7 ⊆ [0, S_7]`, and by completeness ({claim:completeness-no-gaps}, the
+Lean lemma `exists_numeral_of_le`) every integer of `[0, S_7]` is the value of at least
+one cap-respecting tuple on seven places. This is the same lemma T3 uses, and it is the
+only place in T5 where it is used.
+
+**Step 4 — the closed form.** For `k >= 8` we have `F_{k-1} >= 13 >= 10`, hence
+`F_{k-1}/5 - 1 >= F_{k-1}/10`, and `(F1)` gives `F_{k-1} >= phi^{k-3}`. So
+
+```
+log prod_{k=8}^{a} (F_{k-1}/5 - 1)  >=  sum_{k=8}^{a} ( (k-3) lambda - log 10 )
+  =  lambda ( (a-3)(a-2)/2 - 10 )  -  (a - 7) log 10
+  =  lambda a^2/2  -  (5 lambda/2 + log 10) a  +  ( 7 log 10 - 7 lambda ).
+```
+
+Numerically `5 lambda/2 + log 10 = 3.5056146...` and `7 log 10 - 7 lambda = 12.7496128...`.
+Replacing the first by the larger `3.5057` and the second by the smaller `12.749` weakens
+the bound in both places, which gives the stated closed form. ∎
+
+**Sharpness of Lemma F is not claimed and is not needed.** Computing `B(a, ·)` exactly by
+DP over the range `8 <= a <= 16`, the band minimum's departure from `lambda a^2/2` grows by
+about `1.53` per unit of `a` — against the proved coefficient `3.5057`, so the lemma is
+loose by roughly a factor of two in its linear term over that range. Sixteen points settle
+nothing about the coefficient, and nothing below needs them to: both the proved and the
+observed forms are `lambda a^2/2 + O(a)`, and only the quadratic term reaches §8.4.
+
+### 8.3 The construction L2
+
+Fix `N >= 10000` and let
+
+```
+c = max{ k : F_k <= N },                 a = min{ k >= 1 : S_k >= (4/3) N },
+M = c - a,                               X = floor( N - S_a/5 ),
+m_k = floor( X / (M F_k) )   for a < k <= c.
+```
+
+`a` is well defined because `S_k -> infinity`, and `a >= 2` because `S_1 = F_1 F_2 = 1`
+is below `(4/3) N`. The condition defining `a` is `N <= theta_2 S_a`; the definition of
+`X` is `X = floor(N - theta_1 S_a)`. That `M >= 1` is checked in §8.4.
+
+**(1) The block absorbs the whole band, not just one residue.** By construction
+`N <= theta_2 S_a`.
+
+**(2) `X` is a constant fraction of `N`.** The place values satisfy `F_a/F_{a-1} <= 2` for
+every `a >= 2` — at `a = 2` it reads `F_2/F_1 = 1`, at `a = 3` it reads `F_3/F_2 = 2`,
+and for `a >= 4` it is `F_a = F_{a-1} + F_{a-2} <= 2 F_{a-1}` — so
+
+```
+S_a / S_{a-1} = F_{a+1}/F_{a-1} = 1 + F_a/F_{a-1} <= 3.
+```
+
+Minimality of `a` (available because `a >= 2`) gives `S_{a-1} < (4/3) N`, hence
+`S_a < 4 N` and
+
+```
+X  >  N - (4/5) N - 1  =  N/5 - 1  >=  N/6      (the last step for N >= 30).
+```
+
+**(3) The caps are respected on the counting block.** For `a < k <= c`, using `M >= 1`
+and `X <= N`,
+
+```
+m_k <= X/F_k <= N/F_k,     and    F_k^2 >= F_{a+1}^2 >= F_a F_{a+1} = S_a >= (4/3) N > N,
+```
+
+so `m_k <= N/F_k < F_k`.
+
+**(4) The budget is respected.** For any tuple `(d_k)_{a<k<=c}` with `0 <= d_k <= m_k`,
+
+```
+sigma = sum_{a<k<=c} d_k F_k  <=  sum_{a<k<=c} (X/(M F_k)) F_k  =  X.
+```
+
+**(5) Every residue lands in the band.** For such a tuple, `m = N - sigma` satisfies
+`m <= N <= theta_2 S_a` by (1), and, since `X = floor(N - theta_1 S_a) <= N - theta_1 S_a`,
+
+```
+m  =  N - sigma  >=  N - X  >=  theta_1 S_a.
+```
+
+So `m` is an integer of `I_a`, and Lemma F applies to it — provided `a >= 8`, which §8.4
+checks.
+
+**(6) Completion and injectivity.** By Lemma F there are at least
+`G(a) := prod_{k=8}^{a} (F_{k-1}/5 - 1)` cap-respecting tuples on `[1, a]` of value
+`m`. Gluing any of them to the free tuple, and setting `d_k = 0` for `k > c`, gives a
+digit sequence with total `sigma + (N - sigma) = N`, respecting every cap, supported on
+exactly the places `F_k <= N`; it is therefore counted by `R_c(N)`. Restricting a
+produced numeral to `(a, c]` returns the free tuple and restricting it to `[1, a]`
+returns the inner tuple, so distinct pairs give distinct numerals. Hence
+
+```
+R_c(N)  >=  ( prod_{k=a+1}^{c} (m_k + 1) )  *  G(a).                               (8.3)
+```
+
+The contrast with §4.1 is the second factor alone: L1's block contributes `1` there,
+because it selects one completion per residue; here it contributes `G(a)`, and §8.4
+shows that this factor is what supplies the missing `lambda L^2/8`.
+
+### 8.4 Evaluation
+
+Write `t = log N` and `L = t/lambda`, so `phi^L = N`; `N >= 10000` gives
+`L >= 9.2103/0.4812119 >= 19.13`. From `(F1)`, `phi^{2k-3} <= S_k <= phi^{2k-1}`.
+
+| quantity | bound | derivation |
+|---|---|---|
+| `c` | `L < c <= L + 2` | as in §4.2 |
+| `a` | `(L+1)/2 <= a < (L + 5.5979)/2` | below |
+| `M` | `(L - 5.5979)/2 < M <= (L+3)/2` | subtract |
+
+For the lower bound on `a`: `phi^{2a-1} >= S_a >= (4/3) N >= phi^L`, so `2a - 1 >= L`.
+For the upper: minimality gives `S_{a-1} < (4/3) N`, and `S_{a-1} >= phi^{2a-5}`, so
+`2a - 5 < L + log(4/3)/lambda`; and `log(4/3)/lambda = 0.59782835... < 0.5979`.
+
+At `L >= 19.13` this gives `M > 6.7` and `a >= 10.06`, so `M >= 1` and `a >= 8` as §8.3
+and Lemma F require.
+
+**The counting block.** Since `floor(x) + 1 > x`, each factor of (8.3) satisfies
+`m_k + 1 > X/(M F_k)`, and the resulting inequality is valid term by term even where
+`X/(M F_k) < 1` and the term is negative. With `log X >= t - log 6` from §8.3(2) and
+`log F_k <= (k-1) lambda` from `(F1)`,
+
+```
+log prod_{k=a+1}^{c} (m_k + 1)  >=  M log X - M log M - sum_{k=a+1}^{c} log F_k
+   >=  M (t - log 6) - M log M - lambda M (a + c - 1)/2
+   >=  M lambda L - M log 6 - M log M - lambda M (3L + 7.5979)/4
+    =  lambda M (L - 7.5979)/4 - M log M - M log 6,
+```
+
+using `a + c - 1 <= (L + 5.5979)/2 + (L + 2) - 1 = (3L + 7.5979)/2` from the table.
+Since `L >= 19.13 > 7.5979` the first term increases with `M`, while `-M log M` and
+`-M log 6` decrease with `M` on `M >= 1`; substituting `M > (L - 5.5979)/2` in the first
+and `M <= (L+3)/2` in the other two,
+
+```
+log prod (m_k + 1)  >=  lambda (L - 5.5979)(L - 7.5979)/8
+                        - ((L+3)/2) log((L+3)/2) - (log 6)(L+3)/2.
+```
+
+Expanding, `lambda * 13.1958/8 = 0.79374687... <= 0.79375`,
+`lambda * 42.532286/8 = 2.55837987... >= 2.5583` and `(log 6)/2 = 0.89587973... <= 0.89588`,
+each rounding taken in the direction that lowers the right-hand side:
+
+```
+log prod (m_k + 1)  >=  lambda L^2/8 - 1.68963 L - 0.12934 - ((L+3)/2) log((L+3)/2).  (8.4)
+```
+
+**The block.** By Lemma F, `log G(a) >= lambda a^2/2 - 3.5057 a + 12.749`. The two
+terms are bounded using opposite ends of the table's range for `a`, which is legitimate
+because both bounds hold at the actual `a`: `lambda a^2/2 >= lambda (L+1)^2/8` from
+`a >= (L+1)/2`, and `-3.5057 a > -3.5057 (L + 5.5979)/2 = -1.75285 L - 9.81228` from
+`a < (L + 5.5979)/2`. With `lambda/4 = 0.12030295... >= 0.120302` and
+`lambda/8 = 0.06015147... >= 0.06015`,
+
+```
+log G(a)     >=  lambda L^2/8 + 0.120302 L + 0.06015 - 1.75285 L - 9.81228 + 12.749
+             >=  lambda L^2/8 - 1.632548 L + 2.996.                                 (8.5)
+```
+
+**Together.** Adding (8.4) and (8.5) and discarding the positive constant
+`2.996 - 0.12934`, which weakens the bound,
+
+```
+log R_c(N)  >=  lambda L^2/4 - ((L+3)/2) log((L+3)/2) - 3.322178 L
+            >=  lambda L^2/4 - ((L+3)/2) log((L+3)/2) - 3.3222 L.                   (8.6)
+```
+
+`lambda L^2/4 = t^2/(4 lambda)`: the two halves have arrived at the same size, and their
+sum is T2's upper constant.
+
+### 8.5 From (8.6) to the stated form
+
+`3.3222 L = 3.3222 t/lambda` and `3.3222/lambda = 6.9038203... <= 6.9039`, so that term
+is at most `6.9039 t`. For the other, set `beta(t) = 1/(2 lambda) + 3/(2t)`, so that
+`(L+3)/2 = beta(t) t` — the same `beta` as in §4.2, and unrelated to the block factor
+`G(a)` above — and
+
+```
+((L+3)/2) log((L+3)/2)  =  (t/(2 lambda)) log t  +  (3/2) log t
+                           +  (t/(2 lambda)) log beta(t)  +  (3/2) log beta(t).
+```
+
+Every rounding below is taken in the direction that weakens the conclusion, and the chain
+is checkable at five decimals. `N >= 10000` means `t >= 9.2103`. Then
+`3/(2t) <= 1.5/9.2103 <= 0.16288` and `1/(2 lambda) <= 1.03905`, so
+`beta(t) <= 1.20193` and `log beta(t) <= log 1.20193 <= 0.18393`. Hence
+
+- `(t/(2 lambda)) log beta(t)  <=  1.03905 * 0.18393 * t  <=  0.19112 t`;
+- `(3/2) log t <= 0.36161 t`, because `log t/t` is decreasing for `t >= e` and equals
+  `2.22033/9.2103 <= 0.24107` at `t = 9.2103`, and `1.5 * 0.24107 = 0.361605`;
+- `(3/2) log beta(t) <= 1.5 * 0.18393 = 0.275895 <= 0.03 t`, since `0.03 * 9.2103 >= 0.2763`.
+
+Adding, `((L+3)/2) log((L+3)/2) <= (t log t)/(2 lambda) + 0.58273 t`, and with (8.6)
+
+```
+log R_c(N)  >=  t^2/(4 lambda) - (t log t)/(2 lambda) - (0.58273 + 6.9039) t
+            >=  t^2/(4 lambda) - (t log t)/(2 lambda) - 7.5 t,
+```
+
+which is T5. ∎
+
+**Uniformity.** `a`, `c`, `M` and `X` are functions of `N` alone and every step is an
+inequality valid at each `N >= 10000` — no subsequence, no averaging, no choice depending
+on `N` beyond those four. So T5 holds at every integer `N >= 10000`, which is what C5
+needs in order to bound the liminf.
+
+**Proof of C5.** Dividing T5 by `t^2 = (log N)^2`, for `N >= 10000`
+
+```
+log R_c(N)/(log N)^2  >=  1/(4 lambda) - (log t)/(2 lambda t) - 7.5/t,
+```
+
+and both correction terms tend to `0`, so `liminf >= 1/(4 lambda)`. T2's consequence gives
+`limsup <= 1/(4 lambda)`. A liminf at least as large as the limsup forces equality and the
+existence of the limit. ∎
+
+**The threshold is honest but the inequality is still vacuous at computable `N`.** The
+right-hand side of T5 is negative until `t ≈ 20.475`, i.e. `N ≈ 7.8 * 10^8`. That is a
+long way past the range where `R_c(N)` has been computed exactly, though nearer than T3's
+`5.3 * 10^{10}`. As with T3, §8.7 confronts the *construction* with the exact values, not
+this inequality.
+
+### 8.6 Where route L2a stopped
+
+L2a was attempted first and did not close. Its plan (§4.4) is to replace the contiguous
+reserved block by a sparse reserved set and to correct residues hierarchically, coarsest
+scale first, so that each reserved place absorbs only a residue of its own magnitude. The
+statement it needs, and that could not be established, is:
+
+> for a free family that is a **product** `prod_k {0, ..., m_k}` over the non-reserved
+> places, the residue left after the free digits are chosen can be driven to zero by the
+> reserved digits alone, without any digit exceeding its cap.
+
+The obstruction is not the carry's termination, which is where §4.4 expected it to be. It
+is upstream of that. In a product family the free digits are chosen independently of `N`,
+so after they are chosen the residue is an arbitrary integer of `[0, N]` — the hierarchy
+of scales never gets started, because there is no first scale at which the residue is
+already small. Making the residue small at each scale requires choosing the free digits
+greedily against `N`, and greedily-chosen digits are no longer a product: the number of
+admissible choices at each place then depends on the choices already made, so the count is
+no longer `prod (m_k + 1)` and has to be tracked through the adaptation.
+
+Tracking the count through an adaptive choice at every place is precisely what Lemma F
+does — its `D_a(m)` **is** the set of admissible top digits given the residue, and the
+recursion (8.1) is the tracking. So the repair of L2a is not a sparse reserved set at all;
+it is to stop reserving places and count the choices instead, at every place rather than
+at a sparse subset. That is route L2b, and it is why L2a was not pursued further once
+L2b closed. Whether a genuinely sparse variant also works is not settled here, and
+nothing above shows that it cannot.
+
+### 8.7 Numerical confrontation
+
+The construction of §8.3, evaluated directly with the *proved* block factor `G(a)` of
+Lemma F rather than with the true band minimum of `B(a, ·)`, is
+`capfib.lower.t5_lower_bound`. At the
+largest verified value, `N` = 1000000 {fig:n-max-verified}, it gives 39.802
+{fig:t5-lower-nmax} against the exact `log R_c(N)` of 68.3632 {fig:log-rc-nmax}, with a
+block boundary at place 16 {fig:t5-block-nmax}; of that total, 24.765
+{fig:t5-log-block-nmax} is the block factor — the part L1 discards, and on its own already
+larger than L1's whole bound of 17.774 {fig:t3-lower-nmax}. It stayed at or below the
+exact value at each of the 37 sampled `N` and exceeded it at none of them; the run gate in
+`scripts/run_phase2.py` refuses to write anything if it ever does.
+
+Three further checks are in `tests/test_phase2_bounds.py`, all against exact enumeration
+rather than against the formulas they are testing:
+
+- Lemma F's closed form is checked against the exact band minimum of `B(a, ·)`, computed
+  by DP, for `a` = 8 to 12.
+- (8.2), the step everything rests on, is checked exhaustively — at every integer of the
+  band, for `a` = 2 to 13, not at sampled residues.
+- §8.3's cap, budget and band conditions are checked at four values of `N` up to `10^6`.
+
+Separately, and outside the suite because it is slow, the construction was enumerated
+element by element at each `N` from 3 to 219 (at `N = 2` the counting block is empty and
+the construction is not defined): each produced digit sequence was confirmed to be a valid
+capped representation of `N`, all of them distinct, and their number at or below the
+brute-force `R_c(N)`.
+
+### 8.8 What is not claimed
+
+**C5 does not make T2 sharp in the secondary term.** T5 and T2's effective form of §3.6
+sandwich `log R_c(N)` between `t^2/(4 lambda) - (t log t)/(2 lambda) - 7.5 t` and
+`t^2/(4 lambda) - (t log t)/(2 lambda) + O(t)`, so the first two terms agree; but T2's
+`O(t)` is not made explicit anywhere in this note, and no attempt is made here to pin the
+`O(t)` term from either side.
+
+**Lemma F is not a local limit theorem.** It bounds `B(a, m)` from below by
+`exp(lambda a^2/2 - O(a))` on the band, which is `exp(-O(a))` times the total mass. It says
+nothing about `B(a, m)` from above, nothing about the shape of `B(a, ·)`, and nothing at
+all outside the band — in particular `B(a, 0) = 1`, so no bound of this kind can hold on
+all of `[0, S_a]`.
+
+**The fluctuation objection of §4.4 is answered, not refuted.** That paragraph observed
+that `R_c` has 49.6% decreasing steps over N <= 1000000 ({claim:rc-not-monotone}), so an
+inner bound holding on average need not hold at a given residue. Lemma F does not
+contradict that measurement: it is a bound holding uniformly across the band rather than
+on average over it, and it is coarse enough — `exp(-O(a))` below the mean — that
+fluctuations of the measured size pass under it untouched.
+
+**The ledger and the roadmap are deliberately untouched.** C5 bears on
+`{claim:leading-constant}`, which this note still records as a conjecture, and on
+`{claim:sandwich-bounds}`; promoting either is a decision to be taken after this proof has
+been read, not a side effect of writing it. Nothing in §§1–7 was weakened: T3 and C4 are
+left exactly as proved. T5 does not use T3 as a step — the appendix table records that —
+but it reuses T3's machinery, the block/counting split and the completeness lemma, and a
+reader tracking where the factor of two went needs both halves in view.
+
+**The weakest step, named.** It is Step 2 of Lemma F — the four-case table and the
+integer count (8.2). Everything else in T5 is bookkeeping over inequalities of the kind
+§4 already uses; that step is the only genuinely new inference, it is where an
+off-by-one or a missed case would be invisible in the algebra, and cases 2 and 3 exist
+only because the naive version (assuming `[alpha, beta] ⊆ [0, F_a]`) is false near the
+band edges. It is checked exhaustively rather than at samples for that reason.
 
 ---
 
@@ -697,7 +1172,10 @@ Attempted after the main results; see the section added by the stretch task.
 | T2 | (H1), (H2), `(F1)`, `(F2)`, and T1 for the consequence |
 | T3 | `{claim:sum-of-squares}`, `{claim:completeness-no-gaps}` (Lean: `exists_numeral_of_le`), `(F1)` |
 | C4 | T2, T3 |
+| Lemma F (§8.2) | `{claim:sum-of-squares}`, `{claim:completeness-no-gaps}` (Lean: `exists_numeral_of_le`), `(F1)` |
+| T5 | Lemma F, `(F1)`; not on T3 |
+| C5 | T2, T5 |
 
-Nothing in T1–T3 depends on the CKL citation, on `countReps_le_uncapped`, or on any
+Nothing in T1–T5 depends on the CKL citation, on `countReps_le_uncapped`, or on any
 numerical result. §6 is confrontation, not evidence: no constant in §§2–5 was derived
 from data.
