@@ -114,16 +114,24 @@ with no gaps.
 
 For the article's four places: `1 + 1 + 4 + 9 = 15 = F₄·F₅ = 3·5`. ✓
 
-**Why there are no gaps.** A digit system with place values `u₁ < u₂ < …` and digit
-bounds `m₁, m₂, …` represents every integer up to `Σ m_k u_k` without gaps precisely when
+**Why there are no gaps.** Let `S_n = Σ_{k≤n} F_k²` be the capacity of the first `n` places.
+Every integer in `[0, S_n]` is representable, by induction on `n`. For `n = 0` the range is
+`{0}`. For the step, given `N ≤ S_{n+1} = S_n + F_{n+1}²`, take the top digit
+`d_{n+1} = min(F_{n+1}, ⌊N / F_{n+1}⌋)`
+and the residue `r = N − d_{n+1} F_{n+1}`. If `N ≥ F_{n+1}²` then `d_{n+1} = F_{n+1}` and
+`r = N − F_{n+1}² ≤ S_n`. Otherwise `d_{n+1} = ⌊N/F_{n+1}⌋`, so `r = N mod F_{n+1} < F_{n+1} ≤ S_n`
+for `n ≥ 1` (and `r = 0` for `n = 0`, where the place value is 1). Either way the induction
+hypothesis applies to `r`.
 
-```
-u_k  ≤  1 + Σ_{j<k} m_j u_j        for every k
-```
+This is the Kempner–Fraenkel argument (Fraenkel 1985) in the form that does **not** require the
+place values to be strictly increasing — which matters here, because `F_1 = F_2 = 1` are equal.
+The usual statement of the condition, `u_k ≤ 1 + Σ_{j<k} m_j u_j` for `u_1 < u_2 < …`, does not
+apply verbatim to this convention. The overlapping-interval induction above needs only
+`F_n ≤ 1 + Σ_{j<n} F_j²`, which holds with enormous room to spare. That slack is exactly the
+redundancy.
 
-(the Kempner–Fraenkel completeness condition; the greedy algorithm then always
-succeeds). Here `u_k = m_k = F_k`, so the condition reads `F_k ≤ 1 + F_{k−1}F_k`, which is
-true for all *k* with enormous room to spare. That slack is exactly the redundancy.
+This argument is formalised in Lean as `exists_numeral_of_le`
+(`lean/NonLinearNumberSystems/Completeness.lean`).
 
 **Impact.** Completeness is the property that makes this a genuine numeration system
 rather than a curiosity. Note that the *ordinary* Fibonacci base (digits `{0,1}`) is

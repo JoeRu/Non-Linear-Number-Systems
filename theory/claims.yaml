@@ -19,7 +19,7 @@
 - id: completeness-no-gaps
   statement: "Every integer in [0, sum_{k<=n} F_k^2] has at least one representation."
   status: theorem
-  evidence: "Kempner-Fraenkel condition F_k <= 1 + F_{k-1} F_k; theory/01-background.md §3"
+  evidence: "Overlapping-interval induction in theory/01-background.md §3, valid for the duplicated 1-place; formalised in Lean as exists_numeral_of_le in lean/NonLinearNumberSystems/Completeness.lean"
   source: "Fraenkel 1985, Systems of Numeration"
 
 - id: leading-constant

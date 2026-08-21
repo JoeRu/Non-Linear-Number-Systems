@@ -13,7 +13,12 @@ Defined in code exactly once, in `capfib/fib.py`.
 
 - `R_c(N)` — the number of sequences `(d_k)` with `0 <= d_k <= F_k` and `sum_k d_k F_k = N`.
   The index `k` ranges over **all** places with `F_k <= N` {claim:place-range}.
-- `R_u(N)` — as above with `d_k` unbounded (Coons–Kristensen–Laursen 2023).
+- `R_u(N)` — as above with `d_k` unbounded. Related to the partition function of
+  Coons–Kristensen–Laursen 2023, but **not yet verified to be the same object**: their `p_F(n)`
+  counts multisets of Fibonacci numbers, whereas `R_u` counts digit sequences over places
+  including both `F_1 = 1` and `F_2 = 1`, so the two differ by a splitting factor. The factor is
+  expected to be `o(exp((log N)^2))` and therefore harmless to leading order; establishing that
+  requires the paper, which this project does not hold.
 - `b(N)` — the binary partition function (Mahler 1940, de Bruijn 1948).
 
 ## Generating function
@@ -33,7 +38,7 @@ Primary focus: (A) and (B). (C) is deferred to Phase 6.
 
 | Statement | Status |
 |---|---|
-| `log R_u(N) ~ (log N)^2 / (2 log phi)` | theorem, cited (CKL 2023) |
+| `log R_u(N) ~ (log N)^2 / (2 log phi)` | cited (CKL 2023), **pending verification** that `R_u` is their object |
 | Completeness: no gaps on `[0, sum F_k^2]` | theorem {claim:completeness-no-gaps} |
 | `sum_{k<=n} F_k^2 = F_n F_{n+1}` | theorem {claim:sum-of-squares} |
 | `C_c = 1 / (4 log phi)` | conjecture {claim:leading-constant} |
