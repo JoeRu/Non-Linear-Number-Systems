@@ -36,12 +36,27 @@ RESIDUAL_T = [10.0, 20.0, 40.0, 80.0, 160.0, 320.0, 640.0, 1280.0]
 """Sampled t = log(1/s) for the residual observation. Certifying t = 1280 takes
 about 7 seconds, which is why this sweep lives in the script and not the suite."""
 
+RESIDUAL_ASYMPTOTIC_T_MIN = 20.0
+"""Marks where the residual has entered its asymptotic regime: for t >= this value
+the residual sits in a tight band (spread ~2e-4), while t = 10 -- retained in
+RESIDUAL_T deliberately, never dropped -- sits about 0.018 away from that band,
+since the leading term t^2/(4 log phi) is only an asymptotic approximation and
+t = 10 is the sample furthest from the regime it approximates. Both figures are
+published (see the residual-full-* and residual-asymptotic-* keys below) so a
+claim about this sweep can be written from the honest range, not a narrower one
+mistaken for the whole."""
+
 PHI = (1 + 5 ** 0.5) / 2
 LOG_PHI = math.log(PHI)
 
 
 def atomic_write_text(path: Path, text: str) -> None:
-    """Write text to `path` via a temporary file and an atomic rename."""
+    """Write text to `path` via a temporary file and an atomic rename.
+
+    Args:
+        path: destination file path. Its parent directory must already exist.
+        text: the full contents to write.
+    """
     handle = tempfile.NamedTemporaryFile(
         "w", dir=path.parent, delete=False, encoding="utf-8"
     )
@@ -61,6 +76,10 @@ def atomic_savefig(fig, path: Path) -> None:
     ".tmp" after it) because matplotlib infers the output format from the
     final extension of the filename it is given; a name ending in ".tmp"
     makes it raise "Format 'tmp' is not supported" instead of writing a PNG.
+
+    Args:
+        fig: the matplotlib figure to save.
+        path: destination file path. Its parent directory must already exist.
     """
     fd, tmp_name = tempfile.mkstemp(dir=str(path.parent), suffix=path.suffix)
     os.close(fd)
@@ -99,6 +118,13 @@ def residual_sweep() -> list[dict]:
 
 
 def main() -> int:
+    """Run the Phase 2 verification: bounds against every exact Phase 1 value,
+    plus the residual sweep, writing artifacts only if every gate passes.
+
+    Returns:
+        0 on success (all artifacts written); 1 if any gate or bound check
+        fails, in which case nothing is written.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--n-max", type=int, default=1_000_000, help="largest N to verify"
@@ -191,7 +217,14 @@ def main() -> int:
 
     residuals = [r["residual"] for r in residual_rows]
     residual_centre = sum(residuals) / len(residuals)
-    residual_spread = max(residuals) - min(residuals)
+    residual_full_spread = max(residuals) - min(residuals)
+    asymptotic_residuals = [
+        r["residual"] for r in residual_rows if r["t"] >= RESIDUAL_ASYMPTOTIC_T_MIN
+    ]
+    asymptotic_ts = [r["t"] for r in residual_rows if r["t"] >= RESIDUAL_ASYMPTOTIC_T_MIN]
+    residual_asymptotic_centre = sum(asymptotic_residuals) / len(asymptotic_residuals)
+    residual_asymptotic_spread = max(asymptotic_residuals) - min(asymptotic_residuals)
+    residual_asymptotic_t_min = min(asymptotic_ts)
     residual_lines = ["t,log_F_c,leading,residual"]
     residual_lines += [
         f"{r['t']!r},{r['log_F_c']!r},{r['leading']!r},{r['residual']!r}"
@@ -212,10 +245,38 @@ def main() -> int:
             "precision": 4,
             "description": "mean residual of log F_c against its leading term over the sampled t",
         },
-        "residual-spread": {
-            "value": residual_spread,
+        "residual-full-spread": {
+            "value": residual_full_spread,
             "precision": 6,
-            "description": "max minus min residual over the sampled t",
+            "description": (
+                "max minus min residual over all sampled t in "
+                "[10, 1280], including the pre-asymptotic t=10 point"
+            ),
+        },
+        "residual-asymptotic-centre": {
+            "value": residual_asymptotic_centre,
+            "precision": 4,
+            "description": (
+                f"mean residual over the samples with t >= "
+                f"{RESIDUAL_ASYMPTOTIC_T_MIN:.0f} (the asymptotic regime; "
+                f"excludes the pre-asymptotic t=10 point)"
+            ),
+        },
+        "residual-asymptotic-spread": {
+            "value": residual_asymptotic_spread,
+            "precision": 6,
+            "description": (
+                f"max minus min residual over the samples with t >= "
+                f"{RESIDUAL_ASYMPTOTIC_T_MIN:.0f}"
+            ),
+        },
+        "residual-asymptotic-t-min": {
+            "value": residual_asymptotic_t_min,
+            "precision": 0,
+            "description": (
+                "smallest sampled t in the asymptotic-regime subset "
+                "(t >= RESIDUAL_ASYMPTOTIC_T_MIN)"
+            ),
         },
         "residual-t-min": {
             "value": min(RESIDUAL_T),
@@ -310,8 +371,12 @@ def main() -> int:
     print(f"  largest N verified: {biggest['N']}")
     print(f"  certified slack there: {figures['chernoff-slack-nmax']['value']:.4f}")
     print(
-        f"  residual over t in [{min(RESIDUAL_T):.0f}, {max(RESIDUAL_T):.0f}]: "
-        f"{residual_centre:.4f} +/- {residual_spread:.6f}"
+        f"  residual, full range t in [{min(RESIDUAL_T):.0f}, {max(RESIDUAL_T):.0f}]: "
+        f"spread {residual_full_spread:.6f} (centre {residual_centre:.4f})"
+    )
+    print(
+        f"  residual, asymptotic regime t >= {RESIDUAL_ASYMPTOTIC_T_MIN:.0f}: "
+        f"{residual_asymptotic_centre:.4f} +/- {residual_asymptotic_spread:.6f}"
     )
     return 0
 

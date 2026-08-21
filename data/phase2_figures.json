@@ -39,13 +39,28 @@
     "precision": 4,
     "value": 0.35816961126809205
   },
+  "residual-asymptotic-centre": {
+    "description": "mean residual over the samples with t >= 20 (the asymptotic regime; excludes the pre-asymptotic t=10 point)",
+    "precision": 4,
+    "value": 3.227396794550702
+  },
+  "residual-asymptotic-spread": {
+    "description": "max minus min residual over the samples with t >= 20",
+    "precision": 6,
+    "value": 0.0001781687401205545
+  },
+  "residual-asymptotic-t-min": {
+    "description": "smallest sampled t in the asymptotic-regime subset (t >= RESIDUAL_ASYMPTOTIC_T_MIN)",
+    "precision": 0,
+    "value": 20.0
+  },
   "residual-centre": {
     "description": "mean residual of log F_c against its leading term over the sampled t",
     "precision": 4,
     "value": 3.225127125158062
   },
-  "residual-spread": {
-    "description": "max minus min residual over the sampled t",
+  "residual-full-spread": {
+    "description": "max minus min residual over all sampled t in [10, 1280], including the pre-asymptotic t=10 point",
     "precision": 6,
     "value": 0.018236084771913852
   },
