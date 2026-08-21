@@ -29,6 +29,8 @@ Das Problem sitzt exakt zwischen zwei klassischen, gelösten Fällen:
 
 ## Fortschritt
 
+**Offene Risiken aus ungelösten Review-Disputen:** [`docs/risks.md`](risks.md).
+
 Stand: 2026-08-20. Jede erledigte Teilaufgabe mit dem Commit, der sie abdeckt.
 Offene Punkte sind bewusst *nicht* abgehakt — auch dann nicht, wenn Infrastruktur
 dafür schon existiert.

@@ -141,6 +141,28 @@ lake env lean NonLinearNumberSystems/Redundancy.lean
    already passed an internal review loop. An outside reader with no stake in
    the reasoning catches what self-review structurally cannot.
 
-7. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
+7. **Always check Copilot's PR review.** Standing decision (2026-08-21). Read
+   it on every pull request, **including after merge** — a merged PR is not
+   closed until its review has been read and each finding verified.
+
+   Its record here is mixed in both directions and that is the point. On PR #3
+   it confidently claimed a Lean proof left its goal unsolved; `#print axioms`
+   and deleting the tactic it called insufficient both disproved it. On PR #4 it
+   found real defects that three internal review rounds and two Codex passes had
+   all missed. So: verify each finding, never accept or dismiss the set
+   wholesale.
+
+   `gh api repos/{owner}/{repo}/pulls/{n}/reviews` for the summary and
+   `.../pulls/{n}/comments` for the inline findings — read both, since the
+   summary hides suppressed comments that contain real content.
+
+8. **Unresolved review disputes go in [`docs/risks.md`](docs/risks.md).** When a
+   reviewer holds a position, the project holds another, and no further round
+   will settle it, record it: an ID, the description, both positions stated
+   fairly, and what it could cost the roadmap's objective if the project's
+   position is wrong. That file is for decisions taken under disagreement — not
+   for defects. A defect everyone agrees on gets fixed or tracked as an issue.
+
+9. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
    de Bruijn, Coons–Kristensen–Laursen, Fraenkel) or from Mathlib, include the source
    reference in a comment.
