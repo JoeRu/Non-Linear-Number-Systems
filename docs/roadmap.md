@@ -93,9 +93,12 @@ Erledigt:
 ### Phase 2 — Elementare Schranken ✅ Sandwich bewiesen, Lücke Faktor 2
 
 - [x] $\sum_{k \le n} F_k^2 = F_n F_{n+1}$ **in Lean bewiesen** (nicht in Mathlib vorhanden) — `53f8030`
-- [x] $R_c(N) \le R_u(N)$ **in Lean bewiesen**, ohne `sorry` (`countReps_le_uncapped`) — `53f8030`, `3a1b8c1`.
-      Der Satz ist **nicht tragend**: T1/T2 beweisen die obere Schranke direkt und ohne CKL-Zitat,
-      die Ungleichung stützt nur die qualitative CKL-Bemerkung in `phase2_bounds.md` §7.
+- [x] `countReps_le_uncapped` **in Lean bewiesen**, ohne `sorry` — `53f8030`, `3a1b8c1`.
+      Bewiesen ist die **längenindizierte** Ungleichung `countReps n N ≤ countRepsUncapped n N`
+      bei festem $n$, **nicht** das All-Stellen-$R_c(N) \le R_u(N)$ (Trap 1 in `CLAUDE.md`,
+      Unterscheidung in `phase2_bounds.md` §7). Der Satz ist außerdem **nicht tragend**:
+      T1/T2 beweisen die obere Schranke direkt und ohne CKL-Zitat, die Ungleichung stützt
+      nur die qualitative CKL-Bemerkung.
 - [x] Vollständigkeit **in Lean bewiesen**, ohne `sorry` (`exists_numeral_of_le`, gieriger Abstieg) — `53f8030`, `613da4f`
 - [x] Zusatz: „1 > 1“ formal bewiesen — zwei verschiedene Numerale mit gleichem Wert (`exists_two_numerals_same_value`) — `53f8030`
 - [x] Obere Schranke **ohne** Coons–Kristensen–Laursen: T1 (effektive Chernoff-Schranke) und T2

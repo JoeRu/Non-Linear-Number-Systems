@@ -1,12 +1,16 @@
 # Phase 2 — Result
 
-**Status:** complete, 2026-08-21 · **Proved:** a two-sided bound on `log R_c(N)/(log N)^2`
+**Status:** complete, 2026-08-21 · **Proved:** two-sided bounds on the liminf and
+limsup of `log R_c(N)/(log N)^2`
 
-Phase 2 proves the first theorem of the programme: `log R_c(N)` is trapped
-between `(log N)^2/(8 log phi)` and `(log N)^2/(4 log phi)`. The two constants
-differ by a factor of two, so the sandwich **does not close**, and the gap is
-not an artefact of loose estimates — it is where the lower-bound construction
-spends half its places.
+Phase 2 proves the programme's first asymptotic theorem about `log R_c(N)`: the
+liminf and limsup of `log R_c(N)/(log N)^2` lie between `1/(8 log phi)` and
+`1/(4 log phi)` — **in the sense of C4 below**, and in no other. It is not a
+pointwise statement: nothing here traps `log R_c(N)` between the two expressions
+at a given `N`, and the sampled ratios at `N = 2, 3, 5` sit above the upper
+constant (see "The ratio"). The two constants differ by a factor of two, so the
+sandwich **does not close**, and the gap is not an artefact of loose estimates —
+it is where the lower-bound construction spends half its places.
 
 The proofs are in [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md);
 this page is the summary and quotes it. Every generated number below is read
@@ -82,6 +86,12 @@ leading order those are the cap-binding places, which carry half of
 `log F_c(e^{-s})`. The construction spends that half on landing on `N` at all
 and counts only the other half.
 
+**This section is motivation, not a step.** Nothing in the proof of T3 uses the
+identification with regime A: T3 is proved from `(F1)` and the completeness
+lemma alone, and would stand unchanged if the identification were wrong
+(technical note §4.4). It is offered only to explain *where* the missing factor
+of two goes, and it is leading-order at that.
+
 The factor is **structural to this construction as specified** — a rectangular
 free family with one selected completion per residue — so re-estimating its sums
 more tightly cannot recover it. It is **not** claimed structural to every
@@ -111,8 +121,8 @@ agreeing to `1e-12`; `scripts/run_phase2.py` writes nothing if a gate fails.
 certified Chernoff bound is 81.9137 {fig:chernoff-certified-nmax}, a slack of
 13.5505 {fig:chernoff-slack-nmax}. Over the sampled `N <= 1000000` the bound was
 violated at none of the 37 points and was strict at each of them; the smallest
-slack anywhere in the sample is `1.94`, at `N = 2`, and the slack increases at
-every one of the 36 steps between consecutive sampled points.
+slack anywhere in the sample is `1.94`, at `N = 2`, read from
+`data/phase2_bounds.csv`.
 
 **T3's construction, evaluated directly.** At the same `N` the construction
 gives 17.774 {fig:t3-lower-nmax}, with the fixup block ending at place 16
@@ -128,9 +138,10 @@ the inequality stated as T3 is vacuous over this whole range, and it is the
 **The ratio.** `log R_c(N)/(log N)^2` is 0.3582 {fig:ratio-nmax} at
 `N` = 1000000 {fig:n-max-verified}, between the two proved constants. Its
 behaviour over the sample is **not monotone**: reading the 37 rows in order, it
-falls at every step from `N = 2` down to its sampled minimum `0.3245` at
+falls at every step from `N = 2` down to its sampled minimum `0.3245393` at
 `N = 316`, wobbles across the next four samples (`N = 377, 610, 987, 1000`,
-where it reads `0.3246`, `0.3245`, `0.3252`, `0.3251`), and then rises at every
+where it reads `0.3246032`, `0.3245443`, `0.3251635`, `0.3251464` — note
+`N = 610` sits a hair *above* the minimum, not at it), and then rises at every
 step from `N = 1000` to `0.3582` at `N = 1000000`. At the three smallest samples
 (`N = 2, 3, 5`) it lies **above** the upper constant, at `1.4427`, `0.9102` and
 `0.6213`; from `N = 8` upward, all 34 remaining sampled points lie strictly
@@ -173,7 +184,10 @@ Phase 2 shows the upper constant cannot be lowered.
 **It does not use Coons–Kristensen–Laursen.** The roadmap's upper bound went
 through `R_c <= R_u` plus the cited CKL asymptotic, which would have given
 `1/(2 log phi)`. T1 and T2 prove `1/(4 log phi)` directly, without the citation.
-The Lean statement `countReps_le_uncapped` is proved with no `sorry`, but it is
+The Lean statement `countReps_le_uncapped` is proved with no `sorry` — but what
+is proved is the *length-indexed* inequality
+`countReps n N <= countRepsUncapped n N` at a fixed number of places `n`, not
+the all-places `R_c(N) <= R_u(N)` of §1 (technical note §7) — and it is
 **not load-bearing**: it backs the qualitative comparison remark of §7 of the
 technical note and nothing else. Nothing proved in Phase 2 depends on
 identifying our `R_u` with CKL's `p_F`, an identification that remains recorded
