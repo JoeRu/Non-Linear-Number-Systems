@@ -19,6 +19,16 @@
     "precision": 0,
     "value": 16
   },
+  "flatness-slack-a-max": {
+    "description": "largest block length at which Lemma F's slack was measured",
+    "precision": 0,
+    "value": 16
+  },
+  "flatness-slack-slope": {
+    "description": "least-squares slope, per unit of a, of Lemma F's slack lambda a^2/2 - log(exact band minimum of B(a, .)) over a = 8..16; Lemma F proves this slope is at most 3.5057",
+    "precision": 4,
+    "value": 1.5230255273797673
+  },
   "log-rc-nmax": {
     "description": "exact log R_c at the largest N verified",
     "precision": 4,

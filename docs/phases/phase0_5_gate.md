@@ -30,9 +30,18 @@ the exact `log R_c` is 12.53 against a bound of 18.98.
 count of `theory/01-background.md` is a lower bound only — that count fixes the
 numeral length at `n`, which undercounts `R_c(N)`.
 
-**Status.** Numerical support for a conjecture. Not a proof. Phase 3 must still
-derive the constant from the saddle-point heuristic, and Phase 5 must still
-establish it rigorously.
+**Status, as of Phase 0.5.** Numerical support for a conjecture. Not a proof.
+Phase 3 must still derive the constant from the saddle-point heuristic, and
+Phase 5 must still establish it rigorously.
+
+**Superseded in part (Phase 2).** `{claim:leading-constant}` is no longer a
+conjecture: C5 of `docs/phases/phase2_bounds.md` §8 proves that the limit exists
+and equals `1/(4 log phi)`, elementarily and without a saddle point. The two
+paragraphs above are left as written because they record what Phase 0.5 itself
+established, which is unchanged — a measurement at 37 sampled points is not a
+proof, and was not one then either. What Phase 2 removes is the *outstanding*
+task, not the caveat: Phase 3's job is still to *explain* the constant from the
+saddle point rather than to establish it.
 
 **Consequence for the roadmap.** Phase 3 proceeds. Its job is now to explain a
 measured number rather than to predict an unknown one.

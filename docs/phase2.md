@@ -1,16 +1,25 @@
 # Phase 2 — Result
 
-**Status:** complete, 2026-08-21 · **Proved:** two-sided bounds on the liminf and
-limsup of `log R_c(N)/(log N)^2`
+**Status:** complete, 2026-08-21 · **Proved:** `log R_c(N)/(log N)^2` converges,
+to `1/(4 log phi)`
 
-Phase 2 proves the programme's first asymptotic theorem about `log R_c(N)`: the
-liminf and limsup of `log R_c(N)/(log N)^2` lie between `1/(8 log phi)` and
-`1/(4 log phi)` — **in the sense of C4 below**, and in no other. It is not a
-pointwise statement: nothing here traps `log R_c(N)` between the two expressions
-at a given `N`, and the sampled ratios at `N = 2, 3, 5` sit above the upper
-constant (see "The ratio"). The two constants differ by a factor of two, so the
-sandwich **does not close**, and the gap is not an artefact of loose estimates —
-it is where the lower-bound construction spends half its places.
+Phase 2 proves the programme's first asymptotic theorem about `log R_c(N)`, and
+then closes it:
+
+```
+lim_{N->infinity} log R_c(N)/(log N)^2  =  1/(4 log phi)  =  0.5195217...
+```
+
+— C5 of the technical note ({claim:leading-constant}). It arrives in two stages
+and both are kept. C4 first sandwiches the **liminf and limsup** between
+`1/(8 log phi)` and `1/(4 log phi)`, a factor of two apart, the gap being where
+T3's lower-bound construction spends half its places. §8 then closes that gap
+from below with a second construction, and the limit follows.
+
+**C5 is not a pointwise statement.** Nothing in Phase 2 traps `log R_c(N)`
+between two expressions at a given `N`: C5 is a statement about the limit, and
+the sampled ratios at `N = 2, 3, 5` sit above `1/(4 log phi)` (see "The ratio").
+C4 is likewise a statement about the liminf and limsup and about nothing else.
 
 The proofs are in [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md);
 this page is the summary and quotes it. Every generated number below is read
@@ -60,12 +69,14 @@ places `1..a`.
 
 numerically 0.2598 {fig:lower-constant} to 0.5195 {fig:upper-constant}.
 
-**C4 does not assert that `C_c` exists.** It bounds the liminf and the limsup,
-which is strictly weaker than convergence. Whether `log R_c(N)/(log N)^2`
-converges at all is research question (A) of
-[`theory/00-definitions.md`](../theory/00-definitions.md), and nothing in T1–T3
-bears on it. The roadmap's parametrisation `C_c = 1/(C' log phi)` presupposes
-existence; *if* `C_c` exists, C4 gives `C' in [4, 8]`.
+**C4 does not assert that `C_c` exists — C5 does.** C4 bounds the liminf and the
+limsup, which is strictly weaker than convergence, and nothing in T1–T3 bears on
+whether `log R_c(N)/(log N)^2` converges: that is research question (A) of
+[`theory/00-definitions.md`](../theory/00-definitions.md), and it is answered by
+C5 below, not by C4. Keeping the two apart matters, because it is exactly what
+T5 had to supply beyond a constant. The roadmap's parametrisation
+`C_c = 1/(C' log phi)` presupposes existence; C4 alone gives `C' in [4, 8]`
+*if* `C_c` exists, and C5 gives `C' = 4` unconditionally.
 
 **`C' in [4,8]` is not a strengthening of the roadmap's anticipated `[2,4]`.**
 The roadmap expected an upper coefficient `1/(2 log phi)` cited from
@@ -98,12 +109,69 @@ more tightly cannot recover it. It is **not** claimed structural to every
 refinement. §4.4 of the technical note names two routes that attack the block
 partition rather than the estimates (a sparse multi-scale fixup; counting all
 completions rather than one), either of which alone would close the sandwich,
-together with the failure mode of each.
+together with the failure mode of each. The second route closes; see "Closing
+the sandwich" below.
 
 That second route runs into Phase 1's finding directly: over the measured range
 `N <= 1000000` the census records 49.6% decreasing steps
 ({claim:rc-not-monotone}), so an inner bound holding on average need not hold at
 a given residue.
+
+---
+
+## Closing the sandwich
+
+Route L2b closes, and §8 of the technical note carries the proof.
+
+**Lemma F — a block is flat on its middle band.** Let `B(a, m)` count the
+cap-respecting digit tuples on places `1..a` of value `m`, and let
+`S_a = F_a F_{a+1}` be the block's capacity. For `a >= 8` and every integer `m`
+of the band `[S_a/5, 3 S_a/4]`,
+
+```
+B(a, m)  >=  prod_{k=8}^{a} (F_{k-1}/5 - 1)  =  exp(lambda a^2/2 - 3.5057 a + 12.749).
+```
+
+The proof conditions on the top digit — `B(a, m) = sum_d B(a-1, m - d F_a)`, an
+identity — keeps only the `d` whose residue stays inside the band one level
+down, and counts them: a four-case interval argument resting on
+`S_{a-1} = F_{a-1} F_a` and `S_a - S_{a-1} = F_a^2`, with completeness
+({claim:completeness-no-gaps}) as the base at `a = 7`. Uniformity in the residue
+was the obstacle §4.4 named; the reason it can be met is that the required
+precision is far coarser than a local limit theorem. The block's total mass is
+`exp(lambda a^2/2 + O(a))` spread over `S_a = exp(2 lambda a + O(1))` values, so
+losing the whole range costs `exp(-O(a))`, which is invisible at the `a^2`
+scale.
+
+**T5 — the matching lower bound.** For every integer `N >= 10000`, with
+`t = log N`,
+
+```
+log R_c(N)  >=  t^2/(4 log phi) - (t log t)/(2 log phi) - 7.5 t.
+```
+
+The construction is T3's, with the reserved block counted instead of reserved:
+the boundary `a` is chosen so that `S_a >= (4/3) N`, which places every residue
+`N - sigma` inside Lemma F's band, and the block then contributes a factor
+`exp(lambda a^2/2 - O(a))` where T3's contributed `1`. With `L = log_phi N`, both
+halves then weigh `lambda L^2/8`, and their sum `lambda L^2/4 = t^2/(4 lambda)`
+is T2's constant.
+
+**C5 — the limit exists.** Dividing T5 by `(log N)^2` bounds the liminf below by
+`1/(4 log phi)`; T2 bounds the limsup above by the same value; so the limit
+exists and equals it ({claim:leading-constant}).
+
+**Route L2a did not close.** §8.6 records where it stopped, and the obstruction
+is not the one §4.4 anticipated: it is not the carry's termination but a step
+earlier. A product free family leaves an uncontrolled residue in `[0, N]`, so
+the hierarchy of scales never starts; making the residue small at each scale
+needs adaptively chosen digits, which are not a product. Tracking the count
+through adaptive choices is what Lemma F does, so L2a's repair is L2b.
+
+**T1–T3 and C4 are not superseded.** T5 does not use T3 as a step, but it reuses
+T3's machinery and C4 remains true as proved; T3's `1/(8 log phi)` is the weaker
+bound T5 improves on, and keeping both in view is what makes the factor of two
+legible.
 
 ---
 
@@ -169,17 +237,15 @@ cannot establish a bound, and the quantity was not evaluated between them.
 
 ## What Phase 2 is not
 
-**It does not settle the constant.** The Phase 3 conjecture
-`log R_c(N) ~ (log N)^2/(4 log phi)` ({claim:leading-constant}, still a
-conjecture) sits at the *upper* endpoint of the proved interval. Phase 2
-therefore leaves it to be settled entirely from below: what is missing is a
-matching lower bound, together with the existence statement the conjecture makes
-and C4 does not.
+**It does not pin the secondary term.** T5 and T2's effective form agree to two
+terms — `log R_c(N) = t^2/(4 log phi) - t log t/(2 log phi) + O(t)` with
+`t = log N`, the lower `O(t)` explicit at `7.5 t` and the upper one not made
+explicit — but no argument in Phase 2 fixes that `O(t)` from either side.
 
-Two formulations are deliberately avoided. "The conjecture holds if and only if
-T2 is attained" is wrong — matching the limsup to the upper endpoint says
-nothing about the liminf. And "T2 is sharp" is not established: no argument in
-Phase 2 shows the upper constant cannot be lowered.
+**It does not show T2 is sharp for `R_c(N)` at a given `N`.** C5 says the limit
+of the ratio is `1/(4 log phi)`; it does not say `log R_c(N)` is close to
+`(log N)^2/(4 log phi)` at any particular `N`, and the two proved inequalities
+are both vacuous at every `N` where `R_c(N)` has been computed exactly.
 
 **It does not use Coons–Kristensen–Laursen.** The roadmap's upper bound went
 through `R_c <= R_u` plus the cited CKL asymptotic, which would have given
@@ -203,8 +269,9 @@ is pre-asymptotic.
 
 | | |
 |---|---|
-| Does `C_c` exist at all? | Research question (A); C4 does not address it |
-| Closing the sandwich | Needs a lower-bound construction that does not reserve half the places — L2a or L2b, §4.4 |
+| Does `C_c` exist at all? | **Answered.** Research question (A); C5 (§8) proves the limit exists and equals `1/(4 log phi)`. C4 alone does not address it |
+| Closing the sandwich | **Done.** Route L2b of §4.4 closes it: §8's Lemma F and T5. Route L2a did not close; §8.6 records where it stopped |
+| The secondary term | The `O(t)` in `log R_c(N) = t^2/(4 log phi) - t log t/(2 log phi) + O(t)` is not pinned from either side |
 | The CKL identification | Pending verification; out of scope for Phase 2 |
 
 ---

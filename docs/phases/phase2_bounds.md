@@ -571,8 +571,12 @@ at least `1/(8 lambda)`. Divide T2's consequence by `t^2` to get the limsup boun
 
 **C4 does not assert that `C_c` exists.** It bounds the liminf and the limsup, which is
 a strictly weaker statement than convergence. Whether `log R_c(N)/(log N)^2` converges
-at all is research question (A) of `theory/00-definitions.md`, still open, and nothing
-in T1–T3 bears on it. The roadmap's parametrisation `C_c = 1/(C' log phi)` presupposes
+at all is research question (A) of `theory/00-definitions.md`; nothing in T1–T3 bears on
+it, and C4 leaves it open. It is **not** open as of this note: §8's T5 supplies a matching
+lower bound and C5 concludes that the limit exists and equals `1/(4 lambda)`. The
+distinction C4 draws is still the right one to keep in view — bounding a liminf and a
+limsup is strictly weaker than asserting convergence — and it is what T5 had to supply in
+addition to a constant. The roadmap's parametrisation `C_c = 1/(C' log phi)` presupposes
 existence; *if* `C_c` exists, C4 gives `C' in [4, 8]`.
 
 **How `C' in [4,8]` relates to the roadmap's anticipated `[2,4]`.** It is not a
@@ -785,42 +789,45 @@ D_a(m) = { d in Z : 0 <= d <= F_a,  m - d F_a in I_{a-1} }.
 ```
 
 Unwinding the membership condition, `d in D_a(m)` iff `d` is an integer of the closed
-interval `[alpha, beta] ∩ [0, F_a]`, where
+interval `[d_lo, d_hi] ∩ [0, F_a]`, where
 
 ```
-alpha = (m - theta_2 S_{a-1})/F_a,      beta = (m - theta_1 S_{a-1})/F_a.
+d_lo = (m - theta_2 S_{a-1})/F_a,      d_hi = (m - theta_1 S_{a-1})/F_a.
 ```
+
+(These are real bounds on the digit `d`, not integers, and they are unrelated to the
+function `beta(t)` of §4.2 and §8.5, which is why they are not called `alpha` and `beta`.)
 
 Three exact identities of this place set do all the work. `S_{a-1} = F_{a-1} F_a`
 ({claim:sum-of-squares}) gives
 
 ```
-beta - alpha = (theta_2 - theta_1) S_{a-1}/F_a = (11/20) F_{a-1};                  (F3)
+d_hi - d_lo = (theta_2 - theta_1) S_{a-1}/F_a = (11/20) F_{a-1};                   (F3)
 ```
 
 `S_a - S_{a-1} = F_a^2`, which is the definition of `S`, together with `m >= theta_1 S_a`
 gives
 
 ```
-beta >= (theta_1 S_a - theta_1 S_{a-1})/F_a = theta_1 F_a;                          (F4)
+d_hi >= (theta_1 S_a - theta_1 S_{a-1})/F_a = theta_1 F_a;                          (F4)
 ```
 
 and the same identity with `m <= theta_2 S_a` gives
 
 ```
-alpha <= (theta_2 S_a - theta_2 S_{a-1})/F_a = theta_2 F_a.                         (F5)
+d_lo <= (theta_2 S_a - theta_2 S_{a-1})/F_a = theta_2 F_a.                          (F5)
 ```
 
-The intersection `[alpha, beta] ∩ [0, F_a]` is a closed interval; its length is bounded
+The intersection `[d_lo, d_hi] ∩ [0, F_a]` is a closed interval; its length is bounded
 below in each of the four cases, using `F_a >= F_{a-1}` throughout (the place values are
 non-decreasing):
 
 | case | which endpoint is active | length | bounded below by |
 |---|---|---|---|
-| 1 | `alpha >= 0`, `beta <= F_a` | `beta - alpha` | `(11/20) F_{a-1}` by (F3) |
-| 2 | `alpha < 0`, `beta <= F_a` | `beta` | `theta_1 F_a >= (1/5) F_{a-1}` by (F4) |
-| 3 | `alpha >= 0`, `beta > F_a` | `F_a - alpha` | `(1 - theta_2) F_a >= (1/4) F_{a-1}` by (F5) |
-| 4 | `alpha < 0`, `beta > F_a` | `F_a` | `F_{a-1}` |
+| 1 | `d_lo >= 0`, `d_hi <= F_a` | `d_hi - d_lo` | `(11/20) F_{a-1}` by (F3) |
+| 2 | `d_lo < 0`, `d_hi <= F_a` | `d_hi` | `theta_1 F_a >= (1/5) F_{a-1}` by (F4) |
+| 3 | `d_lo >= 0`, `d_hi > F_a` | `F_a - d_lo` | `(1 - theta_2) F_a >= (1/4) F_{a-1}` by (F5) |
+| 4 | `d_lo < 0`, `d_hi > F_a` | `F_a` | `F_{a-1}` |
 
 In every case the length is at least `rho F_{a-1} = F_{a-1}/5`. A closed real interval
 `[x, y]` contains `floor(y) - ceil(x) + 1 > (y - 1) - (x + 1) + 1 = y - x - 1` integers,
@@ -830,11 +837,18 @@ so
 |D_a(m)|  >  F_{a-1}/5 - 1     for every a >= 2 and every m in I_a.                (8.2)
 ```
 
-Note what (8.2) does **not** say: it is not a statement about where `m` sits inside its
-band, and no case is excluded as unreachable. All four occur — cases 2 and 3 are exactly
-the residues near the two edges of the band, and they are the ones that would break a
-naive argument, which is why the table treats them separately instead of assuming
-`[alpha, beta] ⊆ [0, F_a]`.
+**The split is exhaustive by construction, and case 4 is unreachable.** The four rows are
+the four sign patterns of `d_lo >= 0` and `d_hi <= F_a`, so they cover every `m` of the
+band; case 4 is listed to make that manifest, not because it occurs. It cannot occur:
+case 4 requires `d_lo < 0` and `d_hi > F_a`, hence `d_hi - d_lo > F_a`, while (F3) fixes
+`d_hi - d_lo = (11/20) F_{a-1} <= F_a`. Covering an impossible case costs the proof
+nothing — the bound in that row is the largest of the four — and the row is kept so the
+case analysis can be checked for exhaustiveness without a further argument.
+
+Cases 2 and 3 do occur; they are the residues nearest the two edges of the band. They are
+why the table cannot be collapsed into the naive assumption `[d_lo, d_hi] ⊆ [0, F_a]`,
+which is false there. Note also what (8.2) does **not** say: it is not a statement about
+where `m` sits inside its band.
 
 **Step 3 — the induction.** Let `a >= 8`. Then `F_{a-1} >= F_7 = 13`, so (8.2) gives
 `|D_a(m)| > 13/5 - 1 = 1.6`, in particular `D_a(m)` is non-empty; and since an element
@@ -868,11 +882,15 @@ Replacing the first by the larger `3.5057` and the second by the smaller `12.749
 the bound in both places, which gives the stated closed form. ∎
 
 **Sharpness of Lemma F is not claimed and is not needed.** Computing `B(a, ·)` exactly by
-DP over the range `8 <= a <= 16`, the band minimum's departure from `lambda a^2/2` grows by
-about `1.53` per unit of `a` — against the proved coefficient `3.5057`, so the lemma is
-loose by roughly a factor of two in its linear term over that range. Sixteen points settle
-nothing about the coefficient, and nothing below needs them to: both the proved and the
-observed forms are `lambda a^2/2 + O(a)`, and only the quadratic term reaches §8.4.
+DP, the shortfall of the band minimum below `lambda a^2/2` grows with a least-squares slope
+of 1.5230 {fig:flatness-slack-slope} per unit of `a`, measured over `a` from 8 to 16
+{fig:flatness-slack-a-max} — against the proved coefficient `3.5057`, so Lemma F is loose
+by roughly a factor of two in its linear term over that range. Nine points settle nothing
+about the coefficient, and nothing below needs them to: both the proved and the measured
+forms are `lambda a^2/2 + O(a)`, and only the quadratic term reaches §8.4. Like every other
+generated number quoted in this note, the slope comes from `data/phase2_figures.json` and is
+bound to the prose by `tests/test_phase2_figures.py`; `capfib.lower.block_band_min` is the
+exact band minimum it is computed from.
 
 ### 8.3 The construction L2
 
@@ -987,9 +1005,11 @@ log prod (m_k + 1)  >=  lambda (L - 5.5979)(L - 7.5979)/8
                         - ((L+3)/2) log((L+3)/2) - (log 6)(L+3)/2.
 ```
 
-Expanding, `lambda * 13.1958/8 = 0.79374687... <= 0.79375`,
-`lambda * 42.532286/8 = 2.55837987... >= 2.5583` and `(log 6)/2 = 0.89587973... <= 0.89588`,
-each rounding taken in the direction that lowers the right-hand side:
+Expanding, and using the exact products `5.5979 + 7.5979 = 13.1958` and
+`5.5979 * 7.5979 = 42.53228441`: `lambda * 13.1958/8 = 0.79374687... <= 0.79375`,
+`lambda * 42.53228441/8 = 2.55837977... >= 2.5583` and
+`(log 6)/2 = 0.89587973... <= 0.89588`, each rounding taken in the direction that lowers
+the right-hand side:
 
 ```
 log prod (m_k + 1)  >=  lambda L^2/8 - 1.68963 L - 0.12934 - ((L+3)/2) log((L+3)/2).  (8.4)
@@ -1159,7 +1179,7 @@ reader tracking where the factor of two went needs both halves in view.
 integer count (8.2). Everything else in T5 is bookkeeping over inequalities of the kind
 §4 already uses; that step is the only genuinely new inference, it is where an
 off-by-one or a missed case would be invisible in the algebra, and cases 2 and 3 exist
-only because the naive version (assuming `[alpha, beta] ⊆ [0, F_a]`) is false near the
+only because the naive version (assuming `[d_lo, d_hi] ⊆ [0, F_a]`) is false near the
 band edges. It is checked exhaustively rather than at samples for that reason.
 
 ---

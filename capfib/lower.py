@@ -155,3 +155,51 @@ def t5_lower_bound(n: int) -> T5Result:
         top_place,
         counting_places,
     )
+
+
+def block_band_min(a: int) -> int:
+    """Exact minimum of B(a, m) over the band of the block [1, a].
+
+    `B(a, m)` counts cap-respecting digit tuples on places 1..a with value m,
+    and the band is the integers of [THETA_LO * S_a, THETA_HI * S_a]. The DP
+    runs a sliding window of F_k + 1 terms along each residue class mod F_k,
+    which is what keeps a = 16 (S_a = 1576239) tractable.
+
+    This is the exact quantity `flatness_log_bound` bounds from below; it is
+    used to confront the proved bound with the truth, never to prove anything.
+
+    Args:
+        a: block length, at least 2.
+
+    Returns:
+        min over integers m in the band of B(a, m).
+
+    Raises:
+        ValueError: if a is less than 2.
+    """
+    if a < 2:
+        raise ValueError(f"a must be at least 2, got {a}")
+    F = fibonacci(a)
+    current = [1]
+    for k in range(1, a + 1):
+        f = F[k - 1]
+        previous_top = len(current) - 1
+        top = previous_top + f * f
+        nxt = [0] * (top + 1)
+        for r in range(f):
+            window: list[int] = []
+            running = 0
+            m = r
+            while m <= top:
+                value = current[m] if m <= previous_top else 0
+                window.append(value)
+                running += value
+                if len(window) > f + 1:
+                    running -= window.pop(0)
+                nxt[m] = running
+                m += f
+        current = nxt
+    capacity = len(current) - 1
+    lo = math.ceil(THETA_LO * capacity)
+    hi = math.floor(THETA_HI * capacity)
+    return min(current[lo : hi + 1])

@@ -103,67 +103,45 @@ def test_t3_digits_respect_their_caps():
         assert n // (result.counting_places * places[k - 1]) < places[k - 1]
 
 
-def _block_counts(a):
-    """Exact B(a, .) as a list indexed by m in [0, S_a], by DP over the places.
-
-    The inner loop is a sliding window of F_k + 1 terms along each residue
-    class mod F_k, which is what makes a = 12 (S_a = 33552) cheap enough for
-    the suite.
-    """
-    from capfib.fib import fibonacci
-
-    F = fibonacci(a)
-    current = [1]
-    for k in range(1, a + 1):
-        f = F[k - 1]
-        previous_top = len(current) - 1
-        top = previous_top + f * f
-        nxt = [0] * (top + 1)
-        for r in range(f):
-            window, running, m = [], 0, r
-            while m <= top:
-                value = current[m] if m <= previous_top else 0
-                window.append(value)
-                running += value
-                if len(window) > f + 1:
-                    running -= window.pop(0)
-                nxt[m] = running
-                m += f
-        current = nxt
-    return current
-
-
-@pytest.mark.parametrize("a", [8, 9, 10, 11, 12])
+@pytest.mark.parametrize("a", range(8, 17))
 def test_flatness_bound_holds_against_exact_block_counts(a):
-    """8.2. The proved product bound must not exceed the true band minimum."""
-    from capfib.lower import THETA_HI, THETA_LO, flatness_log_bound
+    """8.2. The proved product bound must not exceed the true band minimum.
 
-    counts = _block_counts(a)
-    capacity = len(counts) - 1
-    lo = math.ceil(THETA_LO * capacity)
-    hi = math.floor(THETA_HI * capacity)
-    band_min = min(counts[lo : hi + 1])
+    The range matches FLATNESS_SLACK_A in scripts/run_phase2.py, so the sharpness
+    remark quoted in 8.2 is supported over exactly the range checked here.
+    """
+    from capfib.lower import block_band_min, flatness_log_bound
+
+    band_min = block_band_min(a)
     assert band_min > 0
     assert flatness_log_bound(a) <= math.log(band_min) + 1e-9
 
 
 @pytest.mark.parametrize("a", range(2, 14))
 def test_flatness_choice_count_is_at_least_rho_fib(a):
-    """8.2, cases 1-4: the number of admissible top digits, checked exhaustively.
+    """8.2, cases 1-3: the number of admissible top digits, checked exhaustively.
 
-    This is the step the whole of T5 rests on, so it is checked at every m in
-    the band rather than at sampled ones.
+    This is the step the whole of T5 rests on, so it is checked at every m in the
+    band rather than at sampled ones, in exact integer arithmetic rather than in
+    floats: the band and the two endpoints d_lo, d_hi all have denominators
+    dividing 20, so scaling by 20 clears them and no comparison is ever decided by
+    a rounding. (8.2) claims the strict inequality |D_a(m)| > F_{a-1}/5 - 1, and
+    that is what is asserted -- scaled to 20|D| > 4 F_{a-1} - 20.
     """
     from capfib.fib import fibonacci
-    from capfib.lower import RHO, THETA_HI, THETA_LO
 
     F = fibonacci(a + 1)
     capacity = sum(f * f for f in F[:a])
     below = capacity - F[a - 1] * F[a - 1]
-    for m in range(math.ceil(THETA_LO * capacity), math.floor(THETA_HI * capacity) + 1):
-        lo = max(0, math.ceil((m - THETA_HI * below) / F[a - 1]))
-        hi = min(F[a - 1], math.floor((m - THETA_LO * below) / F[a - 1]))
-        assert max(0, hi - lo + 1) >= RHO * F[a - 2] - 1
+    top = F[a - 1]
+    # theta_1 S_a <= m <= theta_2 S_a, i.e. 4 S_a <= 20 m <= 15 S_a.
+    for m in range(-((-capacity) // 5), (3 * capacity) // 4 + 1):
+        # d >= (m - (3/4) below)/top  <=>  4 d top >= 4m - 3 below
+        lo = max(0, -((-(4 * m - 3 * below)) // (4 * top)))
+        # d <= (m - (1/5) below)/top  <=>  5 d top <= 5m - below
+        hi = min(top, (5 * m - below) // (5 * top))
+        count = max(0, hi - lo + 1)
+        assert 20 * count > 4 * F[a - 2] - 20
 
 
 @pytest.mark.parametrize("n", [1_000, 10_000, 100_000, 1_000_000])

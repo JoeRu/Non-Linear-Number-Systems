@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from capfib.interval import RELATIVE_TOL, agrees_with_float
-from capfib.lower import t3_lower_bound, t5_lower_bound
+from capfib.lower import block_band_min, t3_lower_bound, t5_lower_bound
 from capfib.manifest import record
 from capfib.product import log_F_c
 from capfib.saddle import argmin_log_s, log_R_bound_certified
@@ -45,6 +45,12 @@ t = 10 is the sample furthest from the regime it approximates. Both figures are
 published (see the residual-full-* and residual-asymptotic-* keys below) so a
 claim about this sweep can be written from the honest range, not a narrower one
 mistaken for the whole."""
+
+FLATNESS_SLACK_A = range(8, 17)
+"""Block lengths at which Lemma F's proved bound is confronted with the exact band
+minimum of B(a, .). The range starts at 8 because that is where the flatness recursion
+first contributes a factor above 1, and stops at 16 because the DP is O(S_a) with
+S_16 = 1576239 and the whole sweep then costs about four seconds."""
 
 PHI = (1 + 5 ** 0.5) / 2
 LOG_PHI = math.log(PHI)
@@ -115,6 +121,27 @@ def residual_sweep() -> list[dict]:
             {"t": t, "log_F_c": value, "leading": leading, "residual": value - leading}
         )
     return rows
+
+
+def flatness_slack_slope() -> float:
+    """Least-squares slope of Lemma F's slack against the block length.
+
+    The slack is `lambda a^2/2 - log(exact band minimum of B(a, .))`, the amount
+    by which the true band minimum falls below the quadratic term. Lemma F proves
+    a slope of at most 3.5057 (docs/phases/phase2_bounds.md 8.2); this measures
+    what the slope actually is over FLATNESS_SLACK_A, so the note's sharpness
+    remark quotes a generated number rather than an eyeballed one.
+
+    Returns:
+        The ordinary-least-squares slope over FLATNESS_SLACK_A.
+    """
+    xs = list(FLATNESS_SLACK_A)
+    ys = [LOG_PHI * a * a / 2 - math.log(block_band_min(a)) for a in xs]
+    mean_x = sum(xs) / len(xs)
+    mean_y = sum(ys) / len(ys)
+    numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+    denominator = sum((x - mean_x) ** 2 for x in xs)
+    return numerator / denominator
 
 
 def main() -> int:
@@ -318,6 +345,21 @@ def main() -> int:
             "value": biggest["t3_lower"],
             "precision": 3,
             "description": "T3 construction evaluated at the largest N verified",
+        },
+        "flatness-slack-slope": {
+            "value": flatness_slack_slope(),
+            "precision": 4,
+            "description": (
+                "least-squares slope, per unit of a, of Lemma F's slack "
+                "lambda a^2/2 - log(exact band minimum of B(a, .)) over "
+                f"a = {min(FLATNESS_SLACK_A)}..{max(FLATNESS_SLACK_A)}; "
+                "Lemma F proves this slope is at most 3.5057"
+            ),
+        },
+        "flatness-slack-a-max": {
+            "value": max(FLATNESS_SLACK_A),
+            "precision": 0,
+            "description": "largest block length at which Lemma F's slack was measured",
         },
         "t5-lower-nmax": {
             "value": biggest["t5_lower"],
