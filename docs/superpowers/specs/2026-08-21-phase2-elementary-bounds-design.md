@@ -358,10 +358,18 @@ The certified evaluation must therefore do both of the following.
 1. **Scale the precision to the dynamic range.** The smallest argument is `s F_1 = s`, so the
    working precision must exceed `log(1/s)` in decimal digits: `dps >= T/log(10) + guard`, with
    `guard >= 40`. This is cheap — `mpmath` is arbitrary-precision and the sum has `O(T)` terms.
-2. **Avoid the cancellation directly.** Compute `log(1 - e^{-z})` through a small-`z` series
-   enclosure with a proved remainder bound, mirroring what the float path already does in
+2. **Avoid the cancellation directly for the smallest arguments.** Compute `log(1 - e^{-z})`
+   through a series enclosure for tiny `z`, mirroring what the float path already does in
    `capfib/product.py:_log1m_exp_log`, rather than forming `1 - exp(-z)` and taking a log.
    `mpmath.iv` has no interval `expm1`, so this must be written and tested.
+
+   **The series threshold must be tiny — around `1e-12`, not `1`.** The bracket
+   `z(1 - z/2) <= 1 - e^{-z} <= z(1 - z/2 + z^2/6)` carries relative error `~z^2/6`, which is
+   negligible for `z = 1e-12` but is `0.17` at `z = 1`. Applying the series wherever `z <= 1`
+   was measured during design to inflate the total interval width to `~0.3` — worse than the
+   quantity being bounded needs. Above the threshold, the scaled precision of (1) makes the
+   direct computation exact enough. Measured widths with the `1e-12` threshold are below
+   `4e-40` at `T = 10`.
 
 **Acceptance test (§8):** across the whole reported range, the width of the certified interval
 for `log F_c(e^-s)` must be below a stated threshold, and both endpoints finite. A test that
@@ -379,8 +387,34 @@ signal only; the certified function must not inherit it as a hard failure.
 
 Mirroring the §4.2 correctness gate that already governs `dp` versus `gf`:
 
-> No certified bound may be reported unless the float path's value lies inside the certified
-> interval **across the whole reported range, in the same run that produces the data.**
+> No certified bound may be reported unless the float path and the certified interval agree to
+> within the float path's own error budget, **across the whole reported range, in the same run
+> that produces the data.**
+
+**Agreement means a relative tolerance, not containment.** "The float value lies inside the
+certified interval" is unsatisfiable and must not be implemented: the certified interval is far
+*tighter* than double precision, so the float value falls outside it essentially always.
+Measured during design:
+
+| `T = log(1/s)` | terms | certified width | `float - midpoint` | relative |
+|---|---|---|---|---|
+| 10 | 31 | `3.9e-40` | `2.8e-14` | `5.2e-16` |
+| 320 | 675 | below `1e-100` | `5.1e-11` | `9.6e-16` |
+| 1280 | 2670 | below `1e-100` | `-3.3e-8` | `3.9e-14` |
+
+The deviation is ordinary double-rounding accumulated over `O(T)` terms. The gate is therefore
+
+```
+| float_value - midpoint(certified) |  <=  RELATIVE_TOL * | midpoint(certified) |
+```
+
+with `RELATIVE_TOL = 1e-12`, comfortably above the largest deviation observed (`3.9e-14`) and
+far below any error that would matter. A failure of this gate means one of the two paths is
+wrong, which is exactly what it is for.
+
+**Anti-goal:** widening the certified interval so that it contains the float value. That would
+make the gate pass while destroying the bound's precision, and it inverts the roles — the
+certified path is the oracle, the float path is the thing being checked.
 
 ---
 
@@ -445,10 +479,10 @@ reported. This gives correspondence, not mere co-occurrence.
 
 ## 8. Tests
 
-1. **Interval soundness and sharpness** — for a range of `s` spanning the reported range, the
-   float `log_F_c` value lies inside the certified interval, **and** the interval's width is
-   below a stated threshold with both endpoints finite. Soundness alone is not enough: an
-   interval of `[-inf, +inf]` is sound (§5.3).
+1. **Interval sharpness and agreement** — for a range of `s` spanning the reported range: the
+   certified interval has finite endpoints and width below a stated threshold, **and** the float
+   `log_F_c` value agrees with its midpoint to `RELATIVE_TOL` (§5.5). Soundness alone is not
+   enough — `[-inf, +inf]` is sound — and containment of the float value is the wrong test.
 2. **Tail bound** — the §5.2 bound exceeds the true tail, checked by evaluating the tail
    explicitly far past the cutoff at several `s`, including a case with `u` close to 1; and the
    hypotheses `K >= 3`, `u >= 1` are enforced rather than assumed.
@@ -560,7 +594,8 @@ repaired overlapping-interval argument (§9), and the untagged CKL row in
 3. `run_phase2.py` regenerates every artifact, writes manifest entries, and reports the §5.5
    gate result; the certified bound holds at every exact `N <= 10^6`.
 4. The certified interval for `log F_c(e^-s)` has finite endpoints and width below the stated
-   threshold across the whole reported range — soundness alone does not satisfy this.
+   threshold across the whole reported range — soundness alone does not satisfy this — and the
+   float path agrees with its midpoint to `RELATIVE_TOL` (§5.5).
 5. The full test suite passes, including the new tests of §8.
 6. `scripts/check_claims.py` reports `claims.yaml OK` with the §12 entries added.
 7. `docs/roadmap.md` Phase 2 checkboxes updated with commit hashes; the malformed `C_c` formula
