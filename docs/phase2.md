@@ -215,11 +215,12 @@ step from `N = 1000` to `0.3582` at `N = 1000000`. At the three smallest samples
 `0.6213`; from `N = 8` upward, all 34 remaining sampled points lie strictly
 inside `[0.2598, 0.5195]`.
 
-**Small `N` above the interval is not evidence against C4.** C4 constrains the
-liminf and the limsup, both unchanged by any finite set of `N`; T2's consequence
-carries a `(1 + o(1))` and T3 is stated only for `N >= 10000`, so neither bound
-claims anything at `N = 2, 3, 5`. The ratio is inflated there by its
-denominator: `(log N)^2` is tiny while `R_c(N) >= 1` forces `log R_c(N) >= 0`.
+**Small `N` above the interval is not evidence against C4, nor against C5.** C4
+constrains the liminf and the limsup and C5 the limit; all three are unchanged by
+any finite set of `N`. T2's consequence carries a `(1 + o(1))`, and T3 and T5 are
+both stated only for `N >= 10000`, so none of these bounds claims anything at
+`N = 2, 3, 5`. The ratio is inflated there by its denominator: `(log N)^2` is
+tiny while `R_c(N) >= 1` forces `log R_c(N) >= 0`.
 
 **The product residual** {claim:product-residual-sampled}. A separate sweep
 evaluates `log F_c(e^{-s}) - (log(1/s))^2/(4 lambda)` at eight values of

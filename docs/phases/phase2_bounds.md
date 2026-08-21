@@ -572,8 +572,10 @@ at least `1/(8 lambda)`. Divide T2's consequence by `t^2` to get the limsup boun
 **C4 does not assert that `C_c` exists.** It bounds the liminf and the limsup, which is
 a strictly weaker statement than convergence. Whether `log R_c(N)/(log N)^2` converges
 at all is research question (A) of `theory/00-definitions.md`; nothing in T1–T3 bears on
-it, and C4 leaves it open. It is **not** open as of this note: §8's T5 supplies a matching
-lower bound and C5 concludes that the limit exists and equals `1/(4 lambda)`. The
+it, and C4 leaves it open. **That is a statement about C4's reach, not about the state of
+the question:** research question (A) is answered later in this same note, by §8's T5,
+which supplies a matching lower bound, and C5, which concludes that the limit exists and
+equals `1/(4 lambda)`. The
 distinction C4 draws is still the right one to keep in view — bounding a liminf and a
 limsup is strictly weaker than asserting convergence — and it is what T5 had to supply in
 addition to a constant. The roadmap's parametrisation `C_c = 1/(C' log phi)` presupposes
@@ -593,10 +595,10 @@ other way.
 this paragraph is left as written because it states correctly what T1–T3 by themselves
 leave open.* The conjecture
 `log R_c(N) ~ (log N)^2/(4 log phi)` ({claim:leading-constant}) sits at the *upper*
-endpoint of the proved interval. Phase 2 therefore leaves it to be settled entirely from
-below: the upper bound is already at the conjectured value, and what is missing is a
-lower bound matching it — together with the existence statement the conjecture asserts
-and C4 does not. Two formulations are deliberately avoided here. "The conjecture holds
+endpoint of the proved interval. T1–T3 therefore leave it to be settled entirely from
+below: the upper bound is already at the conjectured value, and what T1–T3 do not supply
+is a lower bound matching it — together with the existence statement the conjecture
+asserts and C4 does not. (§8 supplies both; Phase 2 as a whole settled it.) Two formulations are deliberately avoided here. "The conjecture holds
 if and only if T2 is attained" is wrong, because matching the limsup to the upper
 endpoint says nothing about the liminf. And "T2 is sharp" is not established: no
 argument in this note shows the upper constant cannot be lowered.
@@ -1135,7 +1137,9 @@ Three further checks are in `tests/test_phase2_bounds.py`, all against exact enu
 rather than against the formulas they are testing:
 
 - Lemma F's closed form is checked against the exact band minimum of `B(a, ·)`, computed
-  by DP, for `a` = 8 to 12.
+  by DP by `capfib.lower.block_band_min`, for `a` = 8 to 16 — the same range the sharpness
+  remark of §8.2 measures its slope over. That DP is itself pinned against a brute-force
+  convolution oracle for `a` = 2 to 10.
 - (8.2), the step everything rests on, is checked exhaustively — at every integer of the
   band, for `a` = 2 to 13, not at sampled residues.
 - §8.3's cap, budget and band conditions are checked at four values of `N` up to `10^6`.
@@ -1167,13 +1171,23 @@ contradict that measurement: it is a bound holding uniformly across the band rat
 on average over it, and it is coarse enough — `exp(-O(a))` below the mean — that
 fluctuations of the measured size pass under it untouched.
 
-**The ledger and the roadmap are deliberately untouched.** C5 bears on
-`{claim:leading-constant}`, which this note still records as a conjecture, and on
-`{claim:sandwich-bounds}`; promoting either is a decision to be taken after this proof has
-been read, not a side effect of writing it. Nothing in §§1–7 was weakened: T3 and C4 are
-left exactly as proved. T5 does not use T3 as a step — the appendix table records that —
-but it reuses T3's machinery, the block/counting split and the completeness lemma, and a
-reader tracking where the factor of two went needs both halves in view.
+**What the ledger now records, and what this note does not decide.** The promotion was
+made after two independent reviews of §8, not as a side effect of writing it.
+`{claim:leading-constant}` is now a `theorem`, its statement being C5 and its evidence
+this section; `{claim:sandwich-bounds}` remains a `theorem`, stating C4, with a note that
+C5 supersedes its lower half by a different construction while C4 itself stays true;
+`{claim:saddle-tightness}` moved from `heuristic` to `theorem`, because T1, T2 and T5
+together force the saddle-point correction to be `O(t)`, which is more than the
+`o((log N)^2)` that claim asserts — the `t^2` and `t log t` terms cancel between T2's
+effective form and T5. What this note still does not decide is the constant in front of
+that `t`: T2's `O(t)` is nowhere made explicit, T5's is `-7.5 t`, and the two do not meet.
+That gap is left open in the ledger as `{claim:saddle-correction-constant}`, and it is the
+same gap as the `c_2` of research question (B).
+
+Nothing in §§1–7 was weakened: T3 and C4 are left exactly as proved. T5 does not use T3 as
+a step — the appendix table records that — but it reuses T3's machinery, the
+block/counting split and the completeness lemma, and a reader tracking where the factor of
+two went needs both halves in view.
 
 **The weakest step, named.** It is Step 2 of Lemma F — the four-case table and the
 integer count (8.2). Everything else in T5 is bookkeeping over inequalities of the kind

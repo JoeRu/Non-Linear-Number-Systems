@@ -34,14 +34,28 @@ numeral length at `n`, which undercounts `R_c(N)`.
 Phase 3 must still derive the constant from the saddle-point heuristic, and
 Phase 5 must still establish it rigorously.
 
-**Superseded in part (Phase 2).** `{claim:leading-constant}` is no longer a
-conjecture: C5 of `docs/phases/phase2_bounds.md` §8 proves that the limit exists
-and equals `1/(4 log phi)`, elementarily and without a saddle point. The two
-paragraphs above are left as written because they record what Phase 0.5 itself
-established, which is unchanged — a measurement at 37 sampled points is not a
-proof, and was not one then either. What Phase 2 removes is the *outstanding*
-task, not the caveat: Phase 3's job is still to *explain* the constant from the
-saddle point rather than to establish it.
+**Superseded in part (Phase 2).** Three of this page's caveats have since been
+discharged, none of them by this page's own method:
+
+- `{claim:leading-constant}` is no longer a conjecture. C5 of
+  `docs/phases/phase2_bounds.md` §8 proves that the limit exists and equals
+  `1/(4 log phi)`, elementarily and without a saddle point.
+- `{claim:saddle-tightness}` is no longer a heuristic; it is a `theorem`,
+  forced by T1, T2 and T5 together. Where this page says it is "expected, but
+  not established here", the second half is still an accurate statement about
+  Phase 0.5 and the first is now an understatement.
+- Excluding `1/(8 log phi)` no longer requires either. C5 excludes it
+  unconditionally, so the conditional framing above — correct when written — is
+  no longer the reason that value is out.
+
+What is **not** superseded is the finer question the secondary term needs. The
+correction's *order* is settled — Phase 2 gives `O(log N)` — but its coefficient
+in `log N` is not, and that coefficient is what a secondary term needs
+({claim:saddle-correction-constant}, open). Everything above is left as written,
+because it records what Phase 0.5 itself established, which is unchanged — a
+measurement is not a proof, and was not one then either. What Phase 2 removes is
+the *outstanding* task, not the caveat: Phase 3's job is still to *explain* the
+constant from the saddle point rather than to establish it.
 
 **Consequence for the roadmap.** Phase 3 proceeds. Its job is now to explain a
 measured number rather than to predict an unknown one.

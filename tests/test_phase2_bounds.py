@@ -192,3 +192,60 @@ def test_t5_digits_respect_their_caps(n):
     budget = n - (capacity + 4) // 5
     for k in range(result.block + 1, result.top_place + 1):
         assert budget // (result.counting_places * places[k - 1]) <= places[k - 1]
+
+
+def _naive_block_counts(a):
+    """B(a, .) by direct convolution -- deliberately slow, obviously correct.
+
+    Independent of `capfib.lower.block_band_min`, which reaches the same list by
+    a sliding window over residue classes. Nothing is shared but the definition.
+    """
+    from capfib.fib import fibonacci
+
+    F = fibonacci(a)
+    counts = [1]
+    for k in range(1, a + 1):
+        f = F[k - 1]
+        top = len(counts) - 1 + f * f
+        nxt = []
+        for m in range(top + 1):
+            total = 0
+            for d in range(f + 1):
+                previous = m - d * f
+                if 0 <= previous < len(counts):
+                    total += counts[previous]
+            nxt.append(total)
+        counts = nxt
+    return counts
+
+
+@pytest.mark.parametrize("a", range(2, 12))
+def test_block_band_min_matches_a_naive_convolution(a):
+    """block_band_min is an oracle for the sharpness figure, so it needs one too.
+
+    Without this, `flatness-slack-slope` and
+    `test_flatness_bound_holds_against_exact_block_counts` share a single
+    implementation of B(a, .), and a block_band_min that returned something too
+    large would satisfy both.
+    """
+    from capfib.lower import THETA_HI, THETA_LO, block_band_min
+
+    counts = _naive_block_counts(a)
+    capacity = len(counts) - 1
+    lo = math.ceil(THETA_LO * capacity)
+    hi = math.floor(THETA_HI * capacity)
+    assert block_band_min(a) == min(counts[lo : hi + 1])
+
+
+@pytest.mark.parametrize("a", range(2, 7))
+def test_block_band_min_matches_the_brute_force_oracle(a):
+    """And against capfib.brute, the package's standard oracle, at small a."""
+    from capfib.brute import count
+    from capfib.fib import fibonacci
+    from capfib.lower import THETA_HI, THETA_LO, block_band_min
+
+    F = fibonacci(a)
+    capacity = sum(f * f for f in F)
+    lo = math.ceil(THETA_LO * capacity)
+    hi = math.floor(THETA_HI * capacity)
+    assert block_band_min(a) == min(count(m, list(F)) for m in range(lo, hi + 1))

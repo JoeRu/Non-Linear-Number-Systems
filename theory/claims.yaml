@@ -29,16 +29,22 @@
   source: "this project, Phase 2"
 
 - id: gate-local-slope
-  statement: "The leading coefficient of the Legendre-transform upper bound on log R_c(N) measures 0.518710 at N = 10^3200, rising monotonically toward 1/(4 log phi) = 0.519522. This bounds C_c from above, excluding 1/(2 log phi); excluding 1/(8 log phi) additionally requires saddle-tightness."
+  statement: "The leading coefficient of the Legendre-transform upper bound on log R_c(N) measures 0.518710 at N = 10^3200, rising monotonically toward 1/(4 log phi) = 0.519522. This bounds C_c from above, excluding 1/(2 log phi). The measurement's original caveat -- that excluding 1/(8 log phi) additionally requires saddle-tightness -- is superseded: C5 (claim leading-constant) excludes 1/(8 log phi) unconditionally and by a route that does not pass through this measurement at all. The measured figure and its status are unaffected by that; what changed is only what the figure is needed for."
   status: verified-numeric
   evidence: "data/phase0_5_gate.csv via scripts/run_phase0_gate.py"
   source: "docs/phases/phase0_5_gate.md"
 
 - id: saddle-tightness
-  statement: "The saddle-point correction to min_s [sN + log F_c(e^-s)] is of lower order than (log N)^2, so the Legendre transform and log R_c(N) share a leading coefficient."
-  status: heuristic
-  evidence: "Standard for generating functions of this type; not established here. Required before the Phase 0.5 measurement can bound C_c from below as well as above."
-  source: "Phase 5 rigorisation target"
+  statement: "The saddle-point correction to min_s [sN + log F_c(e^-s)] is of lower order than (log N)^2, so the Legendre transform and log R_c(N) share the leading coefficient 1/(4 log phi)."
+  status: theorem
+  evidence: "Follows from T1, T2 and T5 of docs/phases/phase2_bounds.md. T1 puts log R_c(N) at or below the transform. T2 applied at s = t/(2 log phi N) puts the transform at or below t^2/(4 log phi) - t log t/(2 log phi) + O(t), with t = log N, since that s is one candidate in the minimum. T5 puts log R_c(N) at or above t^2/(4 log phi) - t log t/(2 log phi) - 7.5 t. The t^2 and t log t terms cancel between the two, so the correction is O(t) = O(log N) -- stronger than the o((log N)^2) this claim asserts, and stronger than the O(t log t) a looser reading gives. Measured, the correction is close to log N itself: the ratio (transform - log R_c)/log N runs 1.379, 1.085, 1.025, 0.999, 0.987, 0.981 at N = 8, 10^2, 10^3, 10^4, 10^5, 10^6 in data/phase2_bounds.csv. This is a consequence of Phase 2, not of the Phase 5 saddle-point analysis it was originally expected to need."
+  source: "this project, Phase 2"
+
+- id: saddle-correction-constant
+  statement: "The saddle-point correction Lambda(N) - log R_c(N), where Lambda(N) = min_s [sN + log F_c(e^-s)], has a determined leading coefficient in log N -- equivalently, c_2 exists in log R_c(N) = t^2/(4 log phi) - t log t/(2 log phi) + c_2 t + o(t), t = log N. This is the finer statement claim saddle-tightness does NOT settle. Note that the ORDER is settled: Phase 2 gives 0 <= correction <= K log N. What is open is the constant, and whether the correction has an asymptotic leading coefficient at all."
+  status: open
+  evidence: "Not established. T2's O(t) is nowhere made explicit and T5's is -7.5 t, so the two error terms do not meet: Phase 2 pins the t^2 and t log t coefficients of log R_c(N) and pins the correction's order, but bounds c_2 from neither side. The measured ratio (Lambda - log R_c)/log N is still drifting downward through 0.981 at N = 10^6 over the range computed, so even the numerics do not name a candidate constant."
+  source: "Phase 5 rigorisation target; secondary-term work (research question (B))"
 
 - id: dp-gf-agree-to-nmax
   statement: "capfib.dp and capfib.gf agree on every coefficient of R_c(N) for N <= 1000000."

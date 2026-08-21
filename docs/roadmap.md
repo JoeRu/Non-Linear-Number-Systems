@@ -60,6 +60,9 @@ dafür schon existiert.
 - [x] `scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png` — `1d218a6`
 - [x] Messung: lokale Steigung **0.518710** bei $N = 10^{3200}$ gegen $1/(4\log\varphi) = 0.519522$ {claim:gate-local-slope} — `1d218a6`
 - [x] Ergebnis korrekt als *obere* Schranke formuliert; $1/(8\log\varphi)$ nur unter Sattelpunkt-Straffheit ausgeschlossen — `1b4dca0`, `3c97822`
+      (**Nachtrag Phase 2:** Der Vorbehalt ist entfallen — C5 schließt $1/(8\log\varphi)$
+      unbedingt aus, auf einem Weg, der diese Messung gar nicht benutzt; die Messung selbst
+      ist davon unberührt — `30da98a`)
 - [x] Deliverable `docs/phases/phase0_5_gate.md` — `1d218a6`, `1b4dca0`, `3c97822`
 - [x] Roadmap an die revidierte Phasenfolge angepasst — `860dd5b`
 
@@ -115,7 +118,7 @@ Erledigt:
       `chernoff-effective-verified`, `product-residual-sampled` — `c4743bc`
 - [x] **Sandwich geschlossen** (Route L2b): Flachheitslemma F — der Block $[1,a]$ ist auf
       seinem mittleren Band flach, $B(a,m) \ge \exp(\lambda a^2/2 - O(a))$ gleichmäßig in
-      $m$ — und daraus T5: $\log R_c(N) \ge t^2/(4\lambda) - t\log t/(2\lambda) - 7{,}5\,t$
+      $m$ — und daraus T5: $\log R_c(N) \ge t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$
       für $N \ge 10000$, $t = \log N$. Route L2a schließt **nicht**; wo sie stehenbleibt,
       ist in `phase2_bounds.md` §8.6 festgehalten — `43397a2`
 - [x] **Existenz von $C_c$ bewiesen** — Forschungsfrage (A) damit **beantwortet**: C5 zeigt,
@@ -132,6 +135,10 @@ Erledigt:
 - [ ] Legendre-Transformation zur Konstante hergeleitet
 - [ ] `phase3_heuristic.md` mit expliziter Heuristik-Warnung
 - [ ] Sekundärterm-Entwicklung ($C_1$, $C_2$)
+      (**Nachtrag Phase 2:** $C_1$ ist bereits festgelegt — T2s effektive Form und T5 haben
+      denselben $t\log t$-Koeffizienten $-1/(2\log\varphi)$, also ist
+      $\log R_c(N) = t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$. Offen bleibt $C_2$,
+      siehe Ledger `saddle-correction-constant`.)
 
 Hinweis: Die Konstante ist durch Phase 0.5 bereits *gemessen* und seit Phase 2 auch
 *bewiesen* (C5, `phase2_bounds.md` §8). Phase 3 muss sie nun *erklären*, nicht
@@ -151,11 +158,20 @@ vorhersagen und nicht etablieren.
 - [ ] Route A: Mellin-Transformation und $\zeta_F^{(F+1)}$
 - [ ] Route B: Taubersätze für $S_c(N)$
 - [ ] Route C: Funktionalgleichung (explorativ)
-- [ ] **Sattelpunkt-Straffheit** beweisen (siehe `theory/claims.yaml`, `saddle-tightness`).
-      **Nachtrag (Phase 2):** Der ursprüngliche Zweck dieses Punktes — den Wert
-      $1/(8\log\varphi)$ auszuschließen — ist entfallen: C5 schließt ihn unbedingt aus.
-      `saddle-tightness` bleibt als eigenständige Aussage über die Sattelpunkt-Korrektur
-      offen und wird für den Sekundärterm weiterhin gebraucht.
+- [x] **Sattelpunkt-Straffheit bewiesen** — `saddle-tightness` ist seit Phase 2 ein
+      `theorem`, nicht mehr eine Heuristik: T1 legt $\log R_c$ unter die
+      Legendre-Transformierte, T2 wertet diese als $t^2/(4\lambda) + O(t)$ aus, T5
+      schränkt $\log R_c$ von unten ein, also ist die Sattelpunkt-Korrektur
+      $O(t\log t) = o(t^2)$ und beide teilen den Leitkoeffizienten. Der ursprüngliche
+      Zweck des Punktes — $1/(8\log\varphi)$ auszuschließen — ist ohnehin entfallen, weil
+      C5 diesen Wert unbedingt ausschließt — `43397a2`, `30da98a`
+- [ ] **Feinere Aussage, weiterhin offen:** die *Ordnung* der Sattelpunkt-Korrektur ist
+      durch Phase 2 mitbewiesen — sie ist $O(\log N)$, weil sich die $t^2$- und
+      $t\log t$-Terme zwischen T2 und T5 wegheben. Offen ist die *Konstante*: T2s $O(t)$
+      wird nirgends explizit gemacht, T5s ist $-7{.}5\,t$, die beiden treffen sich also
+      nicht. Genau diese Konstante ist das $c_2$ der Forschungsfrage (B). Im Ledger als
+      eigener Eintrag `saddle-correction-constant`, Status `open` — nicht als Teil von
+      `saddle-tightness`, das die gröbere und inzwischen bewiesene Aussage macht.
 
 ### Phase 6 — Oszillationen ⬜ offen
 

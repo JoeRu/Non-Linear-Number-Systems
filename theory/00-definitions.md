@@ -46,5 +46,6 @@ Primary focus: (A) and (B). (C) is deferred to Phase 6.
 | Completeness: no gaps on `[0, sum F_k^2]` | theorem {claim:completeness-no-gaps} |
 | `sum_{k<=n} F_k^2 = F_n F_{n+1}` | theorem {claim:sum-of-squares} |
 | `C_c = 1 / (4 log phi)` | theorem {claim:leading-constant} (Phase 2, C5) |
-| Saddle-point bound tightness | heuristic {claim:saddle-tightness} |
+| Saddle-point bound tightness (correction is `o((log N)^2)`) | theorem {claim:saddle-tightness} (Phase 2, from T1+T2+T5) |
+| Saddle-point correction has a determined coefficient in `log N` (equivalently `c_2` exists) | open {claim:saddle-correction-constant} |
 | Oscillation structure | open |

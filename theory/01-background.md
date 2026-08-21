@@ -539,6 +539,13 @@ this exact form.
    Conjecture worth testing numerically: `log R(N) ~ c·(log N)²` with an explicit *c*,
    with bounded oscillation in the fractional part of `log_φ N`.
 
+   **Answered in part (Phase 2).** The first half is settled: the limit exists and
+   `c = 1/(4 log phi)` ({claim:leading-constant}, C5 of
+   `docs/phases/phase2_bounds.md` §8). The oscillation half is untouched and is
+   still question (C) of `theory/00-definitions.md`. The rest of this section is
+   left as it was written — it is a reading record of the article, not a status
+   board.
+
 2. **Extremal numerals.** Which integers have the most / fewest representations at each
    length? (From the table: for *n* = 10 the maximum is 510 384 against an average of
    319 595 — the distribution is not sharply concentrated. Which *N* achieves it?)
