@@ -156,7 +156,7 @@ lake env lean NonLinearNumberSystems/Redundancy.lean
    wholesale.
 
    `gh api repos/{owner}/{repo}/pulls/{n}/reviews` for the summary and
-   `.../pulls/{n}/comments` for the inline findings — read both, since the
+   `gh api repos/{owner}/{repo}/pulls/{n}/comments` for the inline findings — read both, since the
    summary hides suppressed comments that contain real content.
 
 8. **Codex runs at `gpt-5.6-sol`, reasoning effort `ultra`**
