@@ -31,6 +31,10 @@ Thumbs.db
 data/*
 !data/manifest.json
 
+# The quotable figures file IS tracked: the phase documents cite it by key, and
+# a gitignored copy could not keep prose and data in step (risk R-002).
+!data/phase2_figures.json
+
 # Generated figures
 figures/*.png
 figures/*.pdf
