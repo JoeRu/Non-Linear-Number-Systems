@@ -62,6 +62,9 @@ dafür schon existiert.
 
 ### Phase 1 — Exakte Berechnung ✅
 
+**Ergebnis:** [`docs/phase1.md`](phase1.md) — Zusammenfassung; Details in
+[`docs/phases/phase1_report.md`](phases/phase1_report.md).
+
 Erledigt:
 
 - [x] DP-Rekurrenz (naive Ziffernschleife) — `674058b`
@@ -224,6 +227,13 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
 ---
 
 ## Phase 1 — Exakte Berechnung und Sanity Checks
+
+> **✅ Abgeschlossen.** Ergebnis: [`docs/phase1.md`](phase1.md). Exakte Werte für
+> alle `N ≤ 10^6`, abgesichert durch einen punktweisen Abgleich zwischen zwei
+> unabhängigen Algorithmen über den gesamten Bereich. Zentraler Befund:
+> `R_c(N)` fluktuiert stark (49,6 % der Schritte fallen), was `S_c(N)` als
+> Zielobjekt eines Tauber-Arguments nahelegt. Der folgende Abschnitt ist die
+> ursprüngliche Planung und wird als solche beibehalten.
 
 **Zeithorizont:** 1–2 Wochen  
 **Kritikalität:** HOCH — Benchmark für alle theoretischen Ansprüche
