@@ -12,7 +12,7 @@ separate the candidates.
 
 **Result.** See `data/phase0_5_gate.csv` and `figures/phase0_5_gate.png`. The local slope rises
 monotonically to **0.518710** at `N = 10^3200`, against `1/(4 log phi) = 0.519522` — an absolute
-error of 0.000812, still decreasing.
+error of 0.000812, still decreasing {claim:gate-local-slope}.
 
 **What this establishes, and what it does not.** `log_R_bound` computes
 `min_s [sN + log F_c(e^-s)]`, which is a Chernoff *upper* bound on `log R_c(N)`. Its leading

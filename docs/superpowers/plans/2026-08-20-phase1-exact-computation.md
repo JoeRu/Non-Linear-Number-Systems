@@ -217,14 +217,15 @@ def test_local_ratios_length_and_indices():
 
 
 def test_local_ratios_all_finite():
-    """Guarded by min(counts) >= 1, asserted at runtime -- not by appealing to
-    completeness, which is still a `sorry` in Lean."""
+    """Guarded by min(counts) >= 1, checked at runtime and raising
+    `ValueError` on failure -- not a bare `assert` (`python -O` strips those)
+    and not by appealing to completeness, which is still a `sorry` in Lean."""
     r = local_ratios(coefficients(2000))
     assert all(math.isfinite(x) for x in r)
 
 
 def test_local_ratios_rejects_zero_count():
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         local_ratios([1, 0, 1])
 
 
@@ -274,11 +275,14 @@ Expected: FAIL — `ImportError: cannot import name 'local_ratios' from 'capfib.
 def local_ratios(counts: Sequence[int]) -> list[float]:
     """r[n] = counts[n+1] / counts[n] for n = 0 .. len-2.
 
-    The division is guarded by an explicit assertion rather than by appealing
-    to completeness: completeness is still a `sorry` in the Lean development,
-    so it is not something this code may lean on.
+    The division is guarded by an explicit check that raises `ValueError`
+    rather than by appealing to completeness: completeness is still a
+    `sorry` in the Lean development, so it is not something this code may
+    lean on. This is deliberately not a bare `assert`, which `python -O`
+    would strip.
     """
-    assert min(counts) >= 1, "counts must be positive; local_ratios would divide by zero"
+    if min(counts) < 1:
+        raise ValueError("counts must be positive; local_ratios would divide by zero")
     return [counts[n + 1] / counts[n] for n in range(len(counts) - 1)]
 
 
@@ -713,8 +717,22 @@ def main() -> int:
         d = dp_counts(n_max)
         dp_seconds = time.time() - t0
         print(f"  dp took {dp_seconds:.1f}s")
+        # NOTE: scripts/run_phase1.py is authoritative for this block, not
+        # this plan. It additionally checks len(c) == len(d) == n_max + 1
+        # BEFORE comparing for equality: two identically-truncated arrays
+        # compare equal in Python (same elements, same -- too-short --
+        # length), so `c != d` alone would miss that case and defer the
+        # failure to a later out-of-range c[n] lookup. Keeping this synced
+        # here is not the point; the production script is.
+        if len(c) != n_max + 1 or len(d) != n_max + 1:
+            print(f"CROSS-CHECK FAILED: expected arrays of length {n_max + 1} "
+                  f"from both gf and dp, got gf={len(c)}, dp={len(d)}")
+            print("Writing nothing.")
+            return 1
         if c != d:
-            first = next(i for i in range(len(c)) if c[i] != d[i])
+            # The length check above guarantees len(c) == len(d) == n_max + 1
+            # here, so there is no "differ in length" case left to report.
+            first = next(i for i in range(n_max + 1) if c[i] != d[i])
             print(f"CROSS-CHECK FAILED: first disagreement at N={first}: "
                   f"gf={c[first]} dp={d[first]}")
             print("Writing nothing.")
@@ -722,7 +740,10 @@ def main() -> int:
         crosscheck = f"dp==gf pointwise for all N <= {n_max}"
         print(f"cross-check OK: {crosscheck}")
 
-    assert min(c) >= 1, "a zero count would break local_ratios"
+    if min(c) < 1:
+        print("PRECONDITION FAILED: a non-positive count would break local_ratios.")
+        print("Writing nothing.")
+        return 1
 
     census = monotonicity_census(c)
     sc = summatory(c)
@@ -987,8 +1008,12 @@ Append to `theory/claims.yaml`, substituting the real numbers from `data/phase1_
 
 - id: gf-global-checksum
   statement: "For the fixed-length system on F_1..F_n, sum(counts) equals prod(F_k+1). Reproducible from the test suite for n <= 14. This invariant is insensitive to sum-preserving corruption and does not exercise the production place set; it is not a licence to report values."
-  status: verified-numeric
-  evidence: "tests/test_checksum.py; the limitation is asserted in test_checksum_misses_sum_preserving_corruption"
+  # status: theorem, not verified-numeric -- the identity is derived (each
+  # digit tuple has exactly one value, so summing counts over all values
+  # counts every tuple exactly once), not measured. The test suite
+  # corroborates it for n <= 14; it does not establish it.
+  status: theorem
+  evidence: "Proved in theory/03-invariants.md (gf-global-checksum): each digit tuple has exactly one value, so summing counts over all values counts every tuple exactly once. Corroborated in tests/test_checksum.py for n <= 14, which also asserts the sum-preserving blind spot (test_checksum_misses_sum_preserving_corruption)."
   source: "this project, Phase 1"
 
 - id: sc-monotone

@@ -18,7 +18,7 @@ VALID_STATUS = {"cited", "verified-numeric", "heuristic", "conjecture", "theorem
 REQUIRED_FIELDS = ("id", "statement", "status", "evidence", "source")
 REFERENCE = re.compile(r"\{claim:([a-z0-9-]+)\}")
 SEARCH_DIRS = ("theory", "docs/phases", "paper")
-SEARCH_FILES = ("docs/roadmap.md", "README.md", "CLAUDE.md")
+SEARCH_FILES = ("docs/roadmap.md", "README.md", "CLAUDE.md", "docs/phase1.md")
 FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
 DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
 
@@ -46,6 +46,89 @@ HEDGE_MARKERS = (
     "assumption", "konjektur", "heuristik", "nicht bewiesen", "erwartet",
     "stütze", "vermutung",
 )
+
+# Unqualified universal quantifiers/modals. A `verified-numeric` claim is a
+# measurement over a finite computed range; a paragraph citing one may report
+# what was measured, but wording like "every"/"all"/"must" reads as a
+# statement about all N, which the census this project runs never
+# establishes. This is the recurring overclaim pattern (docs/risks.md R-005):
+# it has recurred enough times, corrected by hand each time, that catching it
+# needs to be mechanical rather than another manual pass.
+UNIVERSAL_QUANTIFIER_WORDS = (
+    "any", "every", "each", "all", "never", "always", "must",
+    "unavailable", "impossible",
+    "jeder", "jede", "jedes", "jeden", "jedem",
+    "alle", "alles", "allen", "sämtliche",
+    "nie", "immer", "stets", "muss", "müssen", "unmöglich",
+)
+_UNIVERSAL_QUANTIFIER_RE = re.compile(
+    r"\b(" + "|".join(re.escape(w) for w in UNIVERSAL_QUANTIFIER_WORDS) + r")\b",
+    re.IGNORECASE,
+)
+
+# A paragraph carrying a range qualification has scoped its universal-sounding
+# wording to the range that was actually measured. Two independent shapes
+# count, and both are boundary-aware -- neither is a bare substring test:
+#
+#   1. A bounded-range expression: N/n or a Fibonacci-place variable (F, or
+#      a subscripted form like `F_k`) -- the only variables this project
+#      actually bounds ranges by -- directly followed by `<=`, `≤`, or the
+#      LaTeX `\le`/`\leq` these documents also use, then a number: "N <= 1000",
+#      "F ≤ 10^6", "$N \le 10^6$". Restricted to those variables so an
+#      unrelated "a <= 1000" cannot qualify a nearby universal; a raw
+#      substring test for "n <=" was also satisfied by "a conditio-n <= 1000
+#      applies", which the variable-shaped-token requirement rules out too.
+#   2. A whole-word/whole-phrase prose marker (`RANGE_PROSE_MARKERS`) that
+#      itself names a bound, matched with word boundaries so it cannot be
+#      satisfied by a substring inside an unrelated, larger word -- "the
+#      result was unobserved" must not be exempted by the substring
+#      "observed" inside it. Bare "observed"/"gemessen" are deliberately NOT
+#      markers: neither names a finite range, so a sentence could carry a
+#      universal claim and be "observed" true without ever stating what was
+#      measured -- exactly how "`R_c` jumps at every Fibonacci place
+#      observed" slipped past before.
+RANGE_EXPR_RE = re.compile(
+    r"\b[NnFf](?:_[A-Za-z0-9]+)?\s*(?:<=|≤|\\leq|\\le)\s*\d"
+)
+RANGE_PROSE_MARKERS = (
+    "over the measured range", "im gemessenen bereich",
+)
+_RANGE_PROSE_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(m) for m in RANGE_PROSE_MARKERS) + r")\b"
+)
+
+# Markdown content here is often a tight bullet list: multiple "- [x] ..."
+# items with no blank line between them, each one a self-contained statement
+# about a different, unrelated piece of work. `re.split(r"\n\s*\n", text)`
+# (blank-line paragraphs) does not separate those items, so without this,
+# they would share one "paragraph" for citation purposes -- letting an
+# unrelated bullet's "alle"/"every" get blamed on a claim cited three bullets
+# away, or letting a range qualifier in one bullet exempt a bare universal in
+# another. Each list item is therefore its own citation scope.
+_LIST_ITEM_BOUNDARY_RE = re.compile(r"\n(?=\s*(?:[-*+]|\d+[.)])\s)")
+# Within one citation scope, sentence-ending punctuation further scopes the
+# range-qualifier check: a qualifier in one sentence of a multi-sentence
+# scope must not silence a bare universal in a different sentence of it.
+_SENTENCE_END_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _citation_scopes(paragraph: str) -> list[str]:
+    """Split a blank-line-delimited paragraph into per-list-item scopes (or
+    a single scope, if it is not a tight list)."""
+    return _LIST_ITEM_BOUNDARY_RE.split(paragraph)
+
+
+def _sentences(scope: str) -> list[str]:
+    """Split one citation scope into sentence-like units for range-qualifier
+    scoping."""
+    units = _SENTENCE_END_RE.split(scope)
+    return [re.sub(r"\s+", " ", u).strip() for u in units if u.strip()]
+
+
+def _has_range_qualifier(sentence: str) -> bool:
+    return bool(RANGE_EXPR_RE.search(sentence)) or bool(
+        _RANGE_PROSE_RE.search(sentence.lower())
+    )
 
 
 def _extract_theorem_path_tokens(evidence: str) -> list[str]:
@@ -107,8 +190,23 @@ def _theorem_evidence_problem(root: Path, cid: str, evidence: str) -> str | None
     pattern and the referent must hold."""
     path_tokens = _extract_theorem_path_tokens(evidence)
     if path_tokens:
+        root_resolved = root.resolve()
+        # A candidate allowed root only counts if it is itself contained in
+        # the repo -- otherwise theory/, paper/, or lean/ being a symlink to
+        # somewhere outside the repository would make that outside location
+        # an "allowed root" and let an external file pass.
+        allowed_roots = [
+            r for r in ((root / d).resolve() for d in ("theory", "paper", "lean"))
+            if r.is_relative_to(root_resolved)
+        ]
         for tok in path_tokens:
-            if not (root / tok).is_file():
+            target = (root / tok).resolve()
+            if not any(target.is_relative_to(a) for a in allowed_roots):
+                return (
+                    f"claim '{cid}': status theorem but its evidence references "
+                    f"'{tok}', which resolves outside theory/, paper/ and lean/"
+                )
+            if not target.is_file():
                 return (
                     f"claim '{cid}': status theorem but its evidence references "
                     f"'{tok}', which does not exist under the repo root"
@@ -139,6 +237,20 @@ def validate(root: Path) -> list[str]:
     ledger_path = root / "theory" / "claims.yaml"
     if not ledger_path.exists():
         return [f"missing ledger: {ledger_path}"]
+
+    # `theory/` could itself be a symlink pointing outside the repository.
+    # Filtering `allowed_roots` in `_theorem_evidence_problem` only protects
+    # evidence *tokens* -- it does nothing if the ledger file being parsed is
+    # itself read through such a symlink. An external ledger that happens to
+    # cite a path that genuinely exists inside this repo (e.g. "paper/x.md")
+    # would then sail through untouched. Reject before parsing, not after.
+    root_resolved = root.resolve()
+    ledger_resolved = ledger_path.resolve()
+    if not ledger_resolved.is_relative_to(root_resolved):
+        return [
+            f"ledger path {ledger_path} resolves to {ledger_resolved}, outside "
+            f"the repo root {root_resolved} -- refusing to parse it"
+        ]
 
     claims = yaml.safe_load(ledger_path.read_text()) or []
     ids: set[str] = set()
@@ -203,7 +315,54 @@ def validate(root: Path) -> list[str]:
             if ref not in ids:
                 problems.append(f"{md}: reference to unknown claim '{ref}'")
         problems.extend(_check_hedging(md, text, status_by_id))
+        problems.extend(_check_universal_claims(md, text, status_by_id))
 
+    return problems
+
+
+def _check_universal_claims(md: Path, text: str, status_by_id: dict) -> list[str]:
+    """Flag paragraphs that cite a `verified-numeric` claim with an
+    unqualified universal quantifier/modal and no explicit range
+    qualification.
+
+    Hedging (`_check_hedging`) only fires for `conjecture`/`heuristic`
+    claims, so a `verified-numeric` claim -- a measurement over a finite
+    range -- can carry universal wording ("every", "must", ...) right past
+    it. This catches that case. It cannot catch a paragraph with no
+    `{claim:...}` token at all, which is why an untethered empirical
+    statement should get a ledger entry and a citation in the first place.
+
+    Citation and range check are each scoped no wider than they need to be:
+    citation to the enclosing list item (a tight bullet list packs unrelated
+    statements into one blank-line paragraph, and a claim cited in one bullet
+    must not make an unrelated universal word in a different bullet look like
+    an overclaim about it), and the range check to the individual sentence
+    carrying the universal word within that (a range qualifier attached to
+    one sentence must not silence an unrelated bare universal in another
+    sentence of the same scope).
+    """
+    problems: list[str] = []
+    for paragraph in re.split(r"\n\s*\n", text):
+        for scope in _citation_scopes(paragraph):
+            cited_verified = [
+                ref for ref in REFERENCE.findall(scope)
+                if status_by_id.get(ref) == "verified-numeric"
+            ]
+            if not cited_verified:
+                continue
+            for sentence in _sentences(scope):
+                match = _UNIVERSAL_QUANTIFIER_RE.search(sentence)
+                if not match:
+                    continue
+                if _has_range_qualifier(sentence):
+                    continue
+                for ref in cited_verified:
+                    problems.append(
+                        f"{md}: paragraph cites claim '{ref}' (status verified-numeric) "
+                        f"with unqualified universal word '{match.group(0)}' and no "
+                        f"range qualification"
+                    )
+                break
     return problems
 
 

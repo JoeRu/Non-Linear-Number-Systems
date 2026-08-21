@@ -57,7 +57,7 @@ dafür schon existiert.
 ### Phase 0.5 — Konstanten-Gate ✅
 
 - [x] `scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png` — `1d218a6`
-- [x] Messung: lokale Steigung **0.518710** bei $N = 10^{3200}$ gegen $1/(4\log\varphi) = 0.519522$ — `1d218a6`
+- [x] Messung: lokale Steigung **0.518710** bei $N = 10^{3200}$ gegen $1/(4\log\varphi) = 0.519522$ {claim:gate-local-slope} — `1d218a6`
 - [x] Ergebnis korrekt als *obere* Schranke formuliert; $1/(8\log\varphi)$ nur unter Sattelpunkt-Straffheit ausgeschlossen — `1b4dca0`, `3c97822`
 - [x] Deliverable `docs/phases/phase0_5_gate.md` — `1d218a6`, `1b4dca0`, `3c97822`
 - [x] Roadmap an die revidierte Phasenfolge angepasst — `860dd5b`
@@ -74,7 +74,7 @@ Erledigt:
 - [x] Brute-Force-Orakel (bewusst langsam, dient als Spezifikation) — `0140c82`
 - [x] **Korrektheits-Gate:** DP gegen Orakel für alle $N \le 200$, beide schnellen Pfade gegeneinander für alle $N \le 500$ — `054f968`
 - [x] Tabelle aus `theory/01-background.md` §4 exakt reproduziert für $n = 1..10$ — `674058b`
-- [x] Vollständigkeit numerisch bestätigt (keine Lücken in der Zählung) — `674058b`
+- [x] Vollständigkeit numerisch bestätigt (Details: `docs/phase1.md` Abschnitt „Completeness") — `674058b`
 - [x] Lauf bis $N = 10^6$ (exakt, nicht Log-Domain — der zurückgestellte Pfad wird nicht gebraucht) — `9ce15e9`
 - [x] `phase1_data.csv` — `9ce15e9`
 - [x] `phase1_plot.png` → geliefert als `phase1_growth.png` und `phase1_fluctuation.png` — `9ce15e9`
@@ -82,12 +82,13 @@ Erledigt:
 - [x] Deskriptive Statistik: Monotonie, lokale Fluktuation — `9ce15e9`
 - [x] Extremale $N$ (offenes Problem 2) — `9ce15e9`
 - [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (49.6% fallende
-      Schritte, aus `data/phase1_summary.json`), damit ist die in Phase 0
-      offengelassene Frage entschieden: der Befund **schränkt Route B ein**
-      (ist eine Randbedingung an sie, keine Auswahl gegen Route A) — jeder
-      Tauber-Angriff muss über die summatorische Funktion `S_c(N)` laufen,
-      nicht direkt über `R_c(N)`; Route A bleibt die primäre Route für den
-      strengen Asymptotik-Beweis (siehe Phase 5) — `8601426`
+      Schritte, aus `data/phase1_summary.json`) {claim:rc-not-monotone}, damit
+      ist die in Phase 0 offengelassene Frage entschieden: der Befund
+      **schränkt Route B ein** (ist eine Randbedingung an sie, keine Auswahl
+      gegen Route A) — er macht es ratsam, einen Tauber-Angriff über die
+      summatorische Funktion `S_c(N)` zu führen statt direkt über `R_c(N)`;
+      Route A bleibt die primäre Route für den strengen Asymptotik-Beweis
+      (siehe Phase 5) — `8601426`
 
 ### Phase 2 — Elementare Schranken 🟡 Aussagen formuliert, Beweise offen
 
@@ -273,7 +274,8 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    - Lokale Fluktuation: Ratio $R_c(N+1)/R_c(N)$; gibt es Spitzen oder systematische Muster?
    - **Vollständigkeit (erledigt):** Es gibt *keine* Lücken. Die Kempner–Fraenkel-Bedingung
      $F_k \le 1 + F_{k-1}F_k$ ist mit großem Spielraum erfüllt, also ist jedes $N \in [0, \sum_k F_k^2]$
-     darstellbar (`theory/01-background.md` §3, numerisch bestätigt in `tests/test_dp.py`).
+     darstellbar (`theory/01-background.md` §3, numerisch bestätigt in `tests/test_dp.py`)
+     {claim:completeness-no-gaps}.
      Aufgabe ist daher der *Beweis* der Vollständigkeit (Phase 2, Lean-Ziel), nicht die Suche nach Lücken.
 
 ### Deliverables
@@ -462,11 +464,12 @@ $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k}
    Mit explizitem Numerant: $\frac{1}{4\log\varphi} = \frac{1}{4 \cdot 0.481\ldots} \approx 0.520$.
 
    > **Numerische Stütze (Phase 0.5):** Die lokale Steigung der Legendre-Transformierten misst
-   > 0.518710 bei $N = 10^{3200}$ und steigt monoton gegen $1/(4\log\varphi) = 0.519522$.
+   > 0.518710 bei $N = 10^{3200}$ und steigt monoton gegen $1/(4\log\varphi) = 0.519522$
+   > {claim:gate-local-slope}.
    > Da es sich um eine *obere* Schranke handelt, schließt dies $1/(2\log\varphi)$ unmittelbar aus;
    > der Ausschluss von $1/(8\log\varphi)$ setzt zusätzlich voraus, dass die Sattelpunkt-Korrektur
    > von niedrigerer Ordnung ist — erwartet, aber in Phase 0.5 nicht bewiesen.
-   > Siehe `docs/phases/phase0_5_gate.md`. Das bleibt eine Konjektur — Phase 5 muss sie beweisen.
+   > Siehe `docs/phases/phase0_5_gate.md`. Das bleibt eine Konjektur — Phase 5 hat sie noch zu beweisen.
 
 3. **Sekundär-Entwicklung (optional, aber wertvoll):**  
    Falls die Heuristik auch Logarithmische Terme anderer Ordnung andeutet, z.B.
@@ -665,7 +668,8 @@ zwischen zwei Alternativen für dasselbe Ziel — sie beantworten verschiedene
 Fragen. Route A bleibt die primäre Route für das rigorose
 Asymptotik-Theorem über $\log R_c(N)$. Der Fluktuations-Befund aus Phase 1
 (`docs/phases/phase1_report.md`) zeigt aber, dass $R_c(N)$ selbst über
-$N \le 10^6$ so unregelmäßig ist (49.6% fallende Schritte), dass ein direkter
+$N \le 10^6$ so unregelmäßig ist (49.6% fallende Schritte) {claim:rc-not-monotone},
+dass ein direkter
 Taubersatz-Angriff auf $R_c(N)$ dadurch erschwert wird — die summatorische
 Funktion $S_c(N)$ ist daher das numerisch sicherere Ziel für einen
 Tauberian-Angriff (Route B), sobald sie verfolgt wird, statt $R_c(N)$ selbst.

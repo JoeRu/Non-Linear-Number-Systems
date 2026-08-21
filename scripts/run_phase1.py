@@ -145,8 +145,25 @@ def main() -> int:
         d = dp_counts(n_max)
         dp_seconds = time.time() - t0
         print(f"  dp took {dp_seconds:.1f}s")
+        # Length must be checked before equality: two identically-truncated
+        # arrays compare equal (Python list equality is pointwise AND
+        # length-sensitive, but "identically truncated" means both sides
+        # agree on every element they share, including their -- too-short --
+        # length), so `c != d` would be False and the cross-check would
+        # report success. The later `c[n]` lookups for n up to n_max would
+        # then raise IndexError instead of this being caught here.
+        if len(c) != n_max + 1 or len(d) != n_max + 1:
+            print(f"CROSS-CHECK FAILED: expected arrays of length {n_max + 1} "
+                  f"from both gf and dp, got gf={len(c)}, dp={len(d)}")
+            print("Writing nothing.")
+            return 1
         if c != d:
-            first = next(i for i in range(len(c)) if c[i] != d[i])
+            # The length check above guarantees len(c) == len(d) == n_max + 1
+            # here, so c and d being unequal guarantees some index in
+            # range(n_max + 1) differs -- this can never exhaust the range
+            # without finding one, so there is no "differ in length" case
+            # left to report at this point.
+            first = next(i for i in range(n_max + 1) if c[i] != d[i])
             print(f"CROSS-CHECK FAILED: first disagreement at N={first}: "
                   f"gf={c[first]} dp={d[first]}")
             print("Writing nothing.")
@@ -154,7 +171,10 @@ def main() -> int:
         crosscheck = f"dp==gf pointwise for all N <= {n_max}"
         print(f"cross-check OK: {crosscheck}")
 
-    assert min(c) >= 1, "a zero count would break local_ratios"
+    if min(c) < 1:
+        print("PRECONDITION FAILED: a non-positive count would break local_ratios.")
+        print("Writing nothing.")
+        return 1
 
     census = monotonicity_census(c)
     sc = summatory(c)

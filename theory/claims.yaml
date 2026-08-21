@@ -75,3 +75,15 @@
   status: theorem
   evidence: "Proved in theory/03-invariants.md (sc-monotone): R_c(n) >= 0 for all n since it counts digit tuples, so S_c(N+1) - S_c(N) = R_c(N+1) >= 0. Corroborated in tests/test_stats.py::test_summatory_is_exact_ints_and_monotone."
   source: "this project"
+
+- id: flat-steps-end-early
+  statement: "Over N <= 1000000 there are exactly 11 flat steps (R_c(N) = R_c(N-1)), at N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78, all below N = 79. No further flat step occurs in the remaining measured range."
+  status: verified-numeric
+  evidence: "data/phase1_summary.json (flat_step_positions field)"
+  source: "this project, Phase 1"
+
+- id: completeness-empirical
+  statement: "min(counts) = 1 over N <= 1000000: every N in this range has at least one representation. This is a measurement over the computed range, not the general completeness statement -- the Lean theorem exists_numeral_of_le (see claim completeness-no-gaps) remains a `sorry`. This claim is evidence toward that theorem, not a substitute for it."
+  status: verified-numeric
+  evidence: "data/phase1_summary.json (min_count field)"
+  source: "this project, Phase 1"

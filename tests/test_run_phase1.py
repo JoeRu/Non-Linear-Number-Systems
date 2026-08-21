@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 
 import capfib.dp as dp_module
+import capfib.gf as gf_module
 
 REAL_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "run_phase1.py"
 
@@ -81,6 +82,143 @@ def test_crosscheck_failure_exits_nonzero_and_writes_nothing(tmp_path, monkeypat
         "a failed cross-check must not create the CSV artifact"
     assert not (tmp_path / "figures").exists(), \
         "a failed cross-check must not create any figures"
+
+
+def _truncated_counts(real):
+    """Return values that agree with `real` on their shared prefix but are
+    shorter -- the shape that made the original, undefaulted
+    `next(i for i in range(len(c)) if c[i] != d[i])` scan raise IndexError
+    (not StopIteration: for i past len(d), evaluating `d[i]` inside the
+    generator raises IndexError before the scan can ever exhaust its range
+    and finish normally). The production code no longer runs that scan at
+    all in this case -- gf stays full-length while dp is 5 short, so the
+    `len(c) != n_max + 1 or len(d) != n_max + 1` check now catches this
+    before the pointwise comparison is even attempted."""
+    def truncated(n_max, places=None):
+        c = list(real(n_max, places))
+        return c[:-5]
+    return truncated
+
+
+def test_crosscheck_length_mismatch_exits_nonzero_and_writes_nothing(tmp_path, monkeypatch):
+    # gf is full-length; dp's array is 5 shorter. The length check now
+    # catches this before the pointwise `c != d` comparison ever runs. This
+    # must be reported and exit 1, not raise IndexError.
+    script_copy = _make_scratch_repo(tmp_path)
+
+    real = dp_module.counts
+    monkeypatch.setattr(dp_module, "counts", _truncated_counts(real))
+    monkeypatch.setattr(sys, "argv", ["run_phase1.py", "--n-max", "3000"])
+
+    exit_code = None
+    try:
+        runpy.run_path(str(script_copy), run_name="__main__")
+    except SystemExit as exc:
+        exit_code = exc.code
+
+    assert exit_code == 1, \
+        "a length-mismatched cross-check must exit non-zero, not raise"
+
+    data_dir = tmp_path / "data"
+    assert (data_dir / "phase1_summary.json").read_text() == SENTINEL_SUMMARY, \
+        "a failed cross-check must not modify an existing summary artifact"
+    assert (data_dir / "manifest.json").read_text() == SENTINEL_MANIFEST, \
+        "a failed cross-check must not modify the manifest"
+    assert not (data_dir / "phase1_data.csv").exists(), \
+        "a failed cross-check must not create the CSV artifact"
+    assert not (tmp_path / "figures").exists(), \
+        "a failed cross-check must not create any figures"
+
+
+def _same_truncation(real):
+    """Return values truncated the same way `_truncated_counts` truncates dp
+    -- so that gf and dp end up EQUAL to each other (same shorter length,
+    same elements), not just individually wrong. `c != d` is False in this
+    case; only an explicit length-vs-n_max check can catch it."""
+    def truncated(n_max, places=None):
+        c = list(real(n_max, places))
+        return c[:-5]
+    return truncated
+
+
+def test_crosscheck_identically_truncated_arrays_exits_nonzero_and_writes_nothing(
+    tmp_path, monkeypatch
+):
+    # Both gf and dp are truncated the same way, so they agree pointwise and
+    # `c != d` is False -- the old code would report "cross-check OK" and
+    # then raise IndexError trying to read c[n_max]. The fix requires both
+    # arrays to have length exactly n_max + 1 before accepting equality.
+    script_copy = _make_scratch_repo(tmp_path)
+
+    real_gf = gf_module.coefficients
+    real_dp = dp_module.counts
+    monkeypatch.setattr(gf_module, "coefficients", _same_truncation(real_gf))
+    monkeypatch.setattr(dp_module, "counts", _same_truncation(real_dp))
+    monkeypatch.setattr(sys, "argv", ["run_phase1.py", "--n-max", "3000"])
+
+    exit_code = None
+    try:
+        runpy.run_path(str(script_copy), run_name="__main__")
+    except SystemExit as exc:
+        exit_code = exc.code
+
+    assert exit_code == 1, \
+        "identically-truncated gf/dp arrays must exit non-zero, not IndexError"
+
+    data_dir = tmp_path / "data"
+    assert (data_dir / "phase1_summary.json").read_text() == SENTINEL_SUMMARY, \
+        "a failed cross-check must not modify an existing summary artifact"
+    assert (data_dir / "manifest.json").read_text() == SENTINEL_MANIFEST, \
+        "a failed cross-check must not modify the manifest"
+    assert not (data_dir / "phase1_data.csv").exists(), \
+        "a failed cross-check must not create the CSV artifact"
+    assert not (tmp_path / "figures").exists(), \
+        "a failed cross-check must not create any figures"
+
+
+def _zeroed_at(real, index):
+    """Return values equal to `real` except one index is forced to 0 --
+    triggering the `min(c) < 1` precondition (which guards `local_ratios`
+    against division by zero) while keeping gf and dp pointwise EQUAL, so
+    the cross-check itself passes and this precondition is what actually
+    gets exercised."""
+    def zeroed(n_max, places=None):
+        c = list(real(n_max, places))
+        c[index] = 0
+        return c
+    return zeroed
+
+
+def test_min_count_precondition_exits_nonzero_and_writes_nothing(tmp_path, monkeypatch):
+    # gf and dp are patched identically, so the cross-check passes -- but
+    # the agreed array has a zero count, which would break local_ratios.
+    # Nothing previously exercised this precondition.
+    script_copy = _make_scratch_repo(tmp_path)
+
+    real_gf = gf_module.coefficients
+    real_dp = dp_module.counts
+    monkeypatch.setattr(gf_module, "coefficients", _zeroed_at(real_gf, 5))
+    monkeypatch.setattr(dp_module, "counts", _zeroed_at(real_dp, 5))
+    monkeypatch.setattr(sys, "argv", ["run_phase1.py", "--n-max", "3000"])
+
+    exit_code = None
+    try:
+        runpy.run_path(str(script_copy), run_name="__main__")
+    except SystemExit as exc:
+        exit_code = exc.code
+
+    assert exit_code == 1, \
+        "a zero count must exit non-zero before any artifact is written"
+
+    data_dir = tmp_path / "data"
+    assert (data_dir / "phase1_summary.json").read_text() == SENTINEL_SUMMARY, \
+        "a failed precondition must not modify an existing summary artifact"
+    assert (data_dir / "manifest.json").read_text() == SENTINEL_MANIFEST, \
+        "a failed precondition must not modify the manifest"
+    assert not (data_dir / "phase1_data.csv").exists(), \
+        "a failed precondition must not create the CSV artifact"
+    assert not (tmp_path / "figures").exists(), \
+        "a failed precondition must not create any figures"
 
 
 @pytest.mark.parametrize("bad_n_max", [0, 1, -5])

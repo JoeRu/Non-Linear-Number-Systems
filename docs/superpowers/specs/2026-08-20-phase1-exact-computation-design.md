@@ -164,7 +164,7 @@ Pure functions over a counts array. No I/O, no plotting, no globals.
 |---|---|
 | `monotonicity_census(counts)` | `{"increasing": int, "flat": int, "decreasing": int, "steps": int}` over `n = 1..N_max`, comparing `counts[n]` to `counts[n-1]`. The three counts must sum to `steps`. |
 | `summatory(counts)` | `list[int]`, `S[N] = Σ_{n ≤ N} counts[n]`, exact. |
-| `local_ratios(counts)` | `list[float]` of length `n_max`; `r[n] = counts[n+1] / counts[n]` for `n = 0 … n_max-1`. Division by zero is guarded by an explicit runtime assertion `min(counts) >= 1` — **not** by appealing to completeness, which is still a `sorry` in Lean. Measured: `min(counts) == 1` at `n_max = 10^6`. |
+| `local_ratios(counts)` | `list[float]` of length `n_max`; `r[n] = counts[n+1] / counts[n]` for `n = 0 … n_max-1`. Division by zero is guarded by an explicit `ValueError` raised when `min(counts) < 1` — **not** by appealing to completeness, which is still a `sorry` in Lean, and deliberately not a bare `assert` (which `python -O` strips). Measured: `min(counts) == 1` at `n_max = 10^6`. |
 | `block_extrema(counts)` | Over **distinct** place values only — `F_1 = F_2 = 1` would otherwise produce a degenerate duplicate first block. For consecutive distinct places `F < F'`, the block is `[F, min(F', n_max+1))`. Returns argmax/argmin per block; **ties broken by smallest `N`**, stated so results are reproducible. |
 | `place_jumps(counts)` | For each **distinct** place value `F ≥ 2`, the ratio `counts[F] / counts[F-1]`. Distinctness matters: `F_1 = F_2 = 1`, and `F = 1` has no `F-1` in range. |
 
@@ -186,7 +186,7 @@ operations:
 1. Compute `gf.coefficients(n_max)` and `dp.counts(n_max)`.
 2. **Precondition:** compare pointwise. On mismatch, report the smallest
    disagreeing `N` and exit non-zero, writing nothing.
-3. Assert `min(counts) >= 1` (guards `local_ratios`).
+3. Check `min(counts) >= 1`; on failure, print a clear message and exit 1 without writing anything (guards `local_ratios`, whose own internal guard raises `ValueError` rather than a bare `assert`, which `python -O` strips).
 4. Call each analysis in `capfib.stats`.
 5. Write each artifact to a temporary path, then **atomically rename** it into
    place, so a failure mid-write cannot leave that one file half-written and
@@ -205,7 +205,7 @@ operations:
 
 | Path | Contents |
 |---|---|
-| `data/phase1_data.csv` | `N, R_c, log_R_c, log_N_sq, ratio, S_c, log_S_c` at every `N = round(10^(j/2))` for `j = 4 … 2·log10(n_max)` (decades and half-decades from 100), plus every distinct place value `F_k ≤ n_max`. Sorted, deduplicated. |
+| `data/phase1_data.csv` | `N, R_c, log_R_c, log_N_sq, ratio, S_c, log_S_c` at every `N = round(10^(j/2))` for `j = 4 … 2·log10(n_max)` (decades and half-decades from 100), plus every distinct place value `F_k ≤ n_max` **except `F = 1`** — `F_1 = F_2 = 1` is a degenerate duplicate place, and `log(1) = 0` would make the `ratio` column's denominator `(log N)^2` zero at `N = 1`. Sorted, deduplicated. |
 | `data/phase1_summary.json` | Monotonicity census, block extrema, fluctuation quantiles, place jumps. No checksum result — the script does not call `checksum_ok`; §3.1's pointwise cross-check is what licenses the numbers. |
 | `figures/phase1_growth.png` | `log R_c(N)` and `log S_c(N)` against `(log N)^2` |
 | `figures/phase1_fluctuation.png` | Local ratio of `R_c` against the relative increment of `S_c` — the visual form of the Route B argument |
