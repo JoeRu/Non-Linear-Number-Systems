@@ -114,7 +114,8 @@ later phase that builds on this data, rests on the place set being right. A
 silent corruption would invalidate the data without failing a single test.
 Cheap to close: assert the full list at the production boundary.
 
-**Revisit:** immediately — this is the one entry here with an obvious fix.
+**Revisit when:** immediately — this is the one entry here with an obvious fix,
+and the argument documented in the spec depends on it.
 
 ---
 
@@ -175,6 +176,10 @@ quantifiers ("any", "every", "must", "unavailable", "jeder", "muss") in a
 paragraph citing a `verified-numeric` claim. Cheap, imperfect, and would have
 caught all four.
 
+**Revisit when:** the check above is implemented and has run clean across the
+repository for a full phase. Until then this stays open — a guard that has not
+yet survived a phase of real writing has not been shown to work.
+
 ---
 
 ## R-006 — Artifacts and manifest can record different generations
@@ -198,6 +203,10 @@ summary, or fresh files with stale hashes.
 **Risk to the roadmap.** Low. A mixed generation would most likely be caught by
 the next `check_claims.py` run via a hash mismatch. Its cost is a confusing
 debugging session, not a wrong published number.
+
+**Revisit when:** `scripts/run_phase1.py` is next modified, or when a claim
+first depends on more than one artifact from the same run — that is the point
+at which a mixed generation stops being merely confusing.
 
 ---
 
