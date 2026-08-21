@@ -8,7 +8,7 @@ by (1 - x^f), both O(n_max). This is the production path; `capfib.dp` is the
 independent implementation it is checked against.
 """
 
-from capfib.fib import places_up_to
+from capfib.fib import fibonacci, places_up_to
 
 
 def coefficients(n_max: int, places: list[int] | None = None) -> list[int]:
@@ -30,3 +30,24 @@ def coefficients(n_max: int, places: list[int] | None = None) -> list[int]:
             nxt[n] = q[n] + (nxt[n - f] if n >= f else 0)
         p = nxt
     return p
+
+
+def checksum_ok(n: int) -> bool:
+    """Verify sum(counts) == prod(F_k + 1) for the fixed-length system on F_1..F_n.
+
+    Every digit tuple has exactly one value, so the coefficients must sum to
+    the number of tuples.
+
+    This is a REGRESSION INVARIANT, not a correctness certificate. It is one
+    scalar over an array of millions: any sum-preserving corruption passes, and
+    it exercises only places F_1..F_n, not the place set a production run uses.
+    See tests/test_checksum.py, which asserts both limitations. What licenses
+    reported values is the pointwise dp/gf cross-check in scripts/run_phase1.py.
+    """
+    places = fibonacci(n)
+    max_value = sum(f * f for f in places)
+    total = sum(coefficients(max_value, places=places))
+    product = 1
+    for f in places:
+        product *= f + 1
+    return total == product

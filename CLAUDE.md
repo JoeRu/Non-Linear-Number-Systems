@@ -40,6 +40,14 @@ results and a Python numerics package to generate and cross-check the underlying
 - **The Fibonacci convention is F_1 = 1, F_2 = 1, F_3 = 2, F_4 = 3, F_5 = 5, …** (spec D2). Place values are constructed in `capfib/fib.py` and **nowhere else**. Every other module imports from there. The duplicated 1-place is load-bearing — it is the source of the "1 > 1" phenomenon, and dropping it also breaks the identity `sum_{k<=n} F_k^2 = F_n * F_{n+1}`.
 - `R_c(N)` counts digit tuples over **all** places `F_k <= N`, never a fixed length `n`. Fixing the length undercounts (spec §4.3, Trap 1).
 - **The §4.2 gate:** no output of `capfib.dp` or `capfib.gf` may appear in any report, figure, or claim until it has matched `capfib.brute` for all N <= 200 and the two fast paths have matched each other for all N <= 500.
+- **Beyond the verified range:** reporting any `capfib.dp`/`capfib.gf` value
+  outside the pointwise-verified range additionally requires `dp` and `gf` to
+  agree pointwise **over the whole reported range, in the same run that
+  produces the data** (`scripts/run_phase1.py` does this). The global checksum
+  `gf.checksum_ok` is a regression invariant and is explicitly **not**
+  sufficient: it is one scalar over millions of coefficients, so any
+  sum-preserving corruption passes, and it does not exercise the production
+  place set.
 - Never remove a Lean `sorry` without a real proof. A `sorry` is a statement; a wrong proof is worse than an open one.
 - Every generated dataset writes an entry to `data/manifest.json`.
 - Commit at the end of every task.
@@ -117,6 +125,22 @@ lake env lean NonLinearNumberSystems/Redundancy.lean
 5. **Respect the correctness gate.** Never present `capfib.dp` or `capfib.gf` output as
    a fact until it has passed the cross-checks described in Global Constraints above.
 
-6. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
+6. **Codex reviews everything.** Standing decision (2026-08-20). Every design
+   spec goes to Codex before it becomes an implementation plan; every code
+   change gets a Codex review; and a **full Codex review runs before pushing
+   for a pull request**, not after. Invoke through the `codex:rescue` skill.
+
+   Treat its findings as external review: verify each against
+   the codebase before acting, push back with technical reasoning where it is
+   wrong, and record the outcome in the artifact itself — the Phase 1 spec
+   carries an "Appendix — review history" naming what was rejected, what was
+   verified, and what was declined and why.
+
+   This exists because it worked the first time it was used: Codex rejected the
+   Phase 1 spec's central verification argument, correctly, after that spec had
+   already passed an internal review loop. An outside reader with no stake in
+   the reasoning catches what self-review structurally cannot.
+
+7. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
    de Bruijn, Coons–Kristensen–Laursen, Fraenkel) or from Mathlib, include the source
    reference in a comment.
