@@ -71,7 +71,7 @@ log R_c(N) >= (log N)^2 / (8 log phi) - C (log N)(log log N).
 ```
 
 The construction of §4.3 gives the secondary coefficient explicitly as `1/(2 log phi) =
-1.0391...`, so any admissible `C` is at least that. `C` and `N_0` are outputs of the write-up,
+1.0390...`, so any admissible `C` is at least that. `C` and `N_0` are outputs of the write-up,
 not inputs to it, and the value proved governs over any value suggested by finite data.
 
 **C4 — sandwich.** Combining T2 and T3,
@@ -217,7 +217,7 @@ log R_c(N) >= sum_{k=a+1}^{c} log(m_k + 1)
             = t^2/(8 lambda) - t log t / (2 lambda) + O(t).
 ```
 
-**The secondary coefficient is explicit and it is not 1.** It is `1/(2 log phi) = 1.0391...`.
+**The secondary coefficient is explicit and it is not 1.** It is `1/(2 log phi) = 1.0390...`.
 T3's `C` must therefore be at least that; `C = 1` is *not* justified by this estimate. The
 `C ≈ 0.88` in Appendix A is finite-range evidence over `N <= 10^6` and is consistent with an
 asymptotic coefficient above 1 — it must not be read as bounding `C`.
@@ -648,7 +648,7 @@ The `log`/count distinction matters for the artifact schema: `data/phase2_bounds
 the logarithm, and a column named "count" holding `1.792` would be wrong.
 
 The implied `C` is finite-range evidence only and **does not bound `C`**. The asymptotic
-secondary coefficient derived in §4.3 is `1/(2 log phi) = 1.0391...`, above every entry in this
+secondary coefficient derived in §4.3 is `1/(2 log phi) = 1.0390...`, above every entry in this
 column, which is consistent: the implied values are still drifting upward across the range.
 
 **Empirical ratio `log R_c(N)/(log N)^2`:** 0.3334 at `10^2`, 0.3342 at `10^4`, 0.3582 at `10^6`

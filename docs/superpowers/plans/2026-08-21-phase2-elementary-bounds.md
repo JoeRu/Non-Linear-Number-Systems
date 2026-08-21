@@ -1598,7 +1598,7 @@ architecture. Four things the spec is emphatic about, because each was a defect 
    own boundary (`a_n(s_n) - log(F_n+1) -> log(1-e^{-1})` at `s_n = 1/(F_n(F_n+1))`).
 2. **C4 does not assert that `C_c` exists.** State it for liminf and limsup. The `C'` translation is
    conditional on existence. Do **not** write "the conjecture holds iff T2 is attained".
-3. **T3's secondary coefficient is `1/(2 log phi) = 1.0391`**, so any admissible `C` is at least that.
+3. **T3's secondary coefficient is `1/(2 log phi) = 1.0390`**, so any admissible `C` is at least that.
    The finite-range `C ≈ 0.88` does not bound it.
 4. **The factor of two is structural to L1 as specified**, not to every refinement. Say so, and point
    at the two routes in §4.4.
