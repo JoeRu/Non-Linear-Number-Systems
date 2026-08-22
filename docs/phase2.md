@@ -272,7 +272,8 @@ is pre-asymptotic.
 |---|---|
 | Does `C_c` exist at all? | **Answered.** Research question (A); C5 (§8) proves the limit exists and equals `1/(4 log phi)`. C4 alone does not address it |
 | Closing the sandwich | **Done.** Route L2b of §4.4 closes it: §8's Lemma F and T5. Route L2a did not close; §8.6 records where it stopped |
-| The secondary term | The `O(t)` in `log R_c(N) = t^2/(4 log phi) - t log t/(2 log phi) + O(t)` is not pinned from either side |
+| The size of the saddle correction | Phase 2 proves `0 <= Lambda(N) - log R_c(N) <= K log N`. Whether that correction divided by `log N` converges — and to what — is open {claim:saddle-correction-constant} |
+| The secondary term `c_2` | Whether `c_2` in research question (B) exists is a **different** question: `c_2` is the limit of `(E - D)/t`, and T2 bounds `E` rather than evaluating it, so neither answer implies the other {claim:secondary-term-constant} |
 | The CKL identification | Pending verification; out of scope for Phase 2 |
 
 ---

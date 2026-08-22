@@ -55,6 +55,16 @@ wording, or write a paragraph that leans on a conjecture, read it yourself and
 ask whether a reader would come away believing something stronger than the
 ledger says. That judgement is not automatable and the check does not replace it.
 
+**Promotion silently removes the guard.** The hedging check applies only to
+paragraphs citing a `conjecture` or `heuristic`. The moment a claim is promoted
+to `theorem`, every paragraph citing it stops being checked — in the same commit
+that makes those paragraphs stale, because they were written to hedge a claim
+that no longer needs hedging. So a promotion is exactly when the prose most
+needs re-reading and exactly when the tool stops looking. This is structural,
+not a one-off: every future promotion repeats it. Observed on this project when
+`leading-constant` moved from `conjecture` to `theorem` in Phase 2. **After
+promoting any claim, grep for its id and read every citing paragraph by hand.**
+
 Strengthening candidates, if this ever bites: split on list items and table
 rows rather than blank lines; scope the hedge to the sentence containing the
 citation; detect negation around the marker.
