@@ -135,10 +135,15 @@ Erledigt:
 - [ ] Legendre-Transformation zur Konstante hergeleitet
 - [ ] `phase3_heuristic.md` mit expliziter Heuristik-Warnung
 - [ ] Sekundärterm-Entwicklung ($C_1$, $C_2$)
-      (**Nachtrag Phase 2:** $C_1$ ist bereits festgelegt — T2s effektive Form und T5 haben
-      denselben $t\log t$-Koeffizienten $-1/(2\log\varphi)$, also ist
-      $\log R_c(N) = t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$. Offen bleibt $C_2$,
-      siehe Ledger `saddle-correction-constant`.)
+      (**Nachtrag Phase 2:** Der $\log N\log\log N$-Term ist bereits festgelegt — T2s
+      effektive Form und T5 tragen denselben Koeffizienten, also gilt
+      $\log R_c(N) = t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$ mit $t=\log N$.
+      **Achtung auf die Normierung:** in der unten in diesem Abschnitt benutzten Schreibweise,
+      die $1/\log\varphi$ ausklammert, heißt das $C_1 = -1/2$; in der Schreibweise der
+      Forschungsfrage (B) in `theory/00-definitions.md`, die nichts ausklammert, heißt
+      dieselbe Aussage $c_1 = -1/(2\log\varphi)$. Offen bleibt $C_2$ bzw. $c_2$ — Ledger
+      `secondary-term-constant`, nicht `saddle-correction-constant`; das sind zwei
+      verschiedene Fragen.)
 
 Hinweis: Die Konstante ist durch Phase 0.5 bereits *gemessen* und seit Phase 2 auch
 *bewiesen* (C5, `phase2_bounds.md` §8). Phase 3 muss sie nun *erklären*, nicht
@@ -159,19 +164,28 @@ vorhersagen und nicht etablieren.
 - [ ] Route B: Taubersätze für $S_c(N)$
 - [ ] Route C: Funktionalgleichung (explorativ)
 - [x] **Sattelpunkt-Straffheit bewiesen** — `saddle-tightness` ist seit Phase 2 ein
-      `theorem`, nicht mehr eine Heuristik: T1 legt $\log R_c$ unter die
-      Legendre-Transformierte, T2 wertet diese als $t^2/(4\lambda) + O(t)$ aus, T5
-      schränkt $\log R_c$ von unten ein, also ist die Sattelpunkt-Korrektur
-      $O(t\log t) = o(t^2)$ und beide teilen den Leitkoeffizienten. Der ursprüngliche
-      Zweck des Punktes — $1/(8\log\varphi)$ auszuschließen — ist ohnehin entfallen, weil
-      C5 diesen Wert unbedingt ausschließt — `43397a2`, `30da98a`
-- [ ] **Feinere Aussage, weiterhin offen:** die *Ordnung* der Sattelpunkt-Korrektur ist
-      durch Phase 2 mitbewiesen — sie ist $O(\log N)$, weil sich die $t^2$- und
-      $t\log t$-Terme zwischen T2 und T5 wegheben. Offen ist die *Konstante*: T2s $O(t)$
-      wird nirgends explizit gemacht, T5s ist $-7{.}5\,t$, die beiden treffen sich also
-      nicht. Genau diese Konstante ist das $c_2$ der Forschungsfrage (B). Im Ledger als
-      eigener Eintrag `saddle-correction-constant`, Status `open` — nicht als Teil von
-      `saddle-tightness`, das die gröbere und inzwischen bewiesene Aussage macht.
+      `theorem`, nicht mehr eine Heuristik. Mit $t=\log N$ und
+      $\Lambda(N) = \min_s\,[sN + \log F_c(e^{-s})]$: T1 legt $\log R_c(N)$ unter
+      $\Lambda(N)$; T2, ausgewertet bei $s = t/(2\lambda N)$, legt $\Lambda(N)$ unter
+      $t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$ — dieses $s$ ist ein Kandidat im
+      Minimum; T5 legt $\log R_c(N)$ über $t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$.
+      Die $t^2$- **und** die $t\log t$-Terme heben sich weg, die Sattelpunkt-Korrektur ist
+      also $O(t) = O(\log N)$, insbesondere $o(t^2)$, und beide teilen den
+      Leitkoeffizienten. (Die gröbere Lesart $O(t\log t)$ ist falsch — $\Lambda(N)$ ist
+      **nicht** $t^2/(4\lambda) + O(t)$, der Term $-t\log t/(2\lambda)$ ist nicht $O(t)$.)
+      Der ursprüngliche Zweck des Punktes — $1/(8\log\varphi)$ auszuschließen — ist
+      ohnehin entfallen, weil C5 diesen Wert unbedingt ausschließt — `43397a2`, `30da98a`
+- [ ] **Zwei feinere Aussagen, beide weiterhin offen.** Die *Ordnung* der
+      Sattelpunkt-Korrektur ist durch Phase 2 mitbewiesen — sie ist $O(\log N)$, weil sich
+      die $t^2$- und $t\log t$-Terme zwischen T2 und T5 wegheben. Offen sind zwei
+      **verschiedene** Konstanten, und sie dürfen nicht gleichgesetzt werden:
+      `saddle-correction-constant` (hat $\Lambda(N) - \log R_c(N)$ einen bestimmten
+      Leitkoeffizienten in $\log N$?) und `secondary-term-constant` (existiert $c_2$ in
+      der Entwicklung von $\log R_c(N)$?). Beide im Ledger mit Status `open`, keine von
+      beiden Teil von `saddle-tightness`, das die gröbere und inzwischen bewiesene Aussage
+      macht. Sie unterscheiden sich um den Leitkoeffizienten von
+      $\Lambda(N) - [t^2/(4\lambda) - t\log t/(2\lambda)]$, der selbst unbewiesen ist:
+      T2s $O(t)$ ist eine Schranke, keine Asymptotik.
 
 ### Phase 6 — Oszillationen ⬜ offen
 
@@ -468,6 +482,13 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
 
 ## Phase 3 — Die Sattelpunkt-Heuristik (Herzstück)
 
+> **Nachtrag (Phase 2).** Wo dieser Abschnitt „Konjektur" sagt, ist der Status vor Phase 2
+> gemeint. $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$ ist bewiesen (C5, Ledger
+> `leading-constant`, Status `theorem`), und ebenso die Straffheit der Sattelpunktschranke
+> (`saddle-tightness`). Phase 3 bleibt sinnvoll und ändert nur ihr Ziel: die Konstante
+> *erklären* statt sie zu *raten*, und den Sekundärterm angreifen, wo tatsächlich noch
+> etwas offen ist (`saddle-correction-constant`, `secondary-term-constant`).
+
 **Zeithorizont:** 3–4 Wochen  
 **Kritikalität:** SEHR HOCH — Liefert die Konjektur und Intuition für Phase 5
 
@@ -587,6 +608,12 @@ $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k}
 
 ## Phase 4 — Numerische Konfrontation (parallel zu Phase 3)
 
+> **Nachtrag (Phase 2).** „Die Konjektur" heißt hier durchgehend die Aussage, die vor
+> Phase 2 eine war; sie ist als C5 bewiesen. Die numerische Arbeit dieser Phase verliert
+> dadurch nichts: sie wird von einem Konjekturtest zu einer *Konfrontation* eines Theorems
+> mit Daten, und der Sekundärterm samt Oszillation, auf den sie eigentlich zielt, ist
+> weiterhin offen.
+
 **Zeithorizont:** 2–3 Wochen  
 **Kritikalität:** HOCH — Quantitatives Feedback auf die Konjektur
 
@@ -662,6 +689,10 @@ $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k}
 ---
 
 ## Phase 5 — Rigorisierung: Drei Angriffsrouten
+
+> **Nachtrag (Phase 2).** Der Leitkoeffizient braucht diese Phase nicht mehr — C5 beweist
+> ihn elementar. Was hier zu holen bleibt, ist alles unterhalb davon: der Sekundärterm
+> (`saddle-correction-constant`, `secondary-term-constant`) und die Oszillationsstruktur.
 
 **Zeithorizont:** Monate (3–6, je nach Route)  
 **Kritikalität:** KRITISCH — Unterschied zwischen Konjektur und Theorem
@@ -847,7 +878,7 @@ sobald sie verfolgt wird.
    
    Die Heuristik aus Phase 3 suggeriert, dass die Konstante $C_c(\alpha)$ interpoliert zwischen:
    - $\alpha=0$: $d_k\le c$ (alle Positionen gleich gecappt) → andere Asymptotik?  
-   - $\alpha=1$: $d_k\le c F_k$ (unserer Fall) → $\frac{1}{4\log\varphi}$ (Konjektur)  
+   - $\alpha=1$: $d_k\le c F_k$ (unserer Fall) → $\frac{1}{4\log\varphi}$ (**bewiesen**, C5, Phase 2)  
    - $\alpha\to\infty$: $d_k\le c F_k^\infty$ (praktisch unkappot) → $\frac{1}{2\log\varphi}$ (Coons–Kristensen–Laursen).
    
    Formuliere ein *parametrisches Theorem* mit $C_c(\alpha)$ als Funktion von $\alpha$ und verifiziere/beweise es für Grenzfälle.
@@ -899,6 +930,8 @@ Phase 3 (3–4 Wochen) ← kritisches Herzstück
 Phase 4 (2–3 Wochen) — Numerik-Feedback
     ↓
 **Entscheidungspunkt:** Konjektur robust genug für Phase 5?
+        (hinfällig für den Leitkoeffizienten — Phase 2 hat ihn bewiesen;
+         gilt weiter für den Sekundärterm)
     ↓ Ja
 Phase 5A (4–6 Monate) — Mellin + Dirichletreihen
     ↓
@@ -909,7 +942,8 @@ Phase 7 (2–3 Monate) — Writeup und Verallgemeinerung
 
 **Zusammenfassung Zeithorizont:**  
 - **Kurzfristig (4–6 Wochen):** Phase 0–2 liefern Sandwich-Theorem + Beweis für Größenordnung.  
-- **Mittelfristig (3–4 Monate zusätzlich):** Phase 3–4 etablieren robuste numerische Konjektur.  
+- **Mittelfristig (3–4 Monate zusätzlich):** Phase 3–4 etablieren robuste numerische Konjektur.
+  (Phase 2 hat den Leitkoeffizienten bereits bewiesen; gemeint ist ab jetzt der Sekundärterm.)  
 - **Langfristig (6–12 Monate):** Phase 5–7 erzielen vollständigen Beweis und publikationsfähiges Papier.
 
 ---

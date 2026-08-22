@@ -3,7 +3,10 @@
 
 Candidates:
     1 / (2 log phi) = 1.03904   (no cap effect; Coons-Kristensen-Laursen)
-    1 / (4 log phi) = 0.51952   (roadmap Phase 3 conjecture)
+    1 / (4 log phi) = 0.51952   (conjectured when this gate was written;
+                                proved in Phase 2 as C5 of
+                                docs/phases/phase2_bounds.md, so this is now
+                                the known value and the gate is a check)
     1 / (8 log phi) = 0.25976   (naive count; a lower bound only)
 
 The estimator is the local slope d(log R)/d((log N)^2), which converges far

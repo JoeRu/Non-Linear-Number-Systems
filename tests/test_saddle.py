@@ -32,8 +32,10 @@ def test_leading_constant_approaches_quarter_log_phi():
     )
     assert abs(slopes[-1] - 1.0 / (8 * LOG_PHI)) > 0.2, (
         "measured slope is far above 1/(8 log phi), but as an upper bound this does "
-        "not by itself exclude a smaller true constant such as 1/(8 log phi) -- "
-        "that additionally requires the saddle-tightness assumption"
+        "not by itself exclude a smaller true constant such as 1/(8 log phi). What "
+        "excludes it is C5 of docs/phases/phase2_bounds.md, unconditionally and by a "
+        "route that does not use this measurement; saddle-tightness, which Phase 0.5 "
+        "had to assume, is since Phase 2 a theorem rather than an assumption"
     )
 
 

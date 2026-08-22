@@ -21,12 +21,14 @@ coefficient therefore bounds `C_c` from above. That excludes `1/(2 log phi) = 1.
 true constant such as `1/(8 log phi) = 0.260`. Excluding that additionally requires the
 saddle-point correction to be of lower order than `(log N)^2`, so that the bound is tight to
 leading order {claim:saddle-tightness}. That is standard for generating functions of this type
-and is expected here, but it is not established in Phase 0.5 — establishing it is part of
-Phase 5's rigorisation. The bound's looseness at reachable `N` is visible directly: at `N = 500`
+and is expected here, but it is not established in Phase 0.5. Establishing it was expected
+to fall to Phase 5's rigorisation; it was in fact settled in Phase 2, by an elementary route
+that does not use this measurement — see the supersession note below. The bound's looseness at reachable `N` is visible directly: at `N = 500`
 the exact `log R_c` is 12.53 against a bound of 18.98.
 
-**Reading.** This supports the roadmap's Phase 3 conjecture
-{claim:leading-constant}. The `1/(8 log phi)` figure obtainable from the §4
+**Reading, as of Phase 0.5.** This supports what was then the roadmap's Phase 3
+conjecture {claim:leading-constant} — a `theorem` since Phase 2, see the
+supersession note below. The `1/(8 log phi)` figure obtainable from the §4
 count of `theory/01-background.md` is a lower bound only — that count fixes the
 numeral length at `n`, which undercounts `R_c(N)`.
 
