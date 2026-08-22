@@ -69,6 +69,15 @@ Strengthening candidates, if this ever bites: split on list items and table
 rows rather than blank lines; scope the hedge to the sentence containing the
 citation; detect negation around the marker.
 
-The distinction this enforces is the epistemic content of the project. Phase 3
-produces a heuristic; Phase 5 produces the theorem. Months separate them —
-long enough for the difference to blur without a mechanical check.
+The distinction this enforces is the epistemic content of the project, and the
+roadmap's original division of labour — Phase 3 produces the heuristic, Phase 5
+produces the theorem — no longer describes where things stand. C5 of
+`docs/phases/phase2_bounds.md` §8 proved the leading constant in **Phase 2**,
+elementarily and without a saddle point, so `leading-constant` is a `theorem`
+already. What Phase 3 still owes is an *explanation* of that constant from the
+saddle point, and what Phase 5 still owes is the secondary term
+(`saddle-correction-constant` and `secondary-term-constant`, both open).
+
+That a phase can deliver a result years earlier than planned is exactly why
+the check is mechanical: the statuses moved, and every paragraph written
+against the old plan went stale in the same commit.

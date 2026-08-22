@@ -71,9 +71,13 @@ def place_jumps(counts: Sequence[int]) -> list[dict]:
     Distinctness matters: F_1 = F_2 = 1 is a single place, and F = 1 has no
     predecessor in range.
 
-    The result is NOT monotone. Measured: the ratio is exactly 1.0 at F = 2,
-    rises at F = 3 and again at F = 8, and only decays monotonically from
-    F = 13 onward. Reporting it as a clean decay law would be wrong.
+    The result is NOT monotone. Measured over the distinct places F <= 10^6
+    (30 place values, of which 29 have a predecessor in range): the ratio is
+    exactly 1.0 at F = 2, rises at F = 3 and again at F = 8, and decays
+    monotonically from F = 13 up to the largest place measured, F = 832040.
+    That is a finite observation over that range, not a law: nothing here
+    establishes the decay continues beyond it. Reporting it as a clean decay
+    law would be wrong twice over.
     """
     n_max = len(counts) - 1
     out: list[dict] = []

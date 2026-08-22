@@ -1,16 +1,31 @@
 #!/usr/bin/env python3
-"""Phase 2: verify the certified bounds against the exact Phase 1 values.
+"""Phase 2: verify the certified bounds against the Phase 1 exact-value ladder.
 
-Writes data/phase2_bounds.csv, data/phase2_figures.json and
-figures/phase2_sandwich.png, and records both datasets in data/manifest.json.
+Reads `data/phase1_data.csv` and checks T1, T3 and T5 at each of its rows --
+the 37-point ladder of N at which Phase 1 recorded an exact `R_c(N)`, not
+every N in that range; the exhaustive comparison is Phase 1's own
+`dp`-vs-`gf` cross-check, not this script's.
+
+Writes data/phase2_bounds.csv, data/phase2_residual.csv,
+data/phase2_figures.json and figures/phase2_sandwich.png, and records all four
+in data/manifest.json.
 
 The gate (spec 5.5): the float and certified evaluations of log F_c must agree
 to RELATIVE_TOL across the whole reported range, in this same run. Nothing is
 written if the gate fails.
+
+"Nothing is written" is enforced by ordering, not by hope: every value --
+including the rendered PNG, which is drawn into an in-memory buffer -- is
+produced before the first byte reaches `data/` or `figures/`. Rendering the
+figure last while recording the CSVs first was the shape of a real defect: on
+a clean checkout `figures/` did not exist, `atomic_savefig` needs its parent
+directory, and the run died having already written three artifacts and three
+manifest entries.
 """
 
 import argparse
 import csv
+import io
 import json
 import math
 import os
@@ -25,6 +40,15 @@ import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+
+MANIFEST = ROOT / "data" / "manifest.json"
+"""Absolute, derived from this file's location -- exactly as scripts/run_phase1.py
+does it. `capfib.manifest.record` defaults to the *relative* "data/manifest.json",
+which resolves against the current working directory: without this the script
+recorded its provenance into whatever repository it happened to be invoked from,
+not the one it wrote its artifacts into. Found by the first test that ever ran
+this script to success (tests/test_run_phase2.py), which runs a copy inside a
+scratch tree and saw its manifest entries land in the real repository instead."""
 
 from capfib.interval import RELATIVE_TOL, agrees_with_float
 from capfib.lower import block_band_min, t3_lower_bound, t5_lower_bound
@@ -75,23 +99,41 @@ def atomic_write_text(path: Path, text: str) -> None:
         raise
 
 
-def atomic_savefig(fig, path: Path) -> None:
-    """Save a figure via a temporary file and an atomic rename.
+def render_figure(fig) -> bytes:
+    """Render a figure to PNG bytes in memory, writing nothing to disk.
 
-    The temp file keeps `path`'s suffix at the end (rather than appending
-    ".tmp" after it) because matplotlib infers the output format from the
-    final extension of the filename it is given; a name ending in ".tmp"
-    makes it raise "Format 'tmp' is not supported" instead of writing a PNG.
+    Rendering is the step most likely to fail for reasons unrelated to the
+    mathematics -- a missing backend, a font cache, a matplotlib upgrade -- so
+    it happens before any artifact is published rather than after, and its
+    result is carried as bytes.
 
     Args:
-        fig: the matplotlib figure to save.
+        fig: the matplotlib figure to render.
+
+    Returns:
+        The PNG encoding of the figure.
+    """
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format="png", dpi=150, bbox_inches="tight")
+    return buffer.getvalue()
+
+
+def atomic_write_bytes(path: Path, payload: bytes) -> None:
+    """Write bytes to `path` via a temporary file and an atomic rename.
+
+    The temp file keeps `path`'s suffix at the end (rather than appending
+    ".tmp" after it) so the published name and the staged name differ only in
+    the random middle, which keeps the rename within one directory.
+
+    Args:
         path: destination file path. Its parent directory must already exist.
+        payload: the full contents to write.
     """
     fd, tmp_name = tempfile.mkstemp(dir=str(path.parent), suffix=path.suffix)
     os.close(fd)
     tmp = Path(tmp_name)
     try:
-        fig.savefig(tmp, dpi=150, bbox_inches="tight")
+        tmp.write_bytes(payload)
         os.replace(tmp, path)
     except BaseException:
         tmp.unlink(missing_ok=True)
@@ -145,12 +187,15 @@ def flatness_slack_slope() -> float:
 
 
 def main() -> int:
-    """Run the Phase 2 verification: bounds against every exact Phase 1 value,
-    plus the residual sweep, writing artifacts only if every gate passes.
+    """Run the Phase 2 verification over the Phase 1 exact-value ladder.
+
+    Checks T1, T3 and T5 at each of `data/phase1_data.csv`'s rows (37 sampled
+    N, not every N in the range), runs the residual sweep, and writes the
+    artifacts only if every gate passes.
 
     Returns:
-        0 on success (all artifacts written); 1 if any gate or bound check
-        fails, in which case nothing is written.
+        0 on success (all artifacts written); 1 if any gate, bound check or
+        the figure rendering fails, in which case nothing is written.
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -162,7 +207,11 @@ def main() -> int:
 
     data_path = ROOT / "data" / "phase1_data.csv"
     if not data_path.exists():
-        print(f"FAILED: {data_path} absent; run scripts/run_phase1.py first")
+        print(
+            f"FAILED: {data_path} absent. It is tracked, so on a clean checkout "
+            f"it is there; if it is not, restore it from git or regenerate it "
+            f"with scripts/run_phase1.py first"
+        )
         return 1
     with data_path.open() as handle:
         exact = {
@@ -245,13 +294,7 @@ def main() -> int:
     header = list(rows[0].keys())
     lines = [",".join(header)]
     lines += [",".join(repr(r[k]) for k in header) for r in rows]
-    csv_path = ROOT / "data" / "phase2_bounds.csv"
-    atomic_write_text(csv_path, "\n".join(lines) + "\n")
-    record(
-        str(csv_path.relative_to(ROOT)),
-        "scripts/run_phase2.py",
-        {"n_max": args.n_max, "relative_tol": RELATIVE_TOL},
-    )
+    bounds_csv = "\n".join(lines) + "\n"
 
     residuals = [r["residual"] for r in residual_rows]
     residual_centre = sum(residuals) / len(residuals)
@@ -268,13 +311,7 @@ def main() -> int:
         f"{r['t']!r},{r['log_F_c']!r},{r['leading']!r},{r['residual']!r}"
         for r in residual_rows
     ]
-    residual_path = ROOT / "data" / "phase2_residual.csv"
-    atomic_write_text(residual_path, "\n".join(residual_lines) + "\n")
-    record(
-        str(residual_path.relative_to(ROOT)),
-        "scripts/run_phase2.py",
-        {"t_values": RESIDUAL_T},
-    )
+    residual_csv = "\n".join(residual_lines) + "\n"
 
     biggest = rows[-1]
     figures = {
@@ -410,32 +447,72 @@ def main() -> int:
             "description": "log R_c(N) / (log N)^2 at the largest N verified",
         },
     }
+
+    # The figure is rendered to bytes HERE, before anything is published. It
+    # used to be drawn last, after three artifacts and three manifest entries
+    # were already on disk -- so on a clean checkout, where `figures/` does not
+    # exist and the atomic rename has no parent directory to land in, the run
+    # failed having already published most of a generation. Rendering first
+    # makes a rendering failure cost nothing.
+    ns = [r["N"] for r in rows]
+    try:
+        fig, ax = plt.subplots(figsize=(9, 5.5))
+        try:
+            ax.plot(ns, [r["chernoff_certified"] for r in rows], label="certified Chernoff bound (T1)")
+            ax.plot(ns, [r["log_R_c"] for r in rows], label="exact log R_c(N)")
+            ax.plot(ns, [r["t3_lower"] for r in rows], label="T3 construction")
+            ax.set_xscale("log")
+            ax.set_xlabel("N")
+            ax.set_ylabel("log R_c(N)")
+            ax.set_title("Phase 2 sandwich: exact values between the proved bounds")
+            ax.legend()
+            ax.grid(alpha=0.3)
+            figure_png = render_figure(fig)
+        finally:
+            plt.close(fig)
+    except Exception as exc:
+        print(f"FIGURE FAILED: {exc!r}. Writing nothing.")
+        return 1
+
+    # Everything above is in memory and every gate has passed. Only now is
+    # anything published, and the manifest entries follow their own artifacts.
+    figures_dir = ROOT / "figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
+    csv_path = ROOT / "data" / "phase2_bounds.csv"
+    atomic_write_text(csv_path, bounds_csv)
+    record(
+        csv_path,
+        "scripts/run_phase2.py",
+        {"n_max": args.n_max, "relative_tol": RELATIVE_TOL},
+        manifest_path=MANIFEST,
+    )
+
+    residual_path = ROOT / "data" / "phase2_residual.csv"
+    atomic_write_text(residual_path, residual_csv)
+    record(
+        residual_path,
+        "scripts/run_phase2.py",
+        {"t_values": RESIDUAL_T},
+        manifest_path=MANIFEST,
+    )
+
     figures_path = ROOT / "data" / "phase2_figures.json"
     atomic_write_text(figures_path, json.dumps(figures, indent=2, sort_keys=True) + "\n")
     record(
-        str(figures_path.relative_to(ROOT)),
+        figures_path,
         "scripts/run_phase2.py",
         {"n_max": args.n_max},
+        manifest_path=MANIFEST,
     )
 
-    ns = [r["N"] for r in rows]
-    fig, ax = plt.subplots(figsize=(9, 5.5))
-    ax.plot(ns, [r["chernoff_certified"] for r in rows], label="certified Chernoff bound (T1)")
-    ax.plot(ns, [r["log_R_c"] for r in rows], label="exact log R_c(N)")
-    ax.plot(ns, [r["t3_lower"] for r in rows], label="T3 construction")
-    ax.set_xscale("log")
-    ax.set_xlabel("N")
-    ax.set_ylabel("log R_c(N)")
-    ax.set_title("Phase 2 sandwich: exact values between the proved bounds")
-    ax.legend()
-    ax.grid(alpha=0.3)
-    figure_path = ROOT / "figures" / "phase2_sandwich.png"
-    atomic_savefig(fig, figure_path)
-    plt.close(fig)
+    figure_path = figures_dir / "phase2_sandwich.png"
+    atomic_write_bytes(figure_path, figure_png)
     record(
-        str(figure_path.relative_to(ROOT)),
+        figure_path,
         "scripts/run_phase2.py",
         {"n_max": args.n_max},
+        manifest_path=MANIFEST,
     )
 
     print(f"OK: gate passed and both bounds held at all {len(rows)} sampled N")

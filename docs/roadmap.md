@@ -454,7 +454,8 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    sind sonst disjunkt.
 
    Falls $C'=4$: der obere Endpunkt des bewiesenen Intervalls wird angenommen — genau die
-   Phase-3-Konjektur $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$.  
+   Phase-3-Konjektur $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$.
+
    Falls $C'=8$: der untere Endpunkt wird angenommen, L1 wäre also bereits scharf.
 
    **Nachtrag (Phase 2, Stretch):** Es ist $C' = 4$; die frühere Phase-3-Konjektur ist als
@@ -878,7 +879,7 @@ sobald sie verfolgt wird.
    
    Die Heuristik aus Phase 3 suggeriert, dass die Konstante $C_c(\alpha)$ interpoliert zwischen:
    - $\alpha=0$: $d_k\le c$ (alle Positionen gleich gecappt) → andere Asymptotik?  
-   - $\alpha=1$: $d_k\le c F_k$ (unserer Fall) → $\frac{1}{4\log\varphi}$ (**bewiesen**, C5, Phase 2)  
+   - $\alpha=1$: $d_k\le c F_k$ (unserer Fall) → $\frac{1}{4\log\varphi}$ (**bewiesen**, C5, Phase 2)
    - $\alpha\to\infty$: $d_k\le c F_k^\infty$ (praktisch unkappot) → $\frac{1}{2\log\varphi}$ (Coons–Kristensen–Laursen).
    
    Formuliere ein *parametrisches Theorem* mit $C_c(\alpha)$ als Funktion von $\alpha$ und verifiziere/beweise es für Grenzfälle.
@@ -892,7 +893,7 @@ sobald sie verfolgt wird.
 3. **Papierstruktur**  
    - **Introduktion:** Ihr Zahlensystem; Motivation (Repräsentations-Zählung); Platzierung im Literatur-Kontext (Mahler, de Bruijn, CKL, Navas).  
    - **Bekannte Anker:** Definieren, Satzbericht bestätigen für Fibonacci-uncapped und binär.  
-   - **Hauptresultat:** Sandwich-Theorem (Phase 2); Heuristik (Phase 3); Haupttheorem mit Beweis (Phase 5).  
+   - **Hauptresultat:** Sandwich-Theorem und Haupttheorem mit Beweis (beide Phase 2: C4 und C5, elementar, ohne Sattelpunkt); Heuristik als *Erklärung* der Konstante (Phase 3); Sekundärterm (Phase 5, offen).
    - **Numerik:** Phase 4 Experimente.  
    - **Oszillationen:** Phase 6 verfeinert Theorem.  
    - **Verallgemeinerung:** $\alpha$-Interpolation; allgemeine Rekurrenzen (skizziert).  
@@ -943,7 +944,7 @@ Phase 7 (2–3 Monate) — Writeup und Verallgemeinerung
 **Zusammenfassung Zeithorizont:**  
 - **Kurzfristig (4–6 Wochen):** Phase 0–2 liefern Sandwich-Theorem + Beweis für Größenordnung.  
 - **Mittelfristig (3–4 Monate zusätzlich):** Phase 3–4 etablieren robuste numerische Konjektur.
-  (Phase 2 hat den Leitkoeffizienten bereits bewiesen; gemeint ist ab jetzt der Sekundärterm.)  
+  (Phase 2 hat den Leitkoeffizienten bereits bewiesen; gemeint ist ab jetzt der Sekundärterm.)
 - **Langfristig (6–12 Monate):** Phase 5–7 erzielen vollständigen Beweis und publikationsfähiges Papier.
 
 ---

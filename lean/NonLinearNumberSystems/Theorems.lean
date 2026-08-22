@@ -15,16 +15,26 @@
   * `exists_two_numerals_same_value` — **"1 > 1"**: two distinct numerals share
                                 a value, because F 1 = F 2 = 1
   * `value_not_injective`    — the evaluation map is not injective
-  * `countReps_le_uncapped`  — `R_c(N) ≤ R_u(N)`: capping digits cannot create
-                                representations, so the capped count is bounded
-                                by the uncapped one. Not a step of the Phase 2
-                                upper bound, which is sharper and is a *paper*
-                                result — proved on paper in
+  * `countReps_le_uncapped`  — `countReps n N ≤ countRepsUncapped n N`: at a
+                                FIXED number of places `n`, capping digits
+                                cannot create representations, so the capped
+                                count is bounded by the uncapped one. Note the
+                                length index: this is the length-indexed
+                                inequality, **not** the all-places
+                                `R_c(N) ≤ R_u(N)` of §1 of the technical note,
+                                and no Lean theorem here bridges the two
+                                (`R_c(N)` sums over every place `F_k ≤ N`, not
+                                over a fixed length). Not a step of the Phase 2
+                                upper bound either, which is sharper and is a
+                                *paper* result — proved on paper in
                                 `docs/phases/phase2_bounds.md` (T2), not here,
                                 so it carries none of the machine-checked
                                 force the rest of this section does. This
                                 declaration supports only the comparison
-                                against Coons–Kristensen–Laursen.
+                                against Coons–Kristensen–Laursen. See
+                                `docs/phase2.md` §"It does not use
+                                Coons–Kristensen–Laursen" for the same
+                                statement of scope.
 
   ## What is open
 

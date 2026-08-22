@@ -1189,8 +1189,14 @@ together force the saddle-point correction to be `O(t)`, which is more than the
 `o((log N)^2)` that claim asserts — the `t^2` and `t log t` terms cancel between T2's
 effective form and T5. What this note still does not decide is the constant in front of
 that `t`: T2's `O(t)` is nowhere made explicit, T5's is `-7.5 t`, and the two do not meet.
-That gap is left open in the ledger as `{claim:saddle-correction-constant}`, and it is the
-same gap as the `c_2` of research question (B).
+That gap is left open in the ledger as `{claim:saddle-correction-constant}`, and it is
+**not** the `c_2` of research question (B) — the two were split apart deliberately and must
+stay split. Writing `Lambda(N) = t^2/(4 log phi) - t log t/(2 log phi) + E(N)` and
+`D(N) = Lambda(N) - log R_c(N)`, one has `c_2 = lim (E(N) - D(N))/t` when both limits
+exist. Determining `D`'s coefficient therefore leaves `c_2` undetermined unless `E`'s is
+known too, and it is not: T2 *bounds* `E` by an unspecified `O(t)`, it never evaluates it.
+The ledger records the two as separate open questions ({claim:secondary-term-constant}),
+and that is the correct reading.
 
 Nothing in §§1–7 was weakened: T3 and C4 are left exactly as proved. T5 does not use T3 as
 a step — the appendix table records that — but it reuses T3's machinery, the

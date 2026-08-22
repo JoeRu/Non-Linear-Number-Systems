@@ -35,6 +35,15 @@ data/*
 # a gitignored copy could not keep prose and data in step (risk R-002).
 !data/phase2_figures.json
 
+# The Phase 1 exact-value ladder IS tracked (37 rows, 4 KB): it is the oracle
+# the Phase 2 bound tests compare T1, T3 and T5 against. While it was ignored,
+# a clean clone had no oracle and those twelve comparisons SKIPPED rather than
+# ran -- the gate silently did not exist for anyone but the machine that
+# generated the file. Its provenance (script, git rev, SHA-256) is recorded in
+# data/manifest.json and asserted by tests/test_phase2_bounds.py, so the
+# tracked copy cannot drift from what scripts/run_phase1.py produced.
+!data/phase1_data.csv
+
 # Generated figures
 figures/*.png
 figures/*.pdf

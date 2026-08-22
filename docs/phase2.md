@@ -287,12 +287,27 @@ is pre-asymptotic.
 cd lean && lake build
 ```
 
-`data/` is gitignored apart from `data/manifest.json` and
-`data/phase2_figures.json`, which is tracked precisely so prose and data cannot
-drift apart (risk R-002, which this mechanism mitigates for the Phase 2
-documents; it stays open for the Phase 1 ones, which have no such artifact).
-`data/manifest.json` records what was produced, by which script, at which
-revision, with what hashes.
+The recipe runs on a clean checkout as written, and that is checked rather than
+assumed: `tests/test_run_phase2.py` runs the script to completion inside a
+scratch tree with no `figures/` directory, and separately fails its very last
+step to confirm nothing is left behind.
+
+`data/` is gitignored apart from three files, each tracked for a stated reason:
+
+- `data/manifest.json` — what was produced, by which script, at which revision,
+  with what SHA-256.
+- `data/phase2_figures.json` — so prose and data cannot drift apart (risk
+  R-002, which this mechanism mitigates for the Phase 2 documents; it stays
+  open for the Phase 1 ones, which have no such artifact).
+- `data/phase1_data.csv` — the 37-row exact-value ladder. The Phase 2 bound
+  tests compare T1, T3 and T5 against it, so while it was gitignored those
+  twelve comparisons *skipped* on every clean clone and the suite was green
+  without them. Its bytes are checked against the manifest's hash, so the
+  tracked copy cannot drift from what `scripts/run_phase1.py` produced.
+
+`figures/` is tracked as a directory (`figures/.gitkeep`) though its contents
+are not: the script writes the PNG through an atomic rename, which needs the
+parent directory to exist.
 
 ## Pointers
 

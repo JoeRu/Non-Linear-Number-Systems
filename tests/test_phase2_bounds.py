@@ -1,25 +1,86 @@
-"""Tests for the certified Chernoff upper bound on log R_c(N)."""
+"""Tests for the certified Chernoff upper bound on log R_c(N).
+
+The comparisons against exact values are marked `oracle_gate`: they are the
+reason this file exists, and `tests/conftest.py` fails the whole session if one
+of them skips instead of running. `data/phase1_data.csv` is tracked (see the
+.gitignore note) precisely so that they always can run; a missing oracle is now
+a failure with a regeneration command in the message, never a skip.
+"""
 
 import csv
+import hashlib
+import json
 import math
 from pathlib import Path
 
 import pytest
 
+from capfib.fib import places_up_to
 from capfib.lower import t3_lower_bound
+from capfib.product import log_F_c
 from capfib.saddle import argmin_log_s, log_R_bound, log_R_bound_certified
 
-DATA = Path(__file__).resolve().parents[1] / "data" / "phase1_data.csv"
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data" / "phase1_data.csv"
+MANIFEST = ROOT / "data" / "manifest.json"
+
+# The N at which the exact oracle is consulted anywhere in this file. Pinned so
+# that a truncated or silently re-scoped `phase1_data.csv` fails loudly rather
+# than shrinking the gate to whatever rows happen to be present.
+REQUIRED_EXACT_N = (100, 1_000, 1_597, 10_000, 100_000, 1_000_000)
+
+LOG_PHI = math.log((1 + 5 ** 0.5) / 2)
 
 
 def _exact():
-    """Load the exact Phase 1 values, or skip if they have not been generated."""
-    if not DATA.exists():
-        pytest.skip("data/phase1_data.csv absent; run scripts/run_phase1.py")
+    """Load the exact Phase 1 values.
+
+    Raises:
+        AssertionError: if the tracked oracle is absent or does not carry every
+            N in `REQUIRED_EXACT_N`. This must fail rather than skip: while it
+            skipped, a clean clone ran none of the twelve comparisons below and
+            still reported green.
+    """
+    assert DATA.exists(), (
+        f"{DATA.relative_to(ROOT)} absent -- it is tracked, so this means it was "
+        f"deleted, not that it was never generated. Restore it from git, or "
+        f"regenerate with: .venv/bin/python scripts/run_phase1.py"
+    )
     with DATA.open() as handle:
-        return {int(r["N"]): float(r["log_R_c"]) for r in csv.DictReader(handle)}
+        values = {int(r["N"]): float(r["log_R_c"]) for r in csv.DictReader(handle)}
+    missing = [n for n in REQUIRED_EXACT_N if n not in values]
+    assert not missing, (
+        f"{DATA.relative_to(ROOT)} is missing exact values at N = {missing}; "
+        f"regenerate with: .venv/bin/python scripts/run_phase1.py"
+    )
+    return values
 
 
+@pytest.mark.oracle_gate
+def test_the_tracked_oracle_matches_its_manifest_provenance():
+    """The tracked exact-value ladder must be what run_phase1.py produced.
+
+    Tracking a generated file buys a clean-clone gate at the price of a file
+    that could be hand-edited into agreement with whatever it is meant to
+    check. `data/manifest.json` records the SHA-256 the generator wrote, so
+    comparing against it closes that hole: an edited CSV fails here before it
+    can quietly license a bound.
+    """
+    entries = json.loads(MANIFEST.read_text())
+    recorded = [
+        e for e in entries
+        if e["file"] == "phase1_data.csv" and e["script"] == "scripts/run_phase1.py"
+    ]
+    assert recorded, "data/manifest.json has no provenance entry for phase1_data.csv"
+    digest = hashlib.sha256(DATA.read_bytes()).hexdigest()
+    assert digest == recorded[-1]["sha256"], (
+        "data/phase1_data.csv does not match the SHA-256 data/manifest.json "
+        "records for it: the tracked oracle and its provenance have diverged. "
+        "Regenerate both with: .venv/bin/python scripts/run_phase1.py"
+    )
+
+
+@pytest.mark.oracle_gate
 @pytest.mark.parametrize("n", [100, 10_000, 1_000_000])
 def test_certified_bound_holds_against_exact_values(n):
     """T1 must hold at every sampled N. Design-time slacks: 4.99, 9.20, 13.55."""
@@ -28,12 +89,66 @@ def test_certified_bound_holds_against_exact_values(n):
     assert bound >= exact[n], f"certified bound {bound} below exact {exact[n]} at N={n}"
 
 
+@pytest.mark.oracle_gate
 def test_certified_bound_is_not_vacuous():
     """A bound of +inf would satisfy the inequality and prove nothing."""
     exact = _exact()
     bound = log_R_bound_certified(1_000_000)
     assert math.isfinite(bound)
     assert bound - exact[1_000_000] < 20.0
+
+
+@pytest.mark.oracle_gate
+@pytest.mark.parametrize("n", [100, 1_000, 10_000, 100_000, 1_000_000])
+def test_certified_bound_equals_an_independently_computed_transform(n):
+    """T1's value, recomputed here rather than trusted.
+
+    Mutation probe (Codex, pre-PR gate): replacing `log_R_bound_certified`
+    with the constant 80.0 left the suite green, because every other check on
+    it is an inequality against an exact value that is far below it. An
+    inequality cannot pin a number; an identity can.
+
+    `log_R_bound_certified(n)` is by construction `s N + log F_c(e^-s)`
+    evaluated at the minimiser the float search returns, then rounded upward
+    through interval arithmetic. This recomputes exactly that quantity from
+    `argmin_log_s` and `log_F_c` -- two calls the certified path also makes,
+    but composed here in the test rather than inside the function -- and
+    requires the two to agree to 1e-6. Measured agreement is ~3e-14; the
+    tolerance is the certification's upward rounding, not slack.
+    """
+    log_s, _ = argmin_log_s(math.log(n))
+    independent = math.exp(log_s + math.log(n)) + log_F_c(log_s)
+    certified = log_R_bound_certified(n)
+    assert certified == pytest.approx(independent, abs=1e-6), (
+        f"N={n}: certified bound {certified} is not the transform "
+        f"{independent} it is defined to be"
+    )
+    assert certified >= independent - 1e-9, "certification may only round upward"
+
+
+@pytest.mark.oracle_gate
+@pytest.mark.parametrize("n", [1_000, 10_000, 100_000, 1_000_000])
+def test_t3_log_count_is_the_product_over_the_counting_block(n):
+    """T3's value is a product identity, and is checked as one.
+
+    Mutation probe (Codex, pre-PR gate): zeroing every T3 `log_count` left
+    the suite green, because `t3 <= exact` and `t5 > t3` both get *easier* as
+    T3 falls. Zero is a perfectly valid lower bound and a perfectly useless
+    one. This recomputes the product of `spec 4.3`'s factors
+    `floor(N / (M F_k)) + 1` over the counting block, from `places_up_to` and
+    the block split the result itself reports, and requires equality -- so a
+    zero, a constant, or a dropped factor all fail.
+    """
+    result = t3_lower_bound(n)
+    places = places_up_to(n)
+    expected = sum(
+        math.log(n // (result.counting_places * places[k - 1]) + 1)
+        for k in range(result.fixup_block + 1, result.top_place + 1)
+    )
+    assert result.log_count == pytest.approx(expected, rel=1e-12)
+    assert result.log_count > 0.0, (
+        f"N={n}: T3 counts a single representation, which is no bound at all"
+    )
 
 
 def test_certified_bound_is_at_least_the_float_bound():
@@ -71,6 +186,7 @@ def test_t3_block_split(n, expected_a, expected_places):
     assert result.counting_places == expected_places
 
 
+@pytest.mark.oracle_gate
 @pytest.mark.parametrize("n", [1_000, 10_000, 100_000, 1_000_000])
 def test_t3_never_exceeds_the_exact_value(n):
     """Spec 8.4. A lower bound above the true value would be a false theorem."""
@@ -144,6 +260,7 @@ def test_flatness_choice_count_is_at_least_rho_fib(a):
         assert 20 * count > 4 * F[a - 2] - 20
 
 
+@pytest.mark.oracle_gate
 @pytest.mark.parametrize("n", [1_000, 10_000, 100_000, 1_000_000])
 def test_t5_never_exceeds_the_exact_value(n):
     """A lower bound above the true value would be a false theorem."""
@@ -159,6 +276,54 @@ def test_t5_improves_on_t3(n):
     from capfib.lower import t5_lower_bound
 
     assert t5_lower_bound(n).log_count > t3_lower_bound(n).log_count
+
+
+@pytest.mark.oracle_gate
+@pytest.mark.parametrize("n", [10_000, 100_000, 1_000_000])
+def test_t5_carries_its_block_factor_at_large_n(n):
+    """T5's content at large N, where the enumeration cannot reach.
+
+    Mutation probe (Codex, pre-PR gate): weakening T5 to `T3 + 0.01` for
+    N >= 1000 left the suite green. Nothing caught it because the element-by-
+    element enumeration of the construction stops at N = 219 -- below the
+    mutation's own threshold -- and every other T5 check was either an
+    inequality against the exact value (which a weaker bound satisfies more
+    easily) or the strict-improvement check above, which `T3 + 0.01` also
+    passes.
+
+    Three things are pinned here, none of which `T3 + 0.01` satisfies:
+
+    1. The decomposition. `log_count` is `log_free + log_block` exactly --
+       T5's whole claim is that the block contributes a factor, so the block
+       factor has to be *in* the total.
+    2. The block factor is the proved flatness bound, recomputed here.
+    3. The margin over T3 is the size the construction predicts, not an
+       epsilon: at these N it is 3.7, 12.3 and 22.0 nats.
+    """
+    from capfib.lower import flatness_log_bound, t5_lower_bound
+
+    t5 = t5_lower_bound(n)
+    t3 = t3_lower_bound(n)
+
+    assert t5.log_count == pytest.approx(t5.log_free + t5.log_block, rel=1e-12)
+    assert t5.log_block == pytest.approx(flatness_log_bound(t5.block), rel=1e-12)
+    assert t5.log_block > 0.0, "the block must contribute a factor, not a 1"
+    assert t5.log_count - t3.log_count > 3.0, (
+        f"N={n}: T5 beats T3 by only {t5.log_count - t3.log_count:.4f} nats; "
+        f"the construction predicts several"
+    )
+    # T5's leading coefficient heads for 1/(4 log phi) while T3's stalls at
+    # 1/(8 log phi), so at the top of the verified range T5's normalised value
+    # must be well clear of T3's. Measured at N = 10^6: 0.2085 against 0.0931.
+    log_n_sq = math.log(n) ** 2
+    assert t5.log_count / log_n_sq > 1.5 * (t3.log_count / log_n_sq), (
+        f"N={n}: T5/(log N)^2 = {t5.log_count / log_n_sq:.4f} is not clear of "
+        f"T3/(log N)^2 = {t3.log_count / log_n_sq:.4f}"
+    )
+    assert t5.log_count / log_n_sq < 1.0 / (4 * LOG_PHI), (
+        "T5 is a lower bound on a quantity whose leading coefficient is "
+        "1/(4 log phi); exceeding it at finite N would be a contradiction"
+    )
 
 
 @pytest.mark.parametrize("n", [1_000, 10_000, 100_000, 1_000_000])

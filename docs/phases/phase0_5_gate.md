@@ -15,16 +15,25 @@ monotonically to **0.518710** at `N = 10^3200`, against `1/(4 log phi) = 0.51952
 error of 0.000812, still decreasing {claim:gate-local-slope}.
 
 **What this establishes, and what it does not.** `log_R_bound` computes
-`min_s [sN + log F_c(e^-s)]`, which is a Chernoff *upper* bound on `log R_c(N)`. Its leading
-coefficient therefore bounds `C_c` from above. That excludes `1/(2 log phi) = 1.039` outright:
-`C_c` cannot exceed a bound measured at 0.5187. It does **not**, by itself, exclude a smaller
-true constant such as `1/(8 log phi) = 0.260`. Excluding that additionally requires the
-saddle-point correction to be of lower order than `(log N)^2`, so that the bound is tight to
-leading order {claim:saddle-tightness}. That is standard for generating functions of this type
-and is expected here, but it is not established in Phase 0.5. Establishing it was expected
-to fall to Phase 5's rigorisation; it was in fact settled in Phase 2, by an elementary route
-that does not use this measurement — see the supersession note below. The bound's looseness at reachable `N` is visible directly: at `N = 500`
-the exact `log R_c` is 12.53 against a bound of 18.98.
+`min_s [sN + log F_c(e^-s)]`, which is a Chernoff *upper* bound on `log R_c(N)`.
+What is measured above is the local slope of that bound against `(log N)^2` at finitely
+many sampled `N`, ending at `N = 10^3200`. Finitely many sampled slopes do not bound
+`C_c`: `C_c` is defined by a limit, and no finite sample constrains one. The measurement
+is evidence about where the transform's leading coefficient is heading — 0.5187 and still
+rising toward 0.5195 — and that is its whole content {claim:gate-local-slope}.
+
+Read the direction carefully, because this page had it backwards until it was corrected:
+the measured slope 0.5187 lies **below** `1/(2 log phi) = 1.039`, not above it, and
+**above** `1/(8 log phi) = 0.260`. Neither position is what rules the candidate out.
+`1/(2 log phi)` is excluded by T2 of `docs/phases/phase2_bounds.md` — which proves the
+transform's leading coefficient *is* `1/(4 log phi)` — together with T1 putting
+`log R_c(N)` at or below the transform. `1/(8 log phi)` is excluded by C5. Phase 0.5
+itself, which had neither, could only read the measurement conditionally on the
+saddle-point correction being of lower order than `(log N)^2` {claim:saddle-tightness} —
+expected then, and not established then. Establishing it was expected to fall to Phase 5's
+rigorisation; it was in fact settled in Phase 2, by an elementary route that does not use
+this measurement — see the supersession note below. The bound's looseness at reachable `N`
+is visible directly: at `N = 500` the exact `log R_c` is 12.53 against a bound of 18.98.
 
 **Reading, as of Phase 0.5.** This supports what was then the roadmap's Phase 3
 conjecture {claim:leading-constant} — a `theorem` since Phase 2, see the

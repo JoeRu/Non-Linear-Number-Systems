@@ -59,8 +59,11 @@ over a limit.
 7. **What is machine-checked and what is not.** Lean proves the elementary
    structural facts — the place recurrence, `sum_{k<=n} F_k^2 = F_n F_{n+1}`,
    the value bound, completeness, non-injectivity of the evaluation map, and
-   `R_c(N) <= R_u(N)`; the index is the "What is proved" section of
-   `lean/NonLinearNumberSystems/Theorems.lean`, and there are no `sorry`s.
+   the *fixed-length* comparison `countReps n N <= countRepsUncapped n N`. Say
+   the length index out loud: it is **not** the all-places `R_c(N) <= R_u(N)`,
+   and no Lean theorem bridges the two. The index is the "What is proved"
+   section of `lean/NonLinearNumberSystems/Theorems.lean`, and there are no
+   `sorry`s.
    None of the asymptotics is in Lean: T1, T2, T3, Lemma F, T5, C4 and C5 are
    paper proofs in `docs/phases/phase2_bounds.md`.
 

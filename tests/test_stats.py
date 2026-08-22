@@ -67,7 +67,12 @@ def test_local_ratios_length_and_indices():
 def test_local_ratios_all_finite():
     """Guarded by min(counts) >= 1, checked at runtime and raising ValueError
     on failure -- not a bare assert (python -O strips those) and not by
-    appealing to completeness, which is still a `sorry` in Lean."""
+    appealing to completeness. Completeness is proved: `exists_numeral_of_le`
+    in lean/NonLinearNumberSystems/, with no `sorry`. The guard stays anyway,
+    because `local_ratios` takes an arbitrary counts array built over any
+    range by any route, so positivity is a precondition on the argument rather
+    than a consequence of that theorem -- the same reasoning capfib/stats.py
+    gives at the function itself."""
     r = local_ratios(coefficients(2000))
     assert all(math.isfinite(x) for x in r)
 

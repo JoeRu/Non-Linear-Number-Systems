@@ -21,4 +21,5 @@ testpaths = ["tests"]
 # Use `-m "not slow"` to skip them deliberately.
 markers = [
     "slow: takes tens of seconds (exhaustive enumeration against the brute-force oracle)",
+    "oracle_gate: compares a public computation against a real, tracked oracle; tests/conftest.py fails the session if one of these skips rather than runs",
 ]

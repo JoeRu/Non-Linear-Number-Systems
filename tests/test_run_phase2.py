@@ -1,10 +1,21 @@
 """scripts/run_phase2.py has five gates -- agreement, Chernoff bound, T3
-bound, T5 bound, residual -- sharing one contract: on failure, exit non-zero
-and write nothing.
+bound, T5 bound, residual -- plus a figure-rendering step, all sharing one
+contract: on failure, exit non-zero and write nothing.
 That contract already broke once during this task (the bounds CSV and its
 manifest entry were written before the residual sweep's own gate ran), and it
 was caught only by reading the diff, not by a test. This suite exists so a
-future regression on any of the five gates is caught by running the suite.
+future regression on any of them is caught by running the suite.
+
+It broke a second time, and again only a human reading found it: the figure
+was written last, after three artifacts and three manifest entries, so on a
+clean checkout -- where `figures/` does not exist and the atomic rename has no
+parent directory -- the run published most of a generation and then died.
+Every test here was a *gate-failure* test; none ever ran the script to
+success, so nothing exercised the figure path at all. Two tests below close
+that: `test_a_successful_run_writes_every_artifact_and_creates_figures_dir`
+runs it to completion from a checkout with no `figures/` directory, and
+`test_a_late_figure_failure_still_writes_nothing` fails the very last step and
+requires the artifacts and the manifest to be untouched.
 
 Self-contained, following tests/test_run_phase1.py's pattern: it never touches
 the real data/ or figures/ directories. It copies the real, unmodified script
@@ -20,6 +31,8 @@ already-verified log_R_c values -- no synthetic counts, and no need to invoke
 the real 37-N, ~12-second run inside the suite.
 """
 
+import hashlib
+import json
 import runpy
 import shutil
 import sys
@@ -225,3 +238,110 @@ def test_n_max_below_2_is_rejected():
         assert result.returncode == 2, \
             f"--n-max {bad_n_max} should be rejected by argparse (exit 2)"
         assert "--n-max must be at least 2" in result.stderr
+
+
+def test_a_late_figure_failure_still_writes_nothing(tmp_path, monkeypatch, capsys):
+    """The last step's failure must not leave a partial generation behind.
+
+    Regression test for the second instance of this script's one contract
+    breaking. Rendering the figure was the final action, taken after the
+    bounds CSV, the residual CSV, the figures JSON and their three manifest
+    entries were already on disk -- so a failure there, which on a clean
+    checkout was the *expected* outcome because `figures/` did not exist, left
+    a recorded, half-published generation that `docs/phase2.md` calls the
+    reproduction recipe.
+
+    `Figure.savefig` is made to raise, standing in for any rendering failure
+    (missing backend, font cache, matplotlib upgrade). The script now renders
+    into memory before publishing anything, so the requirement is the same one
+    the five gates carry: exit non-zero, touch nothing.
+    """
+    import matplotlib.figure
+
+    script_copy = _make_scratch_repo(tmp_path)
+
+    def explode(self, *args, **kwargs):
+        raise RuntimeError("simulated rendering failure")
+
+    monkeypatch.setattr(matplotlib.figure.Figure, "savefig", explode)
+
+    exit_code, out = _run_script(script_copy, monkeypatch, capsys)
+
+    assert exit_code == 1, "a failed figure render must exit non-zero"
+    assert "FIGURE FAILED" in out, "the failure message must name the step"
+    assert "Writing nothing" in out
+    _assert_nothing_written(tmp_path)
+
+
+def test_a_successful_run_writes_every_artifact_and_creates_figures_dir(
+    tmp_path, monkeypatch, capsys
+):
+    """The success path, which no test previously covered.
+
+    The scratch repo deliberately has no `figures/` directory, reproducing a
+    clean checkout: the script must create it rather than assume it. All four
+    artifacts must be replaced (each is pre-seeded with a sentinel, so
+    "written" is checked by content, not by existence) and all four must be
+    recorded in the manifest.
+    """
+    script_copy = _make_scratch_repo(tmp_path)
+    assert not (tmp_path / "figures").exists(), "the fixture must start with no figures/"
+
+    exit_code, out = _run_script(script_copy, monkeypatch, capsys)
+
+    assert exit_code == 0, f"a clean run must exit zero; output was:\n{out}"
+    assert "OK: gate passed" in out
+
+    data_dir = tmp_path / "data"
+    assert (data_dir / "phase2_bounds.csv").read_text() != SENTINEL_BOUNDS
+    assert (data_dir / "phase2_residual.csv").read_text() != SENTINEL_RESIDUAL
+    assert (data_dir / "phase2_figures.json").read_text() != SENTINEL_FIGURES
+
+    png = tmp_path / "figures" / "phase2_sandwich.png"
+    assert png.is_file(), "the script must create figures/ and write the PNG into it"
+    assert png.read_bytes().startswith(b"\x89PNG"), "the PNG must be a real PNG"
+
+    manifest = json.loads((data_dir / "manifest.json").read_text())
+    recorded = {e["file"] for e in manifest}
+    assert recorded == {
+        "phase2_bounds.csv",
+        "phase2_residual.csv",
+        "phase2_figures.json",
+        "phase2_sandwich.png",
+    }, f"every artifact must be recorded; got {sorted(recorded)}"
+    for entry in manifest:
+        assert entry["script"] == "scripts/run_phase2.py"
+        assert entry["sha256"], "each entry must carry a hash"
+
+    # Each recorded hash must be the hash of the artifact in THIS tree. The
+    # script used to hand `record` a repo-relative path, which `_sha256`
+    # resolved against the current working directory -- so running this copy
+    # from the real repository root hashed the real repository's files while
+    # writing entries about the scratch tree's. Correct by coincidence at the
+    # command line, wrong everywhere else, and invisible until a test ran the
+    # script from somewhere other than its own root.
+    by_name = {e["file"]: e["sha256"] for e in manifest}
+    for name, location in (
+        ("phase2_bounds.csv", data_dir / "phase2_bounds.csv"),
+        ("phase2_residual.csv", data_dir / "phase2_residual.csv"),
+        ("phase2_figures.json", data_dir / "phase2_figures.json"),
+        ("phase2_sandwich.png", png),
+    ):
+        assert by_name[name] == hashlib.sha256(location.read_bytes()).hexdigest(), (
+            f"the manifest's hash for {name} is not the hash of the file the "
+            f"script wrote -- it hashed something else"
+        )
+
+    # The manifest must land in the script's own tree. `capfib.manifest.record`
+    # defaults to the CWD-relative "data/manifest.json", so before this test
+    # existed the script recorded its provenance into whichever repository it
+    # was invoked from -- this run would have rewritten the real one.
+    assert (data_dir / "manifest.json").read_text() != SENTINEL_MANIFEST
+
+    # The atomic writers stage through temp files; none may survive.
+    leftovers = sorted(
+        item.name
+        for item in list(data_dir.iterdir()) + list((tmp_path / "figures").iterdir())
+        if item.name.startswith("tmp")
+    )
+    assert not leftovers, f"temporary files survived: {leftovers}"

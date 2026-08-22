@@ -29,7 +29,7 @@
   source: "this project, Phase 2"
 
 - id: gate-local-slope
-  statement: "The leading coefficient of the Legendre-transform upper bound on log R_c(N) measures 0.518710 at N = 10^3200, rising monotonically toward 1/(4 log phi) = 0.519522. This bounds C_c from above, excluding 1/(2 log phi). The measurement's original caveat -- that excluding 1/(8 log phi) additionally requires saddle-tightness -- is superseded: C5 (claim leading-constant) excludes 1/(8 log phi) unconditionally and by a route that does not pass through this measurement at all. The measured figure and its status are unaffected by that; what changed is only what the figure is needed for."
+  statement: "The local slope of the Legendre-transform upper bound on log R_c(N) against (log N)^2 measures 0.518710 at N = 10^3200, rising monotonically across the sampled exponents 50..3200 toward 1/(4 log phi) = 0.519522. This is a measurement of the transform at finitely many N. It does NOT bound C_c: a leading coefficient is a limit, and finitely many sampled slopes constrain no limit. Both rival candidates are excluded on paper instead -- 1/(2 log phi) = 1.039022 by T2 together with T1, and 1/(8 log phi) = 0.259761 by C5 (claim leading-constant), unconditionally and by a route that does not pass through this measurement at all. Note the direction, since it was once recorded backwards: the measured slopes lie BELOW 1/(2 log phi) and ABOVE 1/(8 log phi)."
   status: verified-numeric
   evidence: "data/phase0_5_gate.csv via scripts/run_phase0_gate.py"
   source: "docs/phases/phase0_5_gate.md"
@@ -65,9 +65,9 @@
   source: "this project, Phase 1"
 
 - id: place-jump-decay
-  statement: "R_c(F)/R_c(F-1) at distinct place values equals exactly 1.0 at F=2, rises at F=3 and F=8, and decays monotonically toward 1 only from F=13 onward. It does NOT exceed 1 at every place, and is NOT monotone overall."
+  statement: "Over the distinct place values F <= 1000000, R_c(F)/R_c(F-1) equals exactly 1.0 at F=2, rises at F=3 and F=8, and decays monotonically from F=13 up to the largest place in that range, F=832040. It does NOT exceed 1 at every place in the range, and is NOT monotone over it. The decay is an observation over the measured range; no behaviour beyond F=832040 is asserted, and neither is a limit."
   status: verified-numeric
-  evidence: "data/phase1_summary.json (place_jumps field), checked exhaustively over every distinct place F <= 1000000"
+  evidence: "data/phase1_summary.json (place_jumps field), checked exhaustively at every distinct place F <= 1000000 -- 30 places, the largest 832040"
   source: "this project, Phase 1"
 
 - id: block-extremal-n

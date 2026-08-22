@@ -51,6 +51,25 @@ def record(
     If an entry with the same `file` and `script` already exists, it is
     replaced in place (preserving its position); otherwise the new entry is
     appended. This keeps re-running a generator from duplicating its entries.
+
+    `path` must LOCATE the artifact, not merely name it: only `path.name` is
+    stored, but `path` is what gets opened and hashed. Passing a repo-relative
+    string resolves it against the current working directory instead, which
+    hashes whatever happens to sit there -- silently correct when the script is
+    run from the repository root and silently wrong everywhere else.
+    `scripts/run_phase2.py` did exactly that, and it went unnoticed until a
+    test ran a copy of the script from a scratch tree and watched it hash the
+    real repository's files. Pass an absolute path, as every generator here now
+    does.
+
+    Args:
+        path: the artifact to record. Absolute, or resolvable from the CWD.
+        script: repo-relative path of the generating script.
+        params: the parameters the generator ran with.
+        manifest_path: where to upsert. Absolute, for the same reason.
+
+    Returns:
+        The entry that was written.
     """
     target = Path(path)
     entry = {

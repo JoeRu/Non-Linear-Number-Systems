@@ -1,0 +1,16 @@
+# data/*.csv are written by Python's `csv` module, which terminates rows with
+# RFC-4180 CRLF. Two consequences, and one attribute each.
+#
+# `-text` disables end-of-line conversion entirely. `data/phase1_data.csv` is
+# tracked (it is the exact-value oracle the Phase 2 bound tests run against)
+# and its SHA-256 is compared with the one `data/manifest.json` records at
+# generation time, by
+# tests/test_phase2_bounds.py::test_the_tracked_oracle_matches_its_manifest_provenance.
+# A clone under `core.autocrlf` that rewrote CRLF to LF would change those
+# bytes and fail that check for a reason with nothing to do with the
+# mathematics. Byte-for-byte is the point.
+#
+# `-whitespace` stops `git diff --check` reporting the CR at the end of every
+# row as trailing whitespace. It is the csv module's row terminator, not
+# sloppy editing, and these files are generated and never hand-edited.
+data/*.csv -text -whitespace

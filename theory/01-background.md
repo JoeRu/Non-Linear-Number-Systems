@@ -620,8 +620,11 @@ for n in range(1, 11):
           "gaps:", counts.count(0))
 ```
 
-Running this reproduces the table in §4, and confirms `counts.count(0) == 0` at every
-length — the completeness claim of §3, verified empirically.
+Running this reproduces the table in §4, and confirms `counts.count(0) == 0` at each of
+the lengths the loop covers, `n = 1` to `10`. That is the completeness claim of §3
+checked over those ten lengths, not at every length: the loop is finite. Completeness
+itself is not left resting on it — it is proved for all lengths in Lean, as
+`exists_numeral_of_le`, with no `sorry`.
 
 ---
 
