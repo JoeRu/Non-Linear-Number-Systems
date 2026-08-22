@@ -117,15 +117,18 @@ def test_enclosure_contains_an_independently_summed_reference():
     t = 10.0
     lo, hi, _ = log_F_c_interval(t)
 
+    # The place values come from capfib.fib, the single authority (CLAUDE.md);
+    # re-deriving the recurrence here would be one more copy of it, and the
+    # independence this test needs is in the *summation* and its precision,
+    # not in the place set.
+    from capfib.fib import fibonacci
+
     iv.dps = working_dps(t) + 150
     s = iv.exp(iv.mpf(-t))
     reference = iv.mpf(0)
-    f_prev, f, k = 0, 1, 1
-    while k <= 60:
+    for f in fibonacci(60):
         u = s * f
         reference = reference + (_log1m_exp_neg(u * (f + 1)) - _log1m_exp_neg(u))
-        f_prev, f = f, (f_prev + f if k >= 2 else 1)
-        k += 1
 
     mp.dps = 200
     assert mp.mpf(lo) <= mp.mpf(reference.a)
@@ -137,3 +140,48 @@ def test_tail_bound_rejects_u_below_one():
     iv.dps = working_dps(5.0)
     with pytest.raises(ValueError, match="u.a >= 1"):
         _tail_bound(iv.mpf(0.5))
+
+
+def test_place_values_are_pinned_to_capfib_fib(monkeypatch):
+    """The summed places must agree with `capfib.fib`, the single authority.
+
+    `log_F_c_interval` cannot call `places_up_to`: its break index is decided
+    by the tail condition mid-loop, so it generates the recurrence inline.
+    CLAUDE.md fixes the place values in `capfib.fib` "and nowhere else", and
+    this module certifies the headline upper bound, so the inline sequence is
+    checked against `fibonacci` at the end of every call rather than trusted.
+
+    A drifted recurrence in the loop would make that check fail and raise, so
+    every other test in this file would go red. What that alone would NOT
+    establish is that the check is live at all -- a comparison against the
+    wrong thing, or one accidentally deleted, passes silently. So the guard is
+    exercised directly here, by making the authority disagree.
+    """
+    from capfib import interval as interval_module
+    from capfib.fib import fibonacci
+
+    def corrupted(n):
+        F = fibonacci(n)
+        if len(F) >= 7:
+            F[6] += 1  # F_7 = 13 -> 14, an interior corruption (risk R-003)
+        return F
+
+    monkeypatch.setattr(interval_module, "fibonacci", corrupted)
+    with pytest.raises(RuntimeError, match="diverged from capfib.fib"):
+        log_F_c_interval(10.0)
+
+
+def test_place_value_guard_reports_the_first_differing_index(monkeypatch):
+    """The error must name where the sequences part, not merely that they did."""
+    from capfib import interval as interval_module
+    from capfib.fib import fibonacci
+
+    def corrupted(n):
+        F = fibonacci(n)
+        if len(F) >= 4:
+            F[3] += 1  # F_4 = 3 -> 4
+        return F
+
+    monkeypatch.setattr(interval_module, "fibonacci", corrupted)
+    with pytest.raises(RuntimeError, match="first difference at place index 4"):
+        log_F_c_interval(10.0)

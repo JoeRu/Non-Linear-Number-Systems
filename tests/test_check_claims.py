@@ -442,3 +442,52 @@ def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
     manifest = json.dumps([{"file": "phase0_5_gate.csv"}])
     _write(tmp_path, claims, {"data/manifest.json": manifest})
     assert any("manifest" in p for p in validate(tmp_path))
+
+
+def test_theorem_citing_docs_phases_path_is_accepted(tmp_path):
+    # `docs/phases/` is an allowed proof root alongside theory/, paper/ and
+    # lean/, because a Phase 2 `theorem` claim's proof lives in
+    # docs/phases/phase2_bounds.md and nowhere else.
+    #
+    # This fixture's evidence names *only* a docs/phases path. The real
+    # claims do not: `leading-constant` and `sandwich-bounds` each also name
+    # a Lean file, so dropping "docs/phases" from THEOREM_PATH_TOKEN_RE would
+    # leave both of them validating through the Lean-declaration branch --
+    # on a declaration proving a smaller, different statement. That is
+    # validation by coincidence (docs/risks.md R-004), and it would protect
+    # two `theorem`-status claims while looking green. With no Lean fallback
+    # in the evidence, this test goes red the moment the root is removed.
+    claims = (
+        '- id: iota\n  statement: "I."\n  status: theorem\n'
+        '  evidence: "Proved in docs/phases/phase2_bounds.md section 8 (T5)."\n'
+        '  source: "s"\n'
+    )
+    docs = {"docs/phases/phase2_bounds.md": "## T5\n\nA short real proof.\n"}
+    _write(tmp_path, claims, docs)
+    assert validate(tmp_path) == []
+
+
+def test_theorem_citing_nonexistent_docs_phases_path_is_rejected(tmp_path):
+    # The docs/phases root is checked for existence like every other root:
+    # matching the prefix is not enough.
+    claims = (
+        '- id: kappa2\n  statement: "K."\n  status: theorem\n'
+        '  evidence: "Proved in docs/phases/nonexistent.md section 8."\n'
+        '  source: "s"\n'
+    )
+    _write(tmp_path, claims)
+    problems = validate(tmp_path)
+    assert any("kappa2" in p and "does not exist" in p for p in problems)
+
+
+def test_no_search_file_is_also_covered_by_a_search_dir():
+    # A path listed in both would be scanned twice and every problem in it
+    # reported twice -- which is what happened to docs/phases/phase2_bounds.md.
+    from check_claims import SEARCH_DIRS, SEARCH_FILES
+
+    for relative in SEARCH_FILES:
+        for directory in SEARCH_DIRS:
+            assert not relative.startswith(directory + "/"), (
+                f"{relative} is already reached by SEARCH_DIRS entry "
+                f"'{directory}'; listing it in SEARCH_FILES double-scans it"
+            )

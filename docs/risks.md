@@ -47,7 +47,7 @@ trace to the same artifact.
 
 ## R-002 — Narrative documents contain hand-copied numbers
 
-**Status:** open · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
+**Status:** mitigated for the Phase 2 documents, open for the Phase 1 ones · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
 
 **Description.** `docs/phase1.md` and `docs/phases/phase1_report.md` embed the
 census, the place-jump table and the block-extrema table as literal Markdown.
@@ -80,8 +80,31 @@ artifact and fails on mismatch (cheap, catches drift without changing how the
 prose is written); or a transclusion step at build time (heavier, and makes the
 sources unreadable in isolation).
 
+**Mitigation in place — Phase 2 documents only.** Phase 2 built the first of
+those two candidates. `tests/test_phase2_figures.py` resolves every
+`<literal> {fig:key}` tag in `docs/phase2.md` and
+`docs/phases/phase2_bounds.md` against `data/phase2_figures.json`, renders the
+stored value at its recorded precision, and requires an exact string match; a
+bare `{fig:key}` with no literal in front of it fails too, so the tag cannot
+be used to dodge the comparison. `data/phase2_figures.json` is tracked while
+the rest of `data/` is gitignored, precisely so the artifact a fresh clone
+checks against is the one the prose was written from. For those two documents
+the hand-copied number and the artifact can no longer drift apart silently.
+`docs/phase2.md` refers to this entry as handled; that reference is accurate
+for Phase 2 and for Phase 2 only.
+
+**Mitigation missing — Phase 1 documents.** `docs/phase1.md` and
+`docs/phases/phase1_report.md` carry no `{fig:...}` tags and there is no
+Phase 1 figures artifact for them to be checked against; their census,
+place-jump and block-extrema tables are still literal Markdown, unchecked.
+Retro-fitting the mechanism means regenerating Phase 1 with a figures
+artifact, which is Phase 1 work. Both positions above therefore still stand
+for those two documents, and the entry stays open for them.
+
 **Revisit when:** Phase 4 regenerates data at a different `n_max`, which is the
-first moment drift can actually occur.
+first moment drift can actually occur — and which now bears only on the Phase 1
+documents, since the Phase 2 ones would fail their figure-tag test instead of
+drifting quietly.
 
 ---
 
@@ -142,14 +165,40 @@ Lean-backed claim ever enters the ledger, a `theorem` could be certified by a
 declaration that does not compile — in a project whose thesis is the separation
 of proved from believed.
 
-**Revisit when:** any claim's evidence first cites a Lean declaration. That
-event should be treated as blocking until this is closed.
+**Trigger fired in Phase 2 — and the risk is still dormant.** Three `theorem`
+claims now name a Lean declaration in their evidence:
+`completeness-no-gaps`, `leading-constant` and `sandwich-bounds`, all citing
+`exists_numeral_of_le`. By the revisit condition below that is blocking. It
+was traced through `_theorem_evidence_problem` instead, and the grep route is
+not what validates any of the three: each evidence string *also* contains a
+real repository path (`theory/01-background.md`,
+`docs/phases/phase2_bounds.md`), the path-token branch runs first and returns
+on it, and the Lean-declaration branch is never reached. Confirmed by
+deleting `docs/phases` from `THEOREM_PATH_TOKEN_RE`: only `saddle-tightness`
+then fails, while `leading-constant` and `sandwich-bounds` keep validating —
+through the Lean grep, on a declaration that proves a smaller, different
+statement. That is the failure this entry describes, arriving as a *silent
+pass* rather than a false certification, and it is now pinned by
+`test_theorem_citing_docs_phases_path_is_accepted` in
+`tests/test_check_claims.py`, whose fixture has no Lean fallback and so goes
+red if the path root is dropped.
+
+So the trigger has fired and the entry does **not** close. What changed is
+only the reason it is dormant: previously no claim cited a Lean declaration at
+all; now three do, and they are saved by carrying a checkable path alongside.
+Remove the path from any of those three evidence strings and the grep becomes
+load-bearing that same moment.
+
+**Revisit when:** any claim's evidence cites a Lean declaration *without* also
+citing an existing path under `theory/`, `paper/`, `lean/` or `docs/phases/` —
+at which point the grep is the only thing standing behind a `theorem`, and
+that should be treated as blocking until this is closed.
 
 ---
 
 ## R-005 — Finite observations keep being restated as universal ones
 
-**Status:** open · **Raised by:** Codex and Copilot · **Phase:** 1
+**Status:** mitigated · **Raised by:** Codex and Copilot · **Phase:** 1
 
 **Description.** The Phase 1 finding — 49.6% of steps decrease over `N ≤ 10^6`
 — was written four separate times as a universal claim ("the direct attack is
@@ -176,9 +225,34 @@ quantifiers ("any", "every", "must", "unavailable", "jeder", "muss") in a
 paragraph citing a `verified-numeric` claim. Cheap, imperfect, and would have
 caught all four.
 
-**Revisit when:** the check above is implemented and has run clean across the
-repository for a full phase. Until then this stays open — a guard that has not
-yet survived a phase of real writing has not been shown to work.
+**Outcome — the check exists and Phase 2 ran clean, within its reach.** The
+candidate resolution was implemented: `_check_universal_claims` in
+`scripts/check_claims.py` flags an unqualified universal word in any citation
+scope that cites a `verified-numeric` claim, unless that sentence carries an
+explicit range qualification. It ran across the repository throughout Phase 2
+and reported no surviving overclaim, and Phase 2's own prose was written under
+it. That is what the revisit condition asked for, so the entry moves from open
+to mitigated.
+
+It does not close, because "ran clean" means clean *within its scope*, and the
+scope is narrow in two ways that this branch demonstrated rather than
+hypothesised. First, the check only reads Markdown, and only under `theory/`,
+`docs/phases/`, `paper/` and five named files — a fourth stale epistemic
+statement was found in this branch in a Python docstring
+(`capfib/stats.py`, asserting completeness was still a `sorry` after it had
+been proved), which the check structurally cannot see. That specific gap is
+now covered by `tests/test_epistemic_staleness.py`, a phrase grep over
+`capfib/`, `scripts/` and `.claude/skills/`; it caught a second instance in
+`scripts/run_lean.sh` on its first run. Second, both guards are pattern
+matchers: they catch the recurring *shapes* ("every … {claim:…}", "still a
+`sorry`"), not the proposition. A paragraph that overstates a finite census in
+words neither guard enumerates still passes, and a reviewer remains the
+backstop.
+
+**Revisit when:** a stale or overstated epistemic statement is next found by a
+human reviewer rather than by either guard. That is the signal that the
+patterns have stopped keeping up with the prose, and the point to ask again
+whether pattern matching is the right instrument.
 
 ---
 

@@ -459,8 +459,8 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
 
    **Nachtrag (Phase 2, Stretch):** Es ist $C' = 4$; die frühere Phase-3-Konjektur ist als
    C5 bewiesen (Ledger: `leading-constant`, Status `theorem`). $C'=8$ ist damit
-   ausgeschlossen — L1 ist nicht scharf.  
-   Falls $C'\in(4,8)$: Subtilere Effekt-Messung erforderlich.
+   ausgeschlossen — L1 ist nicht scharf. Die obige Fallunterscheidung ist damit
+   erledigt: $C'\in(4,8)$ war eine der offenen Möglichkeiten und ist ausgeschlossen.
 
 ### Deliverables
 

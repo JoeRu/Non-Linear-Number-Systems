@@ -249,3 +249,98 @@ def test_block_band_min_matches_the_brute_force_oracle(a):
     lo = math.ceil(THETA_LO * capacity)
     hi = math.floor(THETA_HI * capacity)
     assert block_band_min(a) == min(count(m, list(F)) for m in range(lo, hi + 1))
+
+
+def _t5_family(n):
+    """Enumerate the T5 construction of §8.3 element by element at N.
+
+    Each element is a full digit tuple over *all* places `F_k <= N`, least
+    significant first: a fixup on the block [1, a] together with one free
+    tuple on the counting block (a, c]. The free digits are bounded by
+    `m_k = floor(X / (M F_k))` and the fixup ranges over every cap-respecting
+    representation of the residue `N - sigma` on the block, which is the
+    quantity `B(a, N - sigma)` that Lemma F bounds below.
+
+    Args:
+        n: the integer N, at least 3.
+
+    Returns:
+        tuple: (`T5Result`, place values, list of digit tuples).
+    """
+    import itertools
+
+    from capfib.brute import numerals
+    from capfib.fib import places_up_to
+    from capfib.lower import t5_lower_bound
+
+    result = t5_lower_bound(n)
+    places = places_up_to(n)
+    a, c, m_count = result.block, result.top_place, result.counting_places
+    capacity = sum(f * f for f in places[:a])
+    budget = n - (capacity + 4) // 5
+    caps = [budget // (m_count * places[k - 1]) for k in range(a + 1, c + 1)]
+    family = []
+    for free in itertools.product(*(range(m + 1) for m in caps)):
+        sigma = sum(d * places[a + i] for i, d in enumerate(free))
+        for block in numerals(n - sigma, places[:a]):
+            family.append(tuple(block) + free)
+    return result, places, family
+
+
+@pytest.mark.slow
+def test_t5_construction_enumerates_to_valid_distinct_representations():
+    """8.7. The construction, enumerated element by element for N = 3 .. 219.
+
+    This is the property the whole lower bound rests on, and it is checked
+    against `capfib.brute` rather than against the formulas being tested. At
+    each N the enumerated family must consist of valid capped representations
+    of N, all distinct, at least as numerous as the proved bound
+    `exp(t5_lower_bound(N).log_count)`, and no more numerous than the exact
+    `R_c(N)`.
+
+    N starts at 3: at N = 2 the counting block is empty and the construction
+    is not defined. The upper end 219 is where the exhaustive brute-force
+    oracle stops being cheap -- this is a check over that finite range, not a
+    proof of the construction's validity for all N, which is what §8.3 is for.
+
+    Marked `slow` (~45 s, most of it the brute-force oracle) so it can be
+    deselected with `-m "not slow"`; it runs by default.
+    """
+    from capfib.brute import count
+    from capfib.lower import THETA_HI, THETA_LO
+
+    for n in range(3, 220):
+        result, places, family = _t5_family(n)
+        capacity = sum(f * f for f in places[: result.block])
+
+        for sequence in family:
+            assert len(sequence) == len(places), f"N={n}: wrong number of places"
+            assert all(0 <= d <= f for d, f in zip(sequence, places)), \
+                f"N={n}: a digit exceeds its cap"
+            assert sum(d * f for d, f in zip(sequence, places)) == n, \
+                f"N={n}: a sequence does not evaluate to N"
+            residue = sum(
+                d * f for d, f in zip(sequence[: result.block], places[: result.block])
+            )
+            assert THETA_LO * capacity <= residue <= THETA_HI * capacity, \
+                f"N={n}: residue {residue} outside the flat band"
+
+        assert len(set(family)) == len(family), f"N={n}: the family repeats an element"
+        exact = count(n)
+        assert len(family) <= exact, \
+            f"N={n}: construction gives {len(family)} > R_c(N) = {exact}"
+        assert len(family) >= math.exp(result.log_count) - 1e-9, \
+            f"N={n}: proved bound exp({result.log_count}) exceeds the {len(family)} " \
+            f"elements the construction actually produces"
+
+
+@pytest.mark.slow
+def test_t5_enumeration_would_notice_a_broken_construction():
+    """The enumeration above passes trivially if the family is empty.
+
+    Without this, deleting the body of `_t5_family` would leave the checks
+    above green at every N.
+    """
+    for n in (3, 89, 219):
+        _, _, family = _t5_family(n)
+        assert family, f"N={n}: the construction produced no elements at all"

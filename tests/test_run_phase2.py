@@ -1,9 +1,10 @@
-"""scripts/run_phase2.py has four gates -- agreement, Chernoff bound, T3 bound,
-residual -- sharing one contract: on failure, exit non-zero and write nothing.
+"""scripts/run_phase2.py has five gates -- agreement, Chernoff bound, T3
+bound, T5 bound, residual -- sharing one contract: on failure, exit non-zero
+and write nothing.
 That contract already broke once during this task (the bounds CSV and its
 manifest entry were written before the residual sweep's own gate ran), and it
 was caught only by reading the diff, not by a test. This suite exists so a
-future regression on any of the four gates is caught by running the suite.
+future regression on any of the five gates is caught by running the suite.
 
 Self-contained, following tests/test_run_phase1.py's pattern: it never touches
 the real data/ or figures/ directories. It copies the real, unmodified script
@@ -153,6 +154,32 @@ def test_t3_lower_bound_violation_exits_nonzero_and_writes_nothing(tmp_path, mon
     assert exit_code == 1, "a violated T3 lower bound must exit non-zero"
     assert "LOWER BOUND VIOLATED at N=2" in out, \
         "the failure message must name the gate and the N it failed at"
+    _assert_nothing_written(tmp_path)
+
+
+def test_t5_lower_bound_violation_exits_nonzero_and_writes_nothing(tmp_path, monkeypatch, capsys):
+    # The T5 gate is the load-bearing one: T5 is the construction that closes
+    # the sandwich, so a T5 bound above the exact value would be a false
+    # theorem, not merely a loose one. Force it above every exact value,
+    # tripping the check at the smallest N. `t3_lower_bound` and
+    # `log_R_bound_certified` are left real -- at these small, genuine N they
+    # legitimately hold and their own gates pass first, so only the T5 check
+    # is exercised.
+    script_copy = _make_scratch_repo(tmp_path)
+    real_t5 = lower_module.t5_lower_bound
+    monkeypatch.setattr(
+        lower_module,
+        "t5_lower_bound",
+        lambda n: real_t5(n)._replace(log_count=1e9),
+    )
+
+    exit_code, out = _run_script(script_copy, monkeypatch, capsys)
+
+    assert exit_code == 1, "a violated T5 lower bound must exit non-zero"
+    assert "LOWER BOUND VIOLATED at N=2" in out, \
+        "the failure message must name the gate and the N it failed at"
+    assert "T5" in out, \
+        "the message must say which of the two lower bounds was violated"
     _assert_nothing_written(tmp_path)
 
 

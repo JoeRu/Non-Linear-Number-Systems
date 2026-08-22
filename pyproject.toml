@@ -17,3 +17,8 @@ packages = ["capfib"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# `slow` is registered, not deselected: marked tests still run by default.
+# Use `-m "not slow"` to skip them deliberately.
+markers = [
+    "slow: takes tens of seconds (exhaustive enumeration against the brute-force oracle)",
+]

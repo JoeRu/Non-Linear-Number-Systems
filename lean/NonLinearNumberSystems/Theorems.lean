@@ -18,8 +18,12 @@
   * `countReps_le_uncapped`  — `R_c(N) ≤ R_u(N)`: capping digits cannot create
                                 representations, so the capped count is bounded
                                 by the uncapped one. Not a step of the Phase 2
-                                upper bound, which is proved directly and is
-                                sharper; this supports only the comparison
+                                upper bound, which is sharper and is a *paper*
+                                result — proved on paper in
+                                `docs/phases/phase2_bounds.md` (T2), not here,
+                                so it carries none of the machine-checked
+                                force the rest of this section does. This
+                                declaration supports only the comparison
                                 against Coons–Kristensen–Laursen.
 
   ## What is open

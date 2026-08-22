@@ -15,6 +15,8 @@ import math
 
 from mpmath import iv
 
+from capfib.fib import fibonacci
+
 TAIL_U_MIN = 40.0
 """Sum places exactly until s*F_k reaches this, then bound the remainder."""
 
@@ -119,7 +121,9 @@ def log_F_c_interval(t: float, guard: int = 40) -> tuple[iv.mpf, iv.mpf, int]:
     total = iv.mpf(0)
     f_prev, f = 0, 1  # F_1 = 1
     k = 1
+    used: list[int] = []
     while True:
+        used.append(f)
         u = s * f
         total = total + (_log1m_exp_neg(u * (f + 1)) - _log1m_exp_neg(u))
         if k >= 3 and u.a >= TAIL_U_MIN:
@@ -127,6 +131,26 @@ def log_F_c_interval(t: float, guard: int = 40) -> tuple[iv.mpf, iv.mpf, int]:
             break
         f_prev, f = f, (f_prev + f if k >= 2 else 1)  # F_2 = 1, then F_{k+1}
         k += 1
+    # CLAUDE.md: the place values are constructed in capfib.fib "and nowhere
+    # else". The break index is not known in advance, so this loop cannot call
+    # `places_up_to`; it therefore has to pin what it generated against the one
+    # authority instead. Silent divergence here is docs/risks.md R-003's
+    # documented failure mode -- an interior corruption of the place set that
+    # no agreement check between two consumers of the same set can see -- and
+    # this module certifies the headline upper bound, so it is checked rather
+    # than assumed. Raise instead of `assert`: `python -O` strips asserts, and
+    # a guard that vanishes under an optimisation flag is not a guard.
+    expected = fibonacci(k)
+    if used != expected:
+        mismatch = next(
+            (i + 1 for i, (a, b) in enumerate(zip(used, expected)) if a != b),
+            min(len(used), len(expected)) + 1,
+        )
+        raise RuntimeError(
+            f"interval place values diverged from capfib.fib.fibonacci at t={t}: "
+            f"summed {len(used)} places against {len(expected)} expected, "
+            f"first difference at place index {mismatch}"
+        )
     return total.a, total.b, k
 
 

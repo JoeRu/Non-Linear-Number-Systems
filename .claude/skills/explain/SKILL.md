@@ -56,8 +56,13 @@ over a limit.
 5. **The lower bound**, T3: an explicit construction, and why it loses a factor
    of two structurally rather than through slack in the estimates.
 6. **Closing the gap**, Lemma F and T5, and finally C5: the limit exists.
-7. **What is machine-checked and what is not.** Lean proves two finite
-   combinatorial statements; the asymptotics are paper proofs.
+7. **What is machine-checked and what is not.** Lean proves the elementary
+   structural facts — the place recurrence, `sum_{k<=n} F_k^2 = F_n F_{n+1}`,
+   the value bound, completeness, non-injectivity of the evaluation map, and
+   `R_c(N) <= R_u(N)`; the index is the "What is proved" section of
+   `lean/NonLinearNumberSystems/Theorems.lean`, and there are no `sorry`s.
+   None of the asymptotics is in Lean: T1, T2, T3, Lemma F, T5, C4 and C5 are
+   paper proofs in `docs/phases/phase2_bounds.md`.
 
 Read from the sources rather than from memory — `docs/phase2.md` for the
 summary, `docs/phases/phase2_bounds.md` for the proofs, `theory/claims.yaml`

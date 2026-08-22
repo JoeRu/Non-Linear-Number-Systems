@@ -52,8 +52,13 @@ def local_ratios(counts: Sequence[int]) -> list[float]:
     """r[n] = counts[n+1] / counts[n] for n = 0 .. len-2.
 
     The division is guarded by an explicit check (raising `ValueError`) rather
-    than by appealing to completeness: completeness is still a `sorry` in the
-    Lean development, so it is not something this code may lean on.
+    than by appealing to completeness. Completeness now holds -- it is proved
+    in Lean as `exists_numeral_of_le`, with no `sorry` -- but this function
+    still does not depend on it: it accepts an arbitrary counts array, which
+    the caller may have built over any range or by any route, so `min(counts)
+    >= 1` is a precondition on the argument rather than a consequence of a
+    theorem about R_c. Checking it here is local, cheap, and gives a named
+    error instead of a ZeroDivisionError from inside a comprehension.
     """
     if min(counts) < 1:
         raise ValueError("counts must be positive; local_ratios would divide by zero")

@@ -289,14 +289,16 @@ cd lean && lake build
 
 `data/` is gitignored apart from `data/manifest.json` and
 `data/phase2_figures.json`, which is tracked precisely so prose and data cannot
-drift apart (risk R-002). `data/manifest.json` records what was produced, by
-which script, at which revision, with what hashes.
+drift apart (risk R-002, which this mechanism mitigates for the Phase 2
+documents; it stays open for the Phase 1 ones, which have no such artifact).
+`data/manifest.json` records what was produced, by which script, at which
+revision, with what hashes.
 
 ## Pointers
 
 | | |
 |---|---|
-| Proofs (T1, T2, T3, C4) | [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) |
+| Proofs (T1, T2, T3, C4, Lemma F, T5, C5) | [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) |
 | Design spec | [`docs/superpowers/specs/2026-08-21-phase2-elementary-bounds-design.md`](superpowers/specs/2026-08-21-phase2-elementary-bounds-design.md) |
 | Claims | [`theory/claims.yaml`](../theory/claims.yaml), validated by `scripts/check_claims.py` |
 | Lean | `lean/NonLinearNumberSystems/Completeness.lean`, `lean/NonLinearNumberSystems/Bounds.lean` |

@@ -1138,17 +1138,25 @@ rather than against the formulas they are testing:
 
 - Lemma F's closed form is checked against the exact band minimum of `B(a, ·)`, computed
   by DP by `capfib.lower.block_band_min`, for `a` = 8 to 16 — the same range the sharpness
-  remark of §8.2 measures its slope over. That DP is itself pinned against a brute-force
-  convolution oracle for `a` = 2 to 10.
+  remark of §8.2 measures its slope over. That DP is itself pinned twice: against an
+  independent direct-convolution implementation for `a` = 2 to 11, and against
+  `capfib.brute`, the package's standard oracle, for `a` = 2 to 6.
 - (8.2), the step everything rests on, is checked exhaustively — at every integer of the
   band, for `a` = 2 to 13, not at sampled residues.
 - §8.3's cap, budget and band conditions are checked at four values of `N` up to `10^6`.
 
-Separately, and outside the suite because it is slow, the construction was enumerated
-element by element at each `N` from 3 to 219 (at `N = 2` the counting block is empty and
-the construction is not defined): each produced digit sequence was confirmed to be a valid
-capped representation of `N`, all of them distinct, and their number at or below the
-brute-force `R_c(N)`.
+A fourth check enumerates the construction itself, element by element, at each `N` from 3
+to 219 (at `N = 2` the counting block is empty and the construction is not defined):
+`test_t5_construction_enumerates_to_valid_distinct_representations` in
+`tests/test_phase2_bounds.py` builds every element — a fixup on the block together with a
+free tuple on the counting block — and requires each to be a digit sequence respecting
+every cap and evaluating to `N`, with its block residue inside the flat band; requires the
+elements to be pairwise distinct; and requires their number to be at least the proved
+bound `exp(t5_lower_bound(N).log_count)` and at most the brute-force `R_c(N)`. It is
+marked `slow` (~45 s, nearly all of it the oracle) and runs with the rest of the suite.
+This is a check over `N <= 219`, which is where exhaustive enumeration stops being cheap;
+the validity of the construction for larger `N` is what §8.3 argues, not what this
+measures.
 
 ### 8.8 What is not claimed
 

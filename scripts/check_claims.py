@@ -18,13 +18,15 @@ VALID_STATUS = {"cited", "verified-numeric", "heuristic", "conjecture", "theorem
 REQUIRED_FIELDS = ("id", "statement", "status", "evidence", "source")
 REFERENCE = re.compile(r"\{claim:([a-z0-9-]+)\}")
 SEARCH_DIRS = ("theory", "docs/phases", "paper")
+# Root-level Markdown that no SEARCH_DIRS entry reaches. Anything already
+# under theory/, docs/phases/ or paper/ must NOT be listed here as well: it
+# would be scanned twice and every problem in it reported twice.
 SEARCH_FILES = (
     "docs/roadmap.md",
     "README.md",
     "CLAUDE.md",
     "docs/phase1.md",
     "docs/phase2.md",
-    "docs/phases/phase2_bounds.md",
 )
 FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
 DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
