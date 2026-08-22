@@ -144,7 +144,7 @@ and the argument documented in the spec depends on it.
 
 ## R-004 — Lean proof references are validated by grepping text
 
-**Status:** accepted · **Raised by:** Codex, 2026-08-20 · **Phase:** 1
+**Status:** accepted — trigger fired in Phase 2, risk remains dormant · **Raised by:** Codex, 2026-08-20 · **Phase:** 1
 
 **Description.** `scripts/check_claims.py` requires a `theorem` claim's evidence
 to cite a proof location. For repository paths it now checks the file exists.
@@ -174,14 +174,27 @@ not what validates any of the three: each evidence string *also* contains a
 real repository path (`theory/01-background.md`,
 `docs/phases/phase2_bounds.md`), the path-token branch runs first and returns
 on it, and the Lean-declaration branch is never reached. Confirmed by
-deleting `docs/phases` from `THEOREM_PATH_TOKEN_RE`: only `saddle-tightness`
-then fails, while `leading-constant` and `sandwich-bounds` keep validating —
-through the Lean grep, on a declaration that proves a smaller, different
-statement. That is the failure this entry describes, arriving as a *silent
-pass* rather than a false certification, and it is now pinned by
+deleting `docs/phases` from `THEOREM_PATH_TOKEN_RE`: `saddle-tightness`,
+whose evidence names only a `docs/phases/` path, then fails, but
+`leading-constant` and `sandwich-bounds` keep validating anyway — not
+through the Lean grep, but because each evidence string *also* contains a
+`lean/` path token (`lean/NonLinearNumberSystems/Completeness.lean`) that
+survives the deletion, and `_theorem_evidence_problem` returns from the
+path-token branch on that token (`scripts/check_claims.py:236`), which
+checks only that the path resolves to an existing file, never that the file
+contains the declaration the claim cites. The Lean-declaration branch is
+never reached, before or after the mutation. It could not have validated
+either claim regardless: `LEAN_DECL_RE` requires a capitalised dotted
+identifier, so from that same evidence string it extracts only the filename
+`Completeness.lean`, and `_lean_declaration_exists(root, "Completeness.lean")`
+returns `False`. So the surviving validation is by a path token naming a
+Lean file whose contents are never inspected — a file that, read, proves a
+smaller, different statement than the claims cite it for. That is the
+failure this entry describes, arriving as a *silent pass* rather than a
+false certification, and it is now pinned by
 `test_theorem_citing_docs_phases_path_is_accepted` in
-`tests/test_check_claims.py`, whose fixture has no Lean fallback and so goes
-red if the path root is dropped.
+`tests/test_check_claims.py`, whose fixture names only a `docs/phases/` path
+and so goes red if that root is dropped.
 
 So the trigger has fired and the entry does **not** close. What changed is
 only the reason it is dormant: previously no claim cited a Lean declaration at

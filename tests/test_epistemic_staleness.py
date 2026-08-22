@@ -1,11 +1,22 @@
 """Catch stale statements about this repository's own proof state in code.
 
 `scripts/check_claims.py` reads Markdown only, and only under `theory/`,
-`docs/phases/`, `paper/` and six named files. Four separate stale epistemic
+`docs/phases/`, `paper/` and five named files. Four separate stale epistemic
 statements have now been found *outside* that reach -- in a `.py` docstring,
 in a `.sh` echo, and in a skill file -- each one surviving because nothing
 mechanical looks there. This is the cheap complement: a phrase grep over the
-source trees the claim checker does not read.
+source trees the claim checker does not read *as files*.
+
+This file's own scope -- `capfib/`, `scripts/` and `.claude/skills/` --
+deliberately stops short of also scanning `docs/`, `theory/` and `paper/`,
+even though those are exactly the trees `check_claims.py` reads. That is
+not because `check_claims.py` already screens that Markdown for stale
+proof-state language: it has no `sorry`-related pattern at all, only
+claim-ledger and universal-quantifier checks, so a "still a `sorry`"
+sentence written into e.g. `docs/phases/phase2_bounds.md` would be caught by
+neither guard today. The trees are left out of this file only to avoid a
+second copy of the same patterns; that Markdown blind spot is real and
+unmitigated, not covered elsewhere.
 
 It is deliberately narrow. It matches assertions *about the current state of
 this project's proofs* ("still a `sorry`", "modulo sorry", "not yet proved",
@@ -45,19 +56,20 @@ SCAN_GLOBS = (
 # case-insensitive and line-by-line, so the report can name a line number.
 STALE_PROOF_STATE_PATTERNS = (
     (
-        re.compile(r"still\b[^.\n]{0,40}\bsorry\b", re.IGNORECASE),
+        re.compile(r"still\b[^.\n]{0,40}\bsorr(?:y|ies)\b", re.IGNORECASE),
         "asserts something is still a `sorry`",
     ),
     (
-        re.compile(r"\bmodulo\s+`?sorry", re.IGNORECASE),
+        re.compile(r"\bmodulo\s+`?sorr(?:y|ies)\b", re.IGNORECASE),
         "qualifies a build or a proof as holding only 'modulo sorry'",
     ),
     (
         re.compile(
-            r"\b(?:is|are|remains?|contains?|has|have)\b[^.\n]{0,25}\ba\s+`?sorry\b",
+            r"\b(?:is|are|remains?|contains?|has|have|carr(?:y|ies))\b"
+            r"[^.\n]{0,25}\ba\s+`?sorr(?:y|ies)\b",
             re.IGNORECASE,
         ),
-        "asserts a declaration is/contains a `sorry`",
+        "asserts a declaration is/contains/carries a `sorry`",
     ),
     (
         re.compile(r"\bsorry-filled\b", re.IGNORECASE),
@@ -82,8 +94,8 @@ STALE_PROOF_STATE_PATTERNS = (
         "downgrades a result to 'only a conjecture'",
     ),
     (
-        re.compile(r"\bstill\s+(?:open|unproved|unproven)\b", re.IGNORECASE),
-        "asserts a question is still open or unproved",
+        re.compile(r"\b(?:still|remains?)\s+(?:open|unproved|unproven)\b", re.IGNORECASE),
+        "asserts a question is still/remains open or unproved",
     ),
 )
 
@@ -136,6 +148,9 @@ def test_no_stale_proof_state_statements_in_source_trees():
         "C5 remains a conjecture",
         "this is only a conjecture",
         "whether the constant exists is still open",
+        "the development still contains sorries",
+        "whether the bound holds remains open",
+        "any statement added here without a proof carries a `sorry`",
     ],
 )
 def test_patterns_fire_on_the_shapes_they_target(line):

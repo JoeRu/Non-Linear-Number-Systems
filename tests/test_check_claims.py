@@ -451,12 +451,19 @@ def test_theorem_citing_docs_phases_path_is_accepted(tmp_path):
     #
     # This fixture's evidence names *only* a docs/phases path. The real
     # claims do not: `leading-constant` and `sandwich-bounds` each also name
-    # a Lean file, so dropping "docs/phases" from THEOREM_PATH_TOKEN_RE would
-    # leave both of them validating through the Lean-declaration branch --
-    # on a declaration proving a smaller, different statement. That is
-    # validation by coincidence (docs/risks.md R-004), and it would protect
-    # two `theorem`-status claims while looking green. With no Lean fallback
-    # in the evidence, this test goes red the moment the root is removed.
+    # a `lean/` file, so dropping "docs/phases" from THEOREM_PATH_TOKEN_RE
+    # would still leave both of them validating -- via that surviving
+    # `lean/` path token, which the path-token branch accepts merely for
+    # resolving to an existing file, never for containing the declaration
+    # the claim cites. (It is not the Lean-declaration/grep branch that
+    # saves them either way: that branch is never reached while any path
+    # token is present, and even if it were, LEAN_DECL_RE pulls only the
+    # filename `Completeness.lean` out of that evidence, which
+    # `_lean_declaration_exists` rejects.) That is validation by coincidence
+    # (docs/risks.md R-004), and it would protect two `theorem`-status
+    # claims while looking green. This fixture's evidence has no `lean/`
+    # fallback, so it is this test -- not the real claims -- that goes red
+    # the moment the docs/phases root is removed.
     claims = (
         '- id: iota\n  statement: "I."\n  status: theorem\n'
         '  evidence: "Proved in docs/phases/phase2_bounds.md section 8 (T5)."\n'
