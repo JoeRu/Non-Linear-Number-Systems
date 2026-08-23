@@ -102,20 +102,28 @@ def ladder(n_max: int) -> list[int]:
 
 
 def _n_max_type(raw: str) -> int:
-    """argparse type for --n-max: reject anything below 2.
+    """argparse type for --n-max: reject anything below 8.
 
-    n_max=0 divides by zero in the decreasing-steps percentage; n_max in
-    {0, 1} leaves local_ratios empty, so the quantile indexing raises;
-    n_max=1 also divides by log(1)**2 == 0 in the CSV ratio column; negative
-    values leave the counts array empty, so min(c) raises. All of these are
-    confusing crashes deep in analysis code rather than a clear rejection at
-    the argument boundary.
+    Two floors, and the argument boundary enforces the higher of them.
+
+    Below 2 the analysis code crashes confusingly: n_max=0 divides by zero in
+    the decreasing-steps percentage; n_max in {0, 1} leaves local_ratios
+    empty, so the quantile indexing raises; n_max=1 divides by log(1)**2 == 0
+    in the CSV ratio column; negative values leave the counts array empty, so
+    min(c) raises.
+
+    Below 8 the run cannot produce its figures file: `place-jump-f8` needs the
+    place F=8, and a run that always writes figures cannot accept an argument
+    that guarantees it will refuse to. Accepting 2..7 and then failing a
+    runtime precondition made the CLI contract say one thing and the script do
+    another, so the floor lives here instead.
     """
     n = int(raw)
-    if n < 2:
+    if n < 8:
         raise argparse.ArgumentTypeError(
-            f"--n-max must be >= 2 (got {n}); N=0 and N=1 have no ratio to "
-            f"compute and negative N is not meaningful"
+            f"--n-max must be >= 8 (got {n}); below 2 there is no ratio to "
+            f"compute, and below 8 the run cannot reach Fibonacci place F=8, "
+            f"which the place-jump figures require"
         )
     return n
 
@@ -190,6 +198,23 @@ def main() -> int:
         print("skip-crosscheck set: analyses ran, nothing written.")
         return 0
 
+    jump_by_place = {j["place"]: j["ratio"] for j in jumps}
+    if 8 not in jump_by_place:
+        # The place-jump-f2/f3/f8 figures below assume the run reaches
+        # Fibonacci place F=8, i.e. n_max >= 8. _n_max_type now rejects
+        # anything below 8, so no CLI invocation reaches here; this stays as
+        # the second line of defence for callers that import main() and
+        # build args themselves, and because a figures file silently missing
+        # a key is worse than a refusal. Every other precondition in this
+        # function prints a clear message and returns 1 rather than crashing
+        # with a raw traceback, so this one follows suit instead of
+        # asserting.
+        print(f"PRECONDITION FAILED: --n-max {n_max} does not reach "
+              f"Fibonacci place F=8; the place-jump-f2/f3/f8 figures assume "
+              f"it does.")
+        print("Writing nothing.")
+        return 1
+
     rows = []
     for n in ladder(n_max):
         log_n = math.log(n)
@@ -202,6 +227,23 @@ def main() -> int:
             "S_c": sc[n],
             "log_S_c": math.log(sc[n]),
         })
+    # The `log-rc-at-nmax` and `ratio-at-nmax` figures below read `rows[-1]`
+    # and are described as "at the largest N computed", so the ladder's last
+    # row has to be N = n_max. `ladder()` always includes n_max as its
+    # maximum, so this is a precondition on a helper rather than on user
+    # input -- but it is checked here, before anything is written, and in the
+    # same print-and-return-1 shape as every other precondition in this
+    # function. It used to be a bare `assert` sitting *after* the CSV, the
+    # summary and both PNGs had already been written and recorded in the
+    # manifest: on failure it raised a bare traceback and left a published,
+    # manifest-recorded generation with no figures file beside it.
+    if not rows or rows[-1]["N"] != n_max:
+        last = rows[-1]["N"] if rows else None
+        print(f"PRECONDITION FAILED: the ladder's last row is N={last}, not "
+              f"n_max={n_max}; the log-rc-at-nmax and ratio-at-nmax figures "
+              f"would not be at the largest N computed.")
+        print("Writing nothing.")
+        return 1
     sio = io.StringIO()
     w = csv.DictWriter(sio, fieldnames=list(rows[0]))
     w.writeheader()
@@ -273,8 +315,162 @@ def main() -> int:
         record(path, script="scripts/run_phase1.py", params=params,
                manifest_path=MANIFEST)
 
+    # Deliberately excluded: dp_seconds, gf_seconds and peak_rss_mb -- the
+    # wall-clock timings *and* the peak-memory figure. They are in `summary`
+    # and the documents mention them, but all three change from run to run and
+    # from machine to machine. Tagging them would force a prose edit at each
+    # regeneration for no epistemic gain -- churn that looks like rigour and
+    # trains people to edit numbers to make a test pass, which is the opposite
+    # of the point.
+    #
+    # The other half of that decision, learned the hard way: because they are
+    # untagged, prose must not quote them as *specific values* either. Three
+    # regenerations on one branch left `docs/phases/phase1_report.md` saying
+    # "8.7 s / 286.9 s / 273 MB" of a run that had recorded 8.9 / 286.1 / 274
+    # -- risk R-002's exact failure mode, inside the branch that closed it.
+    # The report now states them rounded ("roughly nine seconds", "under
+    # 300 MB"), which regeneration cannot falsify.
+    #
+    # Also deliberately excluded: the full `place_jumps` and `block_extrema`
+    # arrays and `flat_step_positions` list. The documents reproduce those in
+    # full as tables/lists read straight from data/phase1_summary.json;
+    # `tests/test_phase1_tables.py` checks every cell of both tables against
+    # this file directly (anchored on the `<!-- table:... -->` markers in
+    # `docs/phases/phase1_report.md`), so they do not need a `{fig:key}` per
+    # cell -- that would be on the order of a hundred more keys. Only the
+    # specific values pulled out of them into prose as headline figures (a
+    # handful of individual place-jump ratios, the block count, the flat-step
+    # extremes) are promoted to a key here and checked that way instead.
+    # `rows[-1]["N"] == n_max` is checked above, before anything is written.
+    figures = {
+        "n-max": {
+            "value": summary["n_max"],
+            "precision": 0,
+            "description": "largest N for which R_c was computed exactly",
+        },
+        "rc-bit-length": {
+            "value": summary["R_c_bit_length"],
+            "precision": 0,
+            "description": "bit length of R_c at the largest N",
+        },
+        "census-increasing": {
+            "value": summary["census"]["increasing"],
+            "precision": 0,
+            "description": "increasing steps of R_c over the computed range",
+        },
+        "census-decreasing": {
+            "value": summary["census"]["decreasing"],
+            "precision": 0,
+            "description": "decreasing steps of R_c over the computed range",
+        },
+        "census-flat": {
+            "value": summary["census"]["flat"],
+            "precision": 0,
+            "description": "flat steps of R_c over the computed range",
+        },
+        "census-steps": {
+            "value": summary["census"]["steps"],
+            "precision": 0,
+            "description": "total steps examined in the monotonicity census",
+        },
+        "decreasing-fraction": {
+            "value": 100.0 * summary["census"]["decreasing"] / summary["census"]["steps"],
+            "precision": 1,
+            "description": "percentage of steps that decrease, over the computed range",
+        },
+        "fluctuation-median": {
+            "value": summary["fluctuation_quantiles"]["median"],
+            "precision": 4,
+            "description": "median of R_c(N+1)/R_c(N) over the computed range",
+        },
+        "fluctuation-min": {
+            "value": summary["fluctuation_quantiles"]["min"],
+            "precision": 4,
+            "description": "minimum local ratio over the computed range",
+        },
+        "fluctuation-max": {
+            "value": summary["fluctuation_quantiles"]["max"],
+            "precision": 1,
+            "description": "maximum local ratio over the computed range",
+        },
+        "flat-step-count": {
+            "value": len(summary["flat_step_positions"]),
+            "precision": 0,
+            "description": "number of flat steps found",
+        },
+        "flat-step-last": {
+            "value": max(summary["flat_step_positions"]),
+            "precision": 0,
+            "description": "largest N at which a flat step occurs",
+        },
+        "fluctuation-p25": {
+            "value": summary["fluctuation_quantiles"]["p25"],
+            "precision": 4,
+            "description": "25th-percentile order statistic of R_c(N+1)/R_c(N) over the computed range",
+        },
+        "fluctuation-p75": {
+            "value": summary["fluctuation_quantiles"]["p75"],
+            "precision": 4,
+            "description": "75th-percentile order statistic of R_c(N+1)/R_c(N) over the computed range",
+        },
+        "min-count": {
+            "value": summary["min_count"],
+            "precision": 0,
+            "description": "minimum representation count over the computed range",
+        },
+        "block-count": {
+            "value": len(summary["block_extrema"]),
+            "precision": 0,
+            "description": "number of Fibonacci blocks with recorded extrema over the computed range",
+        },
+        "rc-value": {
+            # Serialised as a string, matching how phase1_summary.json stores
+            # R_c_at_n_max. It is a 99-bit integer: Python's json reads it
+            # losslessly either way, but a JSON consumer backed by doubles
+            # silently rounds anything past 2**53, and this artifact is meant
+            # to be readable outside this repository.
+            "value": str(c[n_max]),
+            "precision": 0,
+            "description": "exact value of R_c at the largest N computed",
+        },
+        "log-rc-at-nmax": {
+            "value": rows[-1]["log_R_c"],
+            "precision": 2,
+            "description": "log R_c(N) at the largest N computed",
+        },
+        "ratio-at-nmax": {
+            "value": rows[-1]["ratio"],
+            "precision": 4,
+            "description": "log R_c(N) / (log N)^2 at the largest N computed",
+        },
+        "place-jump-f2": {
+            "value": jump_by_place[2],
+            "precision": 1,
+            "description": "R_c(F)/R_c(F-1) at place F=2",
+        },
+        "place-jump-f3": {
+            "value": jump_by_place[3],
+            "precision": 1,
+            "description": "R_c(F)/R_c(F-1) at place F=3",
+        },
+        "place-jump-f8": {
+            "value": jump_by_place[8],
+            "precision": 3,
+            "description": "R_c(F)/R_c(F-1) at place F=8",
+        },
+        "place-jump-largest": {
+            "value": jumps[-1]["ratio"],
+            "precision": 6,
+            "description": "R_c(F)/R_c(F-1) at the largest distinct place in the computed range",
+        },
+    }
+    figures_path = REPO_ROOT / "data" / "phase1_figures.json"
+    atomic_write_text(figures_path, json.dumps(figures, indent=2, sort_keys=True) + "\n")
+    record(figures_path, script="scripts/run_phase1.py", params={"n_max": n_max},
+           manifest_path=MANIFEST)
+
     print(f"wrote {DATA_CSV.name}, {SUMMARY_JSON.name}, "
-          f"{FIG_GROWTH.name}, {FIG_FLUCT.name}")
+          f"{FIG_GROWTH.name}, {FIG_FLUCT.name}, {figures_path.name}")
     return 0
 
 

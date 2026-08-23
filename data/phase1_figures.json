@@ -1,0 +1,117 @@
+{
+  "block-count": {
+    "description": "number of Fibonacci blocks with recorded extrema over the computed range",
+    "precision": 0,
+    "value": 29
+  },
+  "census-decreasing": {
+    "description": "decreasing steps of R_c over the computed range",
+    "precision": 0,
+    "value": 495548
+  },
+  "census-flat": {
+    "description": "flat steps of R_c over the computed range",
+    "precision": 0,
+    "value": 11
+  },
+  "census-increasing": {
+    "description": "increasing steps of R_c over the computed range",
+    "precision": 0,
+    "value": 504441
+  },
+  "census-steps": {
+    "description": "total steps examined in the monotonicity census",
+    "precision": 0,
+    "value": 1000000
+  },
+  "decreasing-fraction": {
+    "description": "percentage of steps that decrease, over the computed range",
+    "precision": 1,
+    "value": 49.5548
+  },
+  "flat-step-count": {
+    "description": "number of flat steps found",
+    "precision": 0,
+    "value": 11
+  },
+  "flat-step-last": {
+    "description": "largest N at which a flat step occurs",
+    "precision": 0,
+    "value": 78
+  },
+  "fluctuation-max": {
+    "description": "maximum local ratio over the computed range",
+    "precision": 1,
+    "value": 2.0
+  },
+  "fluctuation-median": {
+    "description": "median of R_c(N+1)/R_c(N) over the computed range",
+    "precision": 4,
+    "value": 1.0000325762401059
+  },
+  "fluctuation-min": {
+    "description": "minimum local ratio over the computed range",
+    "precision": 4,
+    "value": 0.9853200404565814
+  },
+  "fluctuation-p25": {
+    "description": "25th-percentile order statistic of R_c(N+1)/R_c(N) over the computed range",
+    "precision": 4,
+    "value": 0.9984254571978695
+  },
+  "fluctuation-p75": {
+    "description": "75th-percentile order statistic of R_c(N+1)/R_c(N) over the computed range",
+    "precision": 4,
+    "value": 1.0016301426956478
+  },
+  "log-rc-at-nmax": {
+    "description": "log R_c(N) at the largest N computed",
+    "precision": 2,
+    "value": 68.36323626767086
+  },
+  "min-count": {
+    "description": "minimum representation count over the computed range",
+    "precision": 0,
+    "value": 1
+  },
+  "n-max": {
+    "description": "largest N for which R_c was computed exactly",
+    "precision": 0,
+    "value": 1000000
+  },
+  "place-jump-f2": {
+    "description": "R_c(F)/R_c(F-1) at place F=2",
+    "precision": 1,
+    "value": 1.0
+  },
+  "place-jump-f3": {
+    "description": "R_c(F)/R_c(F-1) at place F=3",
+    "precision": 1,
+    "value": 1.5
+  },
+  "place-jump-f8": {
+    "description": "R_c(F)/R_c(F-1) at place F=8",
+    "precision": 3,
+    "value": 1.3333333333333333
+  },
+  "place-jump-largest": {
+    "description": "R_c(F)/R_c(F-1) at the largest distinct place in the computed range",
+    "precision": 6,
+    "value": 1.0006532303622866
+  },
+  "ratio-at-nmax": {
+    "description": "log R_c(N) / (log N)^2 at the largest N computed",
+    "precision": 4,
+    "value": 0.35816961126809205
+  },
+  "rc-bit-length": {
+    "description": "bit length of R_c at the largest N",
+    "precision": 0,
+    "value": 99
+  },
+  "rc-value": {
+    "description": "exact value of R_c at the largest N computed",
+    "precision": 0,
+    "value": "489526578056005407591009119276"
+  }
+}

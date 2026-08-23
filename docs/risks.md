@@ -47,12 +47,17 @@ trace to the same artifact.
 
 ## R-002 — Narrative documents contain hand-copied numbers
 
-**Status:** mitigated for the Phase 2 documents, open for the Phase 1 ones · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
+**Status:** mitigated for the documents named in `PHASES` — see "What is bound,
+and what is not" below, which states the residual rather than leaving it inside
+the word "mitigated" · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
 
 **Description.** `docs/phase1.md` and `docs/phases/phase1_report.md` embed the
 census, the place-jump table and the block-extrema table as literal Markdown.
-`data/` is gitignored, so regenerating the artifacts does not update these
-pages; they can silently drift from the citable summary.
+`data/` was gitignored in its entirety when this was raised, so regenerating
+the artifacts did not update these pages and they could silently drift from
+the citable summary. (`data/` is still gitignored by default; the artifacts
+the documents and validators need are now tracked by explicit exception, each
+with its reason in `.gitignore`.)
 
 **Positions.**
 
@@ -81,7 +86,7 @@ prose is written); or a transclusion step at build time (heavier, and makes the
 sources unreadable in isolation).
 
 **Mitigation in place — Phase 2 documents only.** Phase 2 built the first of
-those two candidates. `tests/test_phase2_figures.py` resolves every
+those two candidates. `tests/test_figure_tags.py` resolves every
 `<literal> {fig:key}` tag in `docs/phase2.md` and
 `docs/phases/phase2_bounds.md` against `data/phase2_figures.json`, renders the
 stored value at its recorded precision, and requires an exact string match; a
@@ -93,18 +98,81 @@ the hand-copied number and the artifact can no longer drift apart silently.
 `docs/phase2.md` refers to this entry as handled; that reference is accurate
 for Phase 2 and for Phase 2 only.
 
-**Mitigation missing — Phase 1 documents.** `docs/phase1.md` and
-`docs/phases/phase1_report.md` carry no `{fig:...}` tags and there is no
-Phase 1 figures artifact for them to be checked against; their census,
-place-jump and block-extrema tables are still literal Markdown, unchecked.
-Retro-fitting the mechanism means regenerating Phase 1 with a figures
-artifact, which is Phase 1 work. Both positions above therefore still stand
-for those two documents, and the entry stays open for them.
+**Mitigation in place — Phase 1 documents.** The census and the headline
+figures pulled out of the two tables (specific place-jump ratios, the block
+count, the flat-step extremes, and others) are tagged the same way as Phase
+2: `data/phase1_figures.json` is tracked, and `tests/test_figure_tags.py`
+resolves every `<literal> {fig:key}` tag in `docs/phase1.md` and
+`docs/phases/phase1_report.md` against it. That mechanism does not, by
+itself, reach the place-jump and block-extrema tables themselves — tagging
+every cell of a 28-row and a 29-row table would mean on the order of a
+hundred more keys, for tables that exist so a reader does not have to go
+spelunking in `data/phase1_summary.json`. Those two tables are instead
+covered by `tests/test_phase1_tables.py`, which locates each table in
+`docs/phases/phase1_report.md` by an `<!-- table:... -->` anchor, parses
+every row, and compares every cell against `data/phase1_summary.json`'s
+`place_jumps` and `block_extrema` arrays directly — no tag required, and
+nothing in either table can drift from the artifact unnoticed. Between the
+two mechanisms, all three things this entry names (the census, the
+place-jump table, the block-extrema table) are now checked; the remaining
+untagged residue (the `flat_step_positions` list, mathematical constants,
+structural numbers, literature values, **wall-clock timings and the
+peak-memory figure**) is stated explicitly in `docs/phase1.md`'s own residue
+note rather than left for a reader to discover.
 
-**Revisit when:** Phase 4 regenerates data at a different `n_max`, which is the
-first moment drift can actually occur — and which now bears only on the Phase 1
-documents, since the Phase 2 ones would fail their figure-tag test instead of
-drifting quietly.
+`docs/roadmap.md` is registered as a third Phase 1 document. It quoted the
+census fraction three times with no tag — a narrative document containing
+hand-copied numbers, which is the literal title of this entry. Two of the
+three now carry `{fig:decreasing-fraction}`; the third was German prose using
+a decimal comma (`49,6 %`). The tag regex *does* match a comma literal placed
+directly in front of a tag — confirmed by running `TAG.search` on the
+roadmap's original wording, which had that literal immediately followed by
+the decreasing-fraction tag: the match captures `49,6`, and
+`_check_documents` then strips the comma (`literal.replace(",", "")`) to
+compare it as `496` against the figures file's `49.6`, so a tagged `49,6`
+would have been matched and rejected as drift, not ignored. It cannot be
+accommodated without making `49,6` ambiguous against the
+thousands-separator handling built into `[\d][\d,]*`, which is why it was
+rewritten to state the finding in words ("knapp die Hälfte der Schritte
+fällt") instead of tagging it, so that it no longer carries a number to
+drift.
+
+**What is bound, and what is not.** Bound: every `<literal> {fig:key}` tag in
+`docs/phase1.md`, `docs/phases/phase1_report.md`, `docs/roadmap.md`,
+`docs/phase2.md` and `docs/phases/phase2_bounds.md`; every cell of the two
+Phase 1 tables; and every key in either figures file, which must be quoted in
+some registered document or listed in `KEYS_KNOWINGLY_UNQUOTED` with a reason.
+Registration itself is enforced: `test_every_tagged_document_is_registered`
+walks `docs/`, `theory/`, `paper/`, `README.md` and `CLAUDE.md` (`.md` and
+`.tex`), except for `docs/superpowers/`, a deliberate carve-out for dated
+historical specs and plans (`UNREGISTERED_DOC_PREFIXES` in
+`tests/test_figure_tags.py`), and fails on any other document that carries a
+literal-backed tag without a `PHASES` row.
+
+Not bound, and stated plainly because no mechanism covers it: **a number that
+is generated but never tagged.** The discovery test triggers on
+`TAG.search(text)`, so a document that quotes a generated figure as a bare
+literal — which is what `docs/roadmap.md`'s `49.6` was until this branch — is
+invisible to it, and to everything else here. Detecting that means recognising
+a generated value in arbitrary prose without a marker; it is genuinely hard,
+no such detector exists in this repository, and none is planned. A reviewer
+reading a document against its figures file remains the only thing that
+catches it. Two further gaps are narrower: `paper/` is walked but contains no
+tagged prose yet (`paper/main.tex` is a stub), so that coverage is untested
+against real content; and a document quoting *another* phase's figure cannot
+be tagged at all, because `PHASES` binds one document to one figures file
+(`docs/phases/phase1_report.md` quoting Phase 2's `upper-constant`,
+`docs/phase2.md` quoting Phase 1's `decreasing-fraction`). This file is in the
+same position: it quotes `49.6%` in R-005 and cannot be registered, because
+its prose spells out the bare `{fig:key}` syntax while describing the
+mechanism, which the bare-tag check rejects by design.
+
+**Revisit when:** Phase 4 regenerates data at a different `n_max`, which is
+the first moment drift can actually occur for the bound documents; or when a
+generated-but-untagged number is next found by a reader rather than by a
+guard — that is the residual named above, and the signal that it has started
+costing something; or when `paper/` acquires real prose, at which point the
+walk over it stops being untested coverage.
 
 ---
 
@@ -299,19 +367,24 @@ summary, or fresh files with stale hashes.
   spec was corrected to describe per-file atomicity accurately rather than
   claiming all-or-nothing.
 
-**Risk to the roadmap.** Low, but not for the reason this entry originally
-gave. It claimed `check_claims.py` would catch a mixed generation "via a hash
-mismatch". It does not, and never did: for a `verified-numeric` claim it checks
-that the artifact *basename* named in the evidence appears in
-`data/manifest.json`, and nothing more. It never recomputes a SHA-256, so a
-file whose contents have moved on from the hash recorded beside it passes
-untouched. What does compare a file against its recorded hash is
-`tests/test_phase2_bounds.py::test_the_tracked_oracle_matches_its_manifest_provenance`,
-and only for the one tracked artifact the Phase 2 gate reads. The rest of a
-mixed generation would surface, if at all, through a bound check failing or a
-`{fig:}` literal drifting — not through the manifest. The cost remains a
-confusing debugging session rather than a wrong published number, because the
-artifacts are regenerable in about five minutes.
+**Risk to the roadmap.** Low. This entry originally claimed `check_claims.py`
+would catch a mixed generation "via a hash mismatch"; for a long time that was
+false, and the entry was corrected to say so. It is now true, by a different
+route than the entry first imagined.
+
+`check_claims.py` used to test only that the artifact *basename* named in a
+`verified-numeric` claim's evidence appeared in `data/manifest.json`. That is
+membership in an index, not evidence: an external review found ten claims
+citing four artifacts that were never tracked, so on a clean clone the
+validator printed `claims.yaml OK` while every cited artifact was absent. The
+validator now requires each cited artifact to **exist** and to match the
+SHA-256 `data/manifest.json` recorded for it, and the four cited artifacts are
+tracked (24 KB in total). A file whose contents have moved on from its recorded
+hash now fails by name, and so does one that is missing.
+
+The cost of a mixed generation therefore surfaces immediately rather than
+through a bound check failing or a `{fig:}` literal drifting, and remains a
+regeneration of about five minutes rather than a wrong published number.
 
 **Revisit when:** `scripts/run_phase1.py` is next modified, or when a claim
 first depends on more than one artifact from the same run — that is the point

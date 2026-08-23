@@ -22,7 +22,8 @@ import pytest
 import capfib.dp as dp_module
 import capfib.gf as gf_module
 
-REAL_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "run_phase1.py"
+ROOT = Path(__file__).resolve().parents[1]
+REAL_SCRIPT = ROOT / "scripts" / "run_phase1.py"
 
 # Sentinel content for artifacts that must not be created or touched by a
 # failed cross-check. Distinct from anything the script would ever write.
@@ -221,14 +222,60 @@ def test_min_count_precondition_exits_nonzero_and_writes_nothing(tmp_path, monke
         "a failed precondition must not create any figures"
 
 
-@pytest.mark.parametrize("bad_n_max", [0, 1, -5])
-def test_n_max_below_2_is_rejected(bad_n_max):
-    # argparse rejects this before any coefficient is computed or any file
-    # is touched, so it is safe to invoke the real script directly.
+@pytest.mark.parametrize("bad_n_max", [0, 1, -5, 2, 7])
+def test_n_max_below_floor_is_rejected(bad_n_max):
+    """The CLI must refuse every n_max the run cannot actually serve.
+
+    Two floors exist: below 2 the analysis code crashes, and below 8 the run
+    reaches no Fibonacci place F=8 and so cannot emit the place-jump figures.
+    The argument boundary enforces the higher one. 2 and 7 are the cases that
+    regressed: argparse used to accept them and the run then failed a runtime
+    precondition, so the CLI contract promised what the script refused.
+
+    argparse rejects all of these before any coefficient is computed or any
+    file is touched, so it is safe to invoke the real script directly.
+    """
     result = subprocess.run(
         [sys.executable, str(REAL_SCRIPT), "--n-max", str(bad_n_max)],
         capture_output=True, text=True,
     )
     assert result.returncode == 2, \
         f"--n-max {bad_n_max} should be rejected by argparse (exit 2)"
-    assert "--n-max must be >= 2" in result.stderr
+    assert "--n-max must be >= 8" in result.stderr
+
+
+def test_n_max_at_the_floor_is_accepted(tmp_path):
+    """8 is the smallest accepted value, and it must actually be accepted.
+
+    Without this, raising the floor further -- past what the figures need --
+    would leave every rejection test above still green. --skip-crosscheck
+    stops before any artifact is written, and cwd is a tmp_path, so this
+    cannot touch the repository's data/ directory.
+    """
+    result = subprocess.run(
+        [sys.executable, str(REAL_SCRIPT), "--n-max", "8", "--skip-crosscheck"],
+        capture_output=True, text=True, cwd=tmp_path,
+    )
+    assert result.returncode == 0, \
+        f"--n-max 8 must be accepted; stderr was:\n{result.stderr}"
+
+
+def test_run_phase1_emits_a_tracked_figures_file(tmp_path):
+    """Phase 1 must publish its quotable numbers the way Phase 2 does.
+
+    Risk R-002: the Phase 1 documents quote generated numbers with nothing
+    binding them to the artifacts, so regeneration cannot update the prose and
+    drift is silent. The figures file is what the tag test checks against.
+    """
+    import json
+
+    figures = ROOT / "data" / "phase1_figures.json"
+    assert figures.is_file(), (
+        "data/phase1_figures.json is absent; run scripts/run_phase1.py"
+    )
+    data = json.loads(figures.read_text())
+    assert data, "the figures file is empty"
+    for key, entry in data.items():
+        assert set(entry) >= {"value", "precision", "description"}, key
+        assert isinstance(entry["precision"], int), key
+        assert entry["description"].strip(), f"{key} has no description"

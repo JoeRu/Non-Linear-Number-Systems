@@ -5,9 +5,10 @@ silently did not run.
 
 1. `tests/test_interval.py` compared intervals in a way that was blind to a
    dropped term.
-2. `tests/test_phase2_figures.py` called `pytest.skip` inside its document
-   loop, which disabled the R-002 drift detector whenever an unrelated
-   document was absent.
+2. `tests/test_phase2_figures.py` (now `tests/test_figure_tags.py`, table-
+   driven over both phases) called `pytest.skip` inside its document loop,
+   which disabled the R-002 drift detector whenever an unrelated document
+   was absent.
 3. `data/phase1_data.csv` was gitignored, so on a clean clone the twelve
    comparisons of the certified T1 bound, T3 and T5 against exact values
    skipped. `59 passed, 12 skipped` is what a fresh checkout saw, and it is
@@ -33,7 +34,7 @@ MARKER = "oracle_gate"
 # they are collected. Without this, deleting every marker -- or letting a
 # collection error take out the whole module -- would leave the guard with
 # nothing to complain about.
-GATE_MODULES = ("test_phase2_bounds.py", "test_phase2_figures.py")
+GATE_MODULES = ("test_phase2_bounds.py", "test_figure_tags.py", "test_phase1_tables.py")
 
 
 def gate_violations(collected: int, executed: int, skipped: list[str]) -> list[str]:
@@ -99,6 +100,22 @@ def pytest_collection_modifyitems(config, items):
         if name in GATE_MODULES:
             state.gate_modules_collected.add(name)
     # An explicit set of node ids on the command line is narrowing too.
+    #
+    # This is also why a run scoped to a single module that fails to
+    # collect -- `pytest tests/test_phase1_tables.py` when that file has a
+    # bad import -- prints no ORACLE GATE FAILURE at all, for either check
+    # in `pytest_sessionfinish` below: `config.args` is `['tests/test_...py']`
+    # regardless of whether that file actually collects, so this branch
+    # still runs and still sets `selection_narrowed = True` on an empty (or
+    # partial) `items` list. That is a deliberate consequence of narrowing
+    # being about *what the caller asked pytest to run*, not about whether
+    # collection of it succeeded -- not an accident of collection aborting
+    # before this hook runs. The `GATE_MODULES` module-collection check
+    # below only has something to say about a module that disappeared from
+    # a run that was not narrowed to begin with; see
+    # `tests/test_oracle_gate_guard.py::test_a_single_module_run_is_exempt_from_the_module_check`
+    # and its sibling `test_a_module_that_fails_to_collect_is_named_by_the_gate`
+    # for the demonstration of both halves.
     if config.args and any(
         "::" in a or a.endswith(".py") for a in config.args
     ):

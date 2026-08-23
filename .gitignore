@@ -35,6 +35,23 @@ data/*
 # a gitignored copy could not keep prose and data in step (risk R-002).
 !data/phase2_figures.json
 
+# data/phase1_figures.json is tracked for the same reason as the artifact
+# above: the Phase 1 documents quote it by key, and tests/test_figure_tags.py
+# fails when a quoted literal and the generated value disagree. A gitignored
+# figures file could not keep prose and data in step on a clean clone.
+!data/phase1_figures.json
+
+# The artifacts cited as evidence by `verified-numeric` claims are tracked too,
+# and for the same reason: `scripts/check_claims.py` now requires every cited
+# artifact to exist and to match its `data/manifest.json` SHA-256, so a claim
+# whose evidence is absent on a clean clone must fail rather than pass silently.
+# Ten claims cited these four and none of them survived a fresh checkout.
+# 24 KB in total. Artifacts that no claim cites stay ignored.
+!data/phase1_summary.json
+!data/phase0_5_gate.csv
+!data/phase2_bounds.csv
+!data/phase2_residual.csv
+
 # The Phase 1 exact-value ladder IS tracked (37 rows, 4 KB): it is the oracle
 # the Phase 2 bound tests compare T1, T3 and T5 against. While it was ignored,
 # a clean clone had no oracle and those twelve comparisons SKIPPED rather than

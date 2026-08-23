@@ -42,9 +42,9 @@
       "n_max": 1000000,
       "crosscheck": "dp==gf pointwise for all N <= 1000000"
     },
-    "git_rev": "52a69e76c43ceb3a692a8db08835d0db48711f77",
+    "git_rev": "80b7aac431fdb1d0b85ea15bbdb093d067aec9c9",
     "sha256": "996fe95e0646af367e10321c1e02a5375372a018972f85727e782a85a74cde68",
-    "timestamp": "2026-08-20T19:25:07Z"
+    "timestamp": "2026-08-23T20:15:39Z"
   },
   {
     "file": "phase1_summary.json",
@@ -53,9 +53,9 @@
       "n_max": 1000000,
       "crosscheck": "dp==gf pointwise for all N <= 1000000"
     },
-    "git_rev": "52a69e76c43ceb3a692a8db08835d0db48711f77",
-    "sha256": "ff9408a3c49bbe0cc347ae99d7c3fec7fc91cb271fbab465b17c0bcd8e00d88d",
-    "timestamp": "2026-08-20T19:25:07Z"
+    "git_rev": "80b7aac431fdb1d0b85ea15bbdb093d067aec9c9",
+    "sha256": "13126740219d41ac6beb15949126cd0f3ffccfa9e99aa82c3ce7ce1a54bf5e98",
+    "timestamp": "2026-08-23T20:15:39Z"
   },
   {
     "file": "phase1_growth.png",
@@ -64,9 +64,9 @@
       "n_max": 1000000,
       "crosscheck": "dp==gf pointwise for all N <= 1000000"
     },
-    "git_rev": "52a69e76c43ceb3a692a8db08835d0db48711f77",
+    "git_rev": "80b7aac431fdb1d0b85ea15bbdb093d067aec9c9",
     "sha256": "601381fb8bed25d9364b14459ef3cbcb8b595ccd95ac11751f468d1d5ea92489",
-    "timestamp": "2026-08-20T19:25:07Z"
+    "timestamp": "2026-08-23T20:15:39Z"
   },
   {
     "file": "phase1_fluctuation.png",
@@ -75,9 +75,9 @@
       "n_max": 1000000,
       "crosscheck": "dp==gf pointwise for all N <= 1000000"
     },
-    "git_rev": "52a69e76c43ceb3a692a8db08835d0db48711f77",
+    "git_rev": "80b7aac431fdb1d0b85ea15bbdb093d067aec9c9",
     "sha256": "aeffad6df340b918b635ce0ebd1011cecbc991573f4eedd49a0b6808f6327ed4",
-    "timestamp": "2026-08-20T19:25:07Z"
+    "timestamp": "2026-08-23T20:15:39Z"
   },
   {
     "file": "phase2_bounds.csv",
@@ -128,5 +128,15 @@
     "git_rev": "77aee77f79d6e432f35cf13825f3b58bbe0fec1b",
     "sha256": "ca4aeed999bf6fe96add4378cbbf5cddc914eb37825401216ee7c185453f8744",
     "timestamp": "2026-08-22T13:59:01Z"
+  },
+  {
+    "file": "phase1_figures.json",
+    "script": "scripts/run_phase1.py",
+    "params": {
+      "n_max": 1000000
+    },
+    "git_rev": "80b7aac431fdb1d0b85ea15bbdb093d067aec9c9",
+    "sha256": "97a07ddb7ad9a188a2597869f2a96b1334ef7a999ee01c567692809f819ade65",
+    "timestamp": "2026-08-23T20:15:39Z"
   }
 ]

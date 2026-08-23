@@ -23,7 +23,7 @@ C4 is likewise a statement about the liminf and limsup and about nothing else.
 
 The proofs are in [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md);
 this page is the summary and quotes it. Every generated number below is read
-from `data/phase2_figures.json` by key, and `tests/test_phase2_figures.py`
+from `data/phase2_figures.json` by key, and `tests/test_figure_tags.py`
 requires the literal in the prose to match the stored value exactly.
 
 ---
@@ -292,13 +292,21 @@ assumed: `tests/test_run_phase2.py` runs the script to completion inside a
 scratch tree with no `figures/` directory, and separately fails its very last
 step to confirm nothing is left behind.
 
-`data/` is gitignored apart from three files, each tracked for a stated reason:
+`data/` is gitignored except for the artifacts a clean clone has to have, each
+tracked for a stated reason (`.gitignore` is the authoritative list and carries
+the reason beside each entry):
 
 - `data/manifest.json` — what was produced, by which script, at which revision,
   with what SHA-256.
-- `data/phase2_figures.json` — so prose and data cannot drift apart (risk
-  R-002, which this mechanism mitigates for the Phase 2 documents; it stays
-  open for the Phase 1 ones, which have no such artifact).
+- `data/phase2_figures.json` and `data/phase1_figures.json` — so prose and data
+  cannot drift apart (risk R-002). The mechanism now covers both phases:
+  `data/phase1_figures.json` was added when the Phase 1 documents were tagged,
+  and R-002 records the mitigation as covering both, with the residuals it does
+  *not* cover named there.
+- the artifacts cited as evidence by `verified-numeric` claims —
+  `data/phase1_summary.json`, `data/phase0_5_gate.csv`,
+  `data/phase2_bounds.csv`, `data/phase2_residual.csv` — which
+  `scripts/check_claims.py` requires to exist and to match their recorded hash.
 - `data/phase1_data.csv` — the 37-row exact-value ladder. The Phase 2 bound
   tests compare T1, T3 and T5 against it, so while it was gitignored those
   twelve comparisons *skipped* on every clean clone and the suite was green
