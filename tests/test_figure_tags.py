@@ -32,6 +32,15 @@ ROOT = Path(__file__).resolve().parents[1]
 # casing phase1 in the test bodies. When Phase 1's documents are tagged,
 # flipping this to True is the same kind of data change that adding a new
 # phase is -- not a change to test logic.
+#
+# That flip is not automatic, and forgetting it half-way is worse than
+# forgetting it outright: if one of a phase's documents gets tagged and the
+# other does not, with the row's flag still False, the untagged document's
+# hand-copied numbers become permanently unchecked -- and every test stays
+# green, because `tags_required=False` is exactly what tells this file not to
+# look. `test_tags_required_matches_document_state` below is the mechanical
+# check that catches that the moment it happens, so this comment is a second
+# lock, not the only one.
 PHASES = (
     ("phase1", ROOT / "data" / "phase1_figures.json",
      ("docs/phase1.md", "docs/phases/phase1_report.md"), False),
@@ -165,8 +174,8 @@ def _check_documents(named_texts, figures, require_tags=True):
 
 
 @pytest.mark.oracle_gate
-@pytest.mark.parametrize("name,figures_path,documents,tags_required", PHASES, ids=lambda p: p if isinstance(p, str) else None)
-def test_every_tag_resolves_and_matches(name, figures_path, documents, tags_required):
+@pytest.mark.parametrize("phase", PHASES, ids=lambda p: p[0])
+def test_every_tag_resolves_and_matches(phase):
     """Every {fig:KEY} in a phase's docs that exist must resolve to a known
     key and quote that key's value at its recorded precision.
 
@@ -178,6 +187,7 @@ def test_every_tag_resolves_and_matches(name, figures_path, documents, tags_requ
     absence of an unrelated file. Absent documents are now reported and
     stepped over, not treated as grounds to stop.
     """
+    name, figures_path, documents, tags_required = phase
     figures = _load(figures_path)
     present, missing = _split_by_existence(ROOT, documents)
     assert not missing, (
@@ -198,9 +208,10 @@ def test_every_tag_resolves_and_matches(name, figures_path, documents, tags_requ
         print(f"figure keys generated but never quoted: {unused}")
 
 
-@pytest.mark.parametrize("name,figures_path,documents,tags_required", PHASES, ids=lambda p: p if isinstance(p, str) else None)
-def test_a_drifted_literal_is_caught(name, figures_path, documents, tags_required, tmp_path):
+@pytest.mark.parametrize("phase", PHASES, ids=lambda p: p[0])
+def test_a_drifted_literal_is_caught(phase, tmp_path):
     """The check must fail on a wrong number, or it tests nothing."""
+    _name, figures_path, _documents, _tags_required = phase
     figures = _load(figures_path)
     key = next(iter(figures))
     wrong = _format(figures[key]) + "9"
@@ -212,8 +223,8 @@ def test_a_drifted_literal_is_caught(name, figures_path, documents, tags_require
         _check_documents([("fake.md", text)], figures)
 
 
-@pytest.mark.parametrize("name,figures_path,documents,tags_required", PHASES, ids=lambda p: p if isinstance(p, str) else None)
-def test_a_missing_document_does_not_disable_a_present_one(name, figures_path, documents, tags_required, tmp_path):
+@pytest.mark.parametrize("phase", PHASES, ids=lambda p: p[0])
+def test_a_missing_document_does_not_disable_a_present_one(phase, tmp_path):
     """An absent document must not silence the check on a present one.
 
     This is the property the original in-loop `pytest.skip` lost, and it
@@ -223,6 +234,7 @@ def test_a_missing_document_does_not_disable_a_present_one(name, figures_path, d
     entry of `documents` absent, the second present and carrying a drifted
     literal -- and requires the drift to be caught anyway.
     """
+    _name, figures_path, documents, _tags_required = phase
     figures = _load(figures_path)
     key = next(iter(figures))
     wrong = _format(figures[key]) + "9"
@@ -243,8 +255,8 @@ def test_a_missing_document_does_not_disable_a_present_one(name, figures_path, d
         )
 
 
-@pytest.mark.parametrize("name,figures_path,documents,tags_required", PHASES, ids=lambda p: p if isinstance(p, str) else None)
-def test_a_document_with_no_tags_is_caught(name, figures_path, documents, tags_required):
+@pytest.mark.parametrize("phase", PHASES, ids=lambda p: p[0])
+def test_a_document_with_no_tags_is_caught(phase):
     """Zero tags must fail, not pass vacuously.
 
     Found by the pre-PR gate: a document with no `{fig:}` tags satisfied
@@ -252,6 +264,7 @@ def test_a_document_with_no_tags_is_caught(name, figures_path, documents, tags_r
     unused-keys line, which is printed and never asserted on. A stripped
     document therefore read as a clean pass.
     """
+    _name, figures_path, _documents, _tags_required = phase
     figures = _load(figures_path)
     with pytest.raises(AssertionError, match="no .fig:key. tag"):
         _check_documents(
@@ -261,8 +274,8 @@ def test_a_document_with_no_tags_is_caught(name, figures_path, documents, tags_r
 
 
 @pytest.mark.oracle_gate
-@pytest.mark.parametrize("name,figures_path,documents,tags_required", PHASES, ids=lambda p: p if isinstance(p, str) else None)
-def test_every_real_document_carries_tags(name, figures_path, documents, tags_required):
+@pytest.mark.parametrize("phase", PHASES, ids=lambda p: p[0])
+def test_every_real_document_carries_tags(phase):
     """And the real documents must each carry at least one, not merely be
     checkable in principle -- for phases where tags are required.
 
@@ -273,6 +286,7 @@ def test_every_real_document_carries_tags(name, figures_path, documents, tags_re
     `test_every_tag_resolves_and_matches`'s `require_tags` check, and this
     test still executes for the oracle-gate guard's purposes.
     """
+    _name, figures_path, documents, tags_required = phase
     figures = _load(figures_path)
     for relative in documents:
         text = (ROOT / relative).read_text()
@@ -280,11 +294,50 @@ def test_every_real_document_carries_tags(name, figures_path, documents, tags_re
             assert TAG.search(text), f"{relative} carries no {{fig:}} tag"
 
 
-@pytest.mark.parametrize("name,figures_path,documents,tags_required", PHASES, ids=lambda p: p if isinstance(p, str) else None)
-def test_a_bare_tag_is_caught(name, figures_path, documents, tags_required):
+@pytest.mark.parametrize("phase", PHASES, ids=lambda p: p[0])
+def test_a_bare_tag_is_caught(phase):
     """A tag with no numeric literal before it has no correspondence to
     check, and must fail rather than pass vacuously."""
+    _name, figures_path, _documents, _tags_required = phase
     figures = _load(figures_path)
     key = next(iter(figures))
     with pytest.raises(AssertionError, match="bare tag"):
         _check_documents([("fake.md", f"The value is {{fig:{key}}}.")], figures)
+
+
+@pytest.mark.oracle_gate
+@pytest.mark.parametrize("phase", PHASES, ids=lambda p: p[0])
+def test_tags_required_matches_document_state(phase):
+    """`tags_required=False` must not survive a document actually getting
+    tagged.
+
+    This is the mechanical version of the comment above `PHASES`: a code
+    comment asking a later task to remember to flip a flag is precisely the
+    enforcement that has already failed on this project four times (see
+    `tests/conftest.py`'s history). If a phase is marked
+    `tags_required=False` but one of its documents already carries a
+    `{fig:}` tag, that document's numbers are being quoted right now while
+    nothing checks them for drift -- and every other test in this file
+    stays green, because `require_tags=False` is exactly the setting that
+    tells `_check_documents` not to look. This test looks instead, directly
+    at the real files, independent of `require_tags`.
+
+    Once a phase's flag is `True` this test has nothing to add -- the rest
+    of the suite already enforces tagging for it -- so it passes trivially
+    for `tags_required=True` phases.
+    """
+    name, _figures_path, documents, tags_required = phase
+    if tags_required:
+        return
+    tagged = [
+        relative for relative in documents
+        if (ROOT / relative).exists() and TAG.search((ROOT / relative).read_text())
+    ]
+    assert not tagged, (
+        f"{name}: tags_required is False in PHASES, but {', '.join(tagged)} "
+        f"already carries a {{fig:}} tag. Its numbers are quoted with nothing "
+        f"checking them for drift. Set the {name} row's tags_required to True "
+        f"in tests/test_figure_tags.py now, not after every document in the "
+        f"phase is tagged -- otherwise the untagged sibling's numbers stay "
+        f"unchecked indefinitely while this whole file reports green"
+    )
