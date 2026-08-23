@@ -47,12 +47,17 @@ trace to the same artifact.
 
 ## R-002 — Narrative documents contain hand-copied numbers
 
-**Status:** mitigated for both phases · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
+**Status:** mitigated for the documents named in `PHASES` — see "What is bound,
+and what is not" below, which states the residual rather than leaving it inside
+the word "mitigated" · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
 
 **Description.** `docs/phase1.md` and `docs/phases/phase1_report.md` embed the
 census, the place-jump table and the block-extrema table as literal Markdown.
-`data/` is gitignored, so regenerating the artifacts does not update these
-pages; they can silently drift from the citable summary.
+`data/` was gitignored in its entirety when this was raised, so regenerating
+the artifacts did not update these pages and they could silently drift from
+the citable summary. (`data/` is still gitignored by default; the artifacts
+the documents and validators need are now tracked by explicit exception, each
+with its reason in `.gitignore`.)
 
 **Positions.**
 
@@ -111,19 +116,52 @@ nothing in either table can drift from the artifact unnoticed. Between the
 two mechanisms, all three things this entry names (the census, the
 place-jump table, the block-extrema table) are now checked; the remaining
 untagged residue (the `flat_step_positions` list, mathematical constants,
-structural numbers, literature values, wall-clock timings) is stated
-explicitly in `docs/phase1.md`'s own residue note rather than left for a
-reader to discover.
+structural numbers, literature values, **wall-clock timings and the
+peak-memory figure**) is stated explicitly in `docs/phase1.md`'s own residue
+note rather than left for a reader to discover.
+
+`docs/roadmap.md` is registered as a third Phase 1 document. It quoted the
+census fraction three times with no tag — a narrative document containing
+hand-copied numbers, which is the literal title of this entry. Two of the
+three now carry `{fig:decreasing-fraction}`; the third was German prose using
+a decimal comma (`49,6 %`), which the tag regex cannot match, and was
+rewritten to state the finding in words ("knapp die Hälfte der Schritte
+fällt") so that it no longer carries a number to drift.
+
+**What is bound, and what is not.** Bound: every `<literal> {fig:key}` tag in
+`docs/phase1.md`, `docs/phases/phase1_report.md`, `docs/roadmap.md`,
+`docs/phase2.md` and `docs/phases/phase2_bounds.md`; every cell of the two
+Phase 1 tables; and every key in either figures file, which must be quoted in
+some registered document or listed in `KEYS_KNOWINGLY_UNQUOTED` with a reason.
+Registration itself is enforced: `test_every_tagged_document_is_registered`
+walks `docs/`, `theory/`, `paper/`, `README.md` and `CLAUDE.md` (`.md` and
+`.tex`) and fails on a document that carries a literal-backed tag without a
+`PHASES` row.
+
+Not bound, and stated plainly because no mechanism covers it: **a number that
+is generated but never tagged.** The discovery test triggers on
+`TAG.search(text)`, so a document that quotes a generated figure as a bare
+literal — which is what `docs/roadmap.md`'s `49.6` was until this branch — is
+invisible to it, and to everything else here. Detecting that means recognising
+a generated value in arbitrary prose without a marker; it is genuinely hard,
+no such detector exists in this repository, and none is planned. A reviewer
+reading a document against its figures file remains the only thing that
+catches it. Two further gaps are narrower: `paper/` is walked but contains no
+tagged prose yet (`paper/main.tex` is a stub), so that coverage is untested
+against real content; and a document quoting *another* phase's figure cannot
+be tagged at all, because `PHASES` binds one document to one figures file
+(`docs/phases/phase1_report.md` quoting Phase 2's `upper-constant`,
+`docs/phase2.md` quoting Phase 1's `decreasing-fraction`). This file is in the
+same position: it quotes `49.6%` in R-005 and cannot be registered, because
+its prose spells out the bare `{fig:key}` syntax while describing the
+mechanism, which the bare-tag check rejects by design.
 
 **Revisit when:** Phase 4 regenerates data at a different `n_max`, which is
-the first moment drift can actually occur for either phase — both are now
-checked mechanically rather than by inspection; or when a later phase adds a
-narrative document that quotes generated figures without a matching row in
-`PHASES` (`tests/test_figure_tags.py`) — the mechanism only protects documents
-it has been told about, nothing enforces that a new one gets registered, and
-this project has already lost track of a hardcoded list of modules once this
-same session (`tests/conftest.py`'s `GATE_MODULES`, missing
-`tests/test_phase1_tables.py` until this task added it).
+the first moment drift can actually occur for the bound documents; or when a
+generated-but-untagged number is next found by a reader rather than by a
+guard — that is the residual named above, and the signal that it has started
+costing something; or when `paper/` acquires real prose, at which point the
+walk over it stops being untested coverage.
 
 ---
 

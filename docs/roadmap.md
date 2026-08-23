@@ -85,8 +85,9 @@ Erledigt:
 - [x] `phase1_report.md` — `8601426`
 - [x] Deskriptive Statistik: Monotonie, lokale Fluktuation — `9ce15e9`
 - [x] Extremale $N$ (offenes Problem 2) — `9ce15e9`
-- [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (49.6% fallende
-      Schritte, aus `data/phase1_summary.json`) {claim:rc-not-monotone}, damit
+- [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (49.6
+      {fig:decreasing-fraction}% fallende Schritte, aus
+      `data/phase1_summary.json`) {claim:rc-not-monotone}, damit
       ist die in Phase 0 offengelassene Frage entschieden: der Befund
       **schränkt Route B ein** (ist eine Randbedingung an sie, keine Auswahl
       gegen Route A) — er macht es ratsam, einen Tauber-Angriff über die
@@ -294,7 +295,7 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
 > **✅ Abgeschlossen.** Ergebnis: [`docs/phase1.md`](phase1.md). Exakte Werte für
 > alle `N ≤ 10^6`, abgesichert durch einen punktweisen Abgleich zwischen zwei
 > unabhängigen Algorithmen über den gesamten Bereich. Zentraler Befund:
-> `R_c(N)` fluktuiert stark (49,6 % der Schritte fallen), was `S_c(N)` als
+> `R_c(N)` fluktuiert stark (knapp die Hälfte der Schritte fällt), was `S_c(N)` als
 > Zielobjekt eines Tauber-Arguments nahelegt. Der folgende Abschnitt ist die
 > ursprüngliche Planung und wird als solche beibehalten.
 
@@ -802,7 +803,8 @@ zwischen zwei Alternativen für dasselbe Ziel — sie beantworten verschiedene
 Fragen. Route A bleibt die primäre Route für das rigorose
 Asymptotik-Theorem über $\log R_c(N)$. Der Fluktuations-Befund aus Phase 1
 (`docs/phases/phase1_report.md`) zeigt aber, dass $R_c(N)$ selbst über
-$N \le 10^6$ so unregelmäßig ist (49.6% fallende Schritte) {claim:rc-not-monotone},
+$N \le 10^6$ so unregelmäßig ist (49.6 {fig:decreasing-fraction}% fallende
+Schritte) {claim:rc-not-monotone},
 dass ein direkter
 Taubersatz-Angriff auf $R_c(N)$ dadurch erschwert wird — die summatorische
 Funktion $S_c(N)$ ist daher das numerisch sicherere Ziel für einen

@@ -216,6 +216,23 @@ def main() -> int:
             "S_c": sc[n],
             "log_S_c": math.log(sc[n]),
         })
+    # The `log-rc-at-nmax` and `ratio-at-nmax` figures below read `rows[-1]`
+    # and are described as "at the largest N computed", so the ladder's last
+    # row has to be N = n_max. `ladder()` always includes n_max as its
+    # maximum, so this is a precondition on a helper rather than on user
+    # input -- but it is checked here, before anything is written, and in the
+    # same print-and-return-1 shape as every other precondition in this
+    # function. It used to be a bare `assert` sitting *after* the CSV, the
+    # summary and both PNGs had already been written and recorded in the
+    # manifest: on failure it raised a bare traceback and left a published,
+    # manifest-recorded generation with no figures file beside it.
+    if not rows or rows[-1]["N"] != n_max:
+        last = rows[-1]["N"] if rows else None
+        print(f"PRECONDITION FAILED: the ladder's last row is N={last}, not "
+              f"n_max={n_max}; the log-rc-at-nmax and ratio-at-nmax figures "
+              f"would not be at the largest N computed.")
+        print("Writing nothing.")
+        return 1
     sio = io.StringIO()
     w = csv.DictWriter(sio, fieldnames=list(rows[0]))
     w.writeheader()
@@ -287,11 +304,21 @@ def main() -> int:
         record(path, script="scripts/run_phase1.py", params=params,
                manifest_path=MANIFEST)
 
-    # Deliberately excluded: dp_seconds and gf_seconds. They are in `summary`
-    # and the documents mention them, but wall-clock timings change on every
-    # run. Tagging them would force a prose edit at each regeneration for no
-    # epistemic gain -- churn that looks like rigour and trains people to edit
-    # numbers to make a test pass, which is the opposite of the point.
+    # Deliberately excluded: dp_seconds, gf_seconds and peak_rss_mb -- the
+    # wall-clock timings *and* the peak-memory figure. They are in `summary`
+    # and the documents mention them, but all three change from run to run and
+    # from machine to machine. Tagging them would force a prose edit at each
+    # regeneration for no epistemic gain -- churn that looks like rigour and
+    # trains people to edit numbers to make a test pass, which is the opposite
+    # of the point.
+    #
+    # The other half of that decision, learned the hard way: because they are
+    # untagged, prose must not quote them as *specific values* either. Three
+    # regenerations on one branch left `docs/phases/phase1_report.md` saying
+    # "8.7 s / 286.9 s / 273 MB" of a run that had recorded 8.9 / 286.1 / 274
+    # -- risk R-002's exact failure mode, inside the branch that closed it.
+    # The report now states them rounded ("roughly nine seconds", "under
+    # 300 MB"), which regeneration cannot falsify.
     #
     # Also deliberately excluded: the full `place_jumps` and `block_extrema`
     # arrays and `flat_step_positions` list. The documents reproduce those in
@@ -303,7 +330,7 @@ def main() -> int:
     # specific values pulled out of them into prose as headline figures (a
     # handful of individual place-jump ratios, the block count, the flat-step
     # extremes) are promoted to a key here and checked that way instead.
-    assert rows[-1]["N"] == n_max  # ladder() always includes n_max as its max
+    # `rows[-1]["N"] == n_max` is checked above, before anything is written.
     figures = {
         "n-max": {
             "value": summary["n_max"],

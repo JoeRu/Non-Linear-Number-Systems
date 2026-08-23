@@ -13,20 +13,26 @@ independent counting algorithms
 by construction. Reported values are licensed by that full-range agreement
 {claim:dp-gf-agree-to-nmax} (`dp==gf pointwise for all N <= 1000000`), not by
 a global checksum — see the design spec section 3 for why the checksum is
-insufficient. The same run recorded `gf` at 8.7 s, `dp` at 286.9 s, and peak
-RSS 273 MB (whole-process, i.e. covering `gf` and `dp` together, which is what
-the script measures); these are environment-qualified observations from that
-one recorded run — nothing pins the machine, OS, Python build, or dependency
-versions (`pyproject.toml` states only lower bounds) — not reproducible
-performance figures.
+insufficient. The recorded run took roughly nine seconds for `gf`, a little
+under five minutes for `dp`, and under 300 MB of peak RSS (whole-process, i.e.
+covering `gf` and `dp` together, which is what the script measures). Those
+three quantities are deliberately given to that precision and no more: the
+exact values live in `data/phase1_summary.json` (`gf_seconds`, `dp_seconds`,
+`peak_rss_mb`), they are not promoted to `{fig:...}` keys because they change
+from one run to the next, and an untagged decimal in prose is exactly what goes
+stale unnoticed at the next regeneration (risk R-002). Even rounded they are
+environment-qualified observations from that one recorded run — nothing pins
+the machine, OS, Python build, or dependency versions (`pyproject.toml` states
+only lower bounds) — not reproducible performance figures.
 
 **What Phase 1 is not.** It does not measure the leading asymptotic constant.
 Phase 0.5 already did that at `N = 10^3200`. At `N = 10^6`, `R_c(10^6)` =
 489526578056005407591009119276 {fig:rc-value} (99 {fig:rc-bit-length} bits), so
 `log R_c(10^6)` = 68.36 {fig:log-rc-at-nmax} and the ratio
-`log R_c(N)/(log N)^2` is 0.3582 {fig:ratio-at-nmax} against a limit near
-`0.5195` — squarely pre-asymptotic. Fitting the four-term expansion here would
-report the pre-asymptotic regime convincingly and wrongly.
+`log R_c(N)/(log N)^2` is 0.3582 {fig:ratio-at-nmax} against the limit Phase 2
+proved, `1/(4 log phi)` ≈ `0.5195` — squarely pre-asymptotic. Fitting the
+four-term expansion here would report the pre-asymptotic regime convincingly
+and wrongly.
 
 **Result 1 — R_c fluctuates.** Over `N <= 1000000` the census records 504441
 {fig:census-increasing} increasing steps, 11 {fig:census-flat} flat steps and
@@ -48,7 +54,7 @@ directly against the growth curve (`figures/phase1_growth.png`).
 *Structural note.* Exactly 11 {fig:flat-step-count} flat steps occur over
 `N <= 10^6` (`data/phase1_summary.json`, `census` and `flat_step_positions`
 fields), at `N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78` -- the largest
-being `N` = 78 {fig:flat-step-last} {claim:flat-steps-end-early}. This is
+being at 78 {fig:flat-step-last} {claim:flat-steps-end-early}. This is
 recorded as the observation it is; Phase 1 does not speculate about why.
 
 *Quantiles of the step ratio.* `data/phase1_summary.json` records

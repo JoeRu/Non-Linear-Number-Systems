@@ -87,6 +87,31 @@ def test_place_jump_table_matches_artifact():
     number of decimals and compared as a string -- the same technique
     `tests/test_figure_tags.py` uses with a stored `precision` field, just
     without a separate `{fig:key}` per cell.
+
+    Reading the precision from the document is what makes the cell-by-cell
+    comparison possible without a hundred figure keys, and it is also its
+    weak point: a cell rewritten with *fewer* decimals is compared at that
+    lower precision and passes. Editing the `F = 832040` row from
+    `1.000653` to `1.0` was verified to pass before the two guards below
+    were added. They close the two ways that loses information:
+
+    1. Every ratio cell must quote the same number of decimals. A single
+       cell down-rounded while its neighbours keep six is a drifted cell,
+       and this is what catches it.
+    2. A cell whose stored ratio differs from 1 must not be quoted at a
+       precision that renders it as exactly 1. That is derived from the
+       data, not an invented floor: it is the point at which the row stops
+       carrying the thing the table exists to show.
+
+    **Known limitation that remains.** Re-rendering the *whole* column at a
+    lower uniform precision -- every cell to three decimals, say -- still
+    passes, because each cell then genuinely matches the artifact at the
+    precision quoted and no cell collapses to 1 until three decimals is
+    itself too coarse. That is a loss of resolution rather than a drift
+    between prose and data, so it is out of scope for a drift detector; the
+    values would still be right. Guarding against it would mean pinning the
+    display precision in the document, which is the invented convention this
+    approach set out to avoid.
     """
     summary = _load_summary()
     jumps = summary["place_jumps"]
@@ -96,9 +121,11 @@ def test_place_jump_table_matches_artifact():
         f"has {len(jumps)} place_jumps entries -- table and artifact have "
         f"drifted in length, not just content"
     )
+    precisions = set()
     for i, (row, jump) in enumerate(zip(rows, jumps)):
         assert len(row) == 2, f"place-jump table row {i}: expected 2 cells, got {row!r}"
         place_cell, ratio_cell = row
+        precisions.add(_decimal_places(ratio_cell))
 
         expected_place = str(jump["place"])
         assert place_cell == expected_place, (
@@ -116,6 +143,28 @@ def test_place_jump_table_matches_artifact():
             f"{precision} decimal place(s) is {expected_ratio!r} -- "
             f"regenerate the phase's data and update the table"
         )
+
+        # A cell may not be quoted at a precision that turns a ratio which
+        # is not 1 into a literal 1: that passes the comparison above (the
+        # stored value rounds to it) while deleting the only thing the row
+        # records. Derived from the row's own data, not a fixed floor.
+        if jump["ratio"] != 1.0:
+            assert ratio_cell != f"{1.0:.{precision}f}", (
+                f"place-jump table row {i} (F={jump['place']}), column "
+                f"'ratio': quoted {ratio_cell!r}, which is the recorded "
+                f"ratio {jump['ratio']!r} rounded until it is "
+                f"indistinguishable from 1. The comparison passes at that "
+                f"precision and the row stops saying anything -- quote "
+                f"enough decimals for the ratio to differ from 1"
+            )
+
+    assert len(precisions) == 1, (
+        f"place-jump table: the ratio column mixes decimal precisions "
+        f"{sorted(precisions)}. Precision is read off each cell, so a single "
+        f"cell rewritten with fewer decimals would be compared -- and pass -- "
+        f"at that lower precision while its neighbours keep the generated "
+        f"one. Quote the whole column at one precision"
+    )
 
 
 _BLOCK_RANGE = re.compile(r"^\[(\d+),\s*(\d+)\)")

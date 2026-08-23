@@ -13,6 +13,7 @@ double a guard that has already been silently disabled once, by a
 
 import json
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -38,12 +39,37 @@ ROOT = Path(__file__).resolve().parents[1]
 # look. `test_tags_required_matches_document_state` below is the mechanical
 # check that catches that the moment it happens, so this comment is a second
 # lock, not the only one.
+#
+# `docs/roadmap.md` is a Phase 1 document for this purpose: it quotes the
+# Phase 1 census fraction three times in German prose, which is exactly the
+# "narrative document contains hand-copied numbers" shape risk R-002 names.
+# Registering it here is what lets those literals carry a `{fig:}` tag at all.
 PHASES = (
     ("phase1", ROOT / "data" / "phase1_figures.json",
-     ("docs/phase1.md", "docs/phases/phase1_report.md"), True),
+     ("docs/phase1.md", "docs/phases/phase1_report.md", "docs/roadmap.md"),
+     True),
     ("phase2", ROOT / "data" / "phase2_figures.json",
      ("docs/phase2.md", "docs/phases/phase2_bounds.md"), True),
 )
+
+# Figure keys a phase generates but that no registered document quotes, with
+# the reason. This is an allowlist, not a tolerance: the check below asserts
+# the unquoted set is *exactly* this, so a newly generated key that nobody
+# quotes fails, and a key here that later gets quoted fails too (remove it
+# then). Before this was an assertion it was a `print`, and
+# `figure keys generated but never quoted: ['n-max']` scrolled past on every
+# run for as long as `docs/phase1.md` claimed in prose that every generated
+# figure was tagged -- the statement and the evidence against it were in the
+# same test output.
+KEYS_KNOWINGLY_UNQUOTED = {
+    # `residual-centre` is the mean residual over *all* sampled t, including
+    # the pre-asymptotic t=10 point. The Phase 2 documents quote
+    # `residual-asymptotic-centre` (t >= 20) instead, deliberately: the
+    # full-sample mean mixes regimes. The key stays in the artifact because
+    # `residual-full-spread`, which the documents do quote, is only
+    # interpretable next to it.
+    "phase2": frozenset({"residual-centre"}),
+}
 
 TAG = re.compile(r"([-+]?[\d][\d,]*(?:\.\d+)?)\s*\{fig:([a-z0-9-]+)\}")
 BARE_TAG = re.compile(r"\{fig:([a-z0-9-]+)\}")
@@ -200,9 +226,17 @@ def test_every_tag_resolves_and_matches(phase):
         figures,
         require_tags=tags_required,
     )
-    unused = sorted(set(figures) - seen)
-    if unused:
-        print(f"figure keys generated but never quoted: {unused}")
+    unused = set(figures) - seen
+    expected_unused = KEYS_KNOWINGLY_UNQUOTED.get(name, frozenset())
+    assert unused == expected_unused, (
+        f"{name}: figure keys generated but never quoted in any registered "
+        f"document: {sorted(unused - expected_unused)}; keys allowlisted as "
+        f"unquoted that are in fact quoted now: "
+        f"{sorted(expected_unused - unused)}. A generated key that no "
+        f"document quotes is a number the phase computed and then dropped on "
+        f"the floor -- quote it with a {{fig:key}} tag, or record it in "
+        f"KEYS_KNOWINGLY_UNQUOTED with the reason"
+    )
 
 
 @pytest.mark.parametrize("phase", PHASES, ids=lambda p: p[0])
@@ -229,7 +263,11 @@ def test_a_missing_document_does_not_disable_a_present_one(phase, tmp_path):
     attention to the fact that a document full of tags had gone unchecked.
     The fixture below reproduces exactly that arrangement -- the *first*
     entry of `documents` absent, the second present and carrying a drifted
-    literal -- and requires the drift to be caught anyway.
+    literal -- and requires the drift to be caught anyway. Written for any
+    row length, not exactly two: the phase1 row grew a third document
+    (`docs/roadmap.md`) and a fixture hardcoded to two entries would have
+    had to be edited to keep passing, which is how a fixture stops
+    reproducing the arrangement it was written for.
     """
     _name, figures_path, documents, _tags_required = phase
     figures = _load(figures_path)
@@ -237,13 +275,13 @@ def test_a_missing_document_does_not_disable_a_present_one(phase, tmp_path):
     wrong = _format(figures[key]) + "9"
 
     target = tmp_path / documents[1]
-    target.parent.mkdir(parents=True)
+    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(f"The value is {wrong} {{fig:{key}}}.")
     assert not (tmp_path / documents[0]).exists()
 
     present, missing = _split_by_existence(tmp_path, documents)
     assert present == [documents[1]]
-    assert missing == [documents[0]]
+    assert missing == [d for d in documents if d != documents[1]]
 
     with pytest.raises(AssertionError, match="quoted as"):
         _check_documents(
@@ -361,17 +399,34 @@ def test_tags_required_matches_document_state(phase):
 #     literal-backed tags, e.g. the plan for this very task) -- registering
 #     them would mean validating a finished plan's numbers forever after the
 #     work it describes is done.
-#   - `.superpowers/`: this session's scratch workspace. Gitignored, so
-#     usually absent on a fresh clone, but excluded by path too in case a
-#     task is running with it present.
-UNREGISTERED_DOC_PREFIXES = ("docs/superpowers/", ".superpowers/")
+#
+# Only prefixes that lie *under* `DOC_SEARCH_ROOTS` can do anything here: the
+# walk below never leaves those roots, so an entry naming a tree outside them
+# excludes nothing and merely reads as though the walk were repository-wide.
+# `.superpowers/` (the session scratch workspace) was such an entry and has
+# been dropped for that reason -- it is not reachable, and keeping it
+# described a mechanism that does not exist.
+UNREGISTERED_DOC_PREFIXES = ("docs/superpowers/",)
 
 # Root files/directories that can hold narrative prose quoting generated
 # figures. Not the whole repository -- walking `.venv/`, `.git/`, or
 # `capfib.egg-info/` would be slow and finds nothing relevant. Extend this
 # list the day a real document appears somewhere new; that is a one-line
 # change, not a redesign.
-DOC_SEARCH_ROOTS = ("docs", "theory", "README.md", "CLAUDE.md")
+#
+# `paper/` is in the list because it is the publication target: an unbound
+# number costs more there than anywhere else in the repository, and
+# `scripts/check_claims.py` has always treated it as a prose tree
+# (`SEARCH_DIRS`). The two lists disagreeing about where prose lives is the
+# same defect this file exists to catch, so
+# `test_doc_search_roots_cover_the_claim_checker_trees` below asserts they
+# agree rather than leaving it to memory.
+DOC_SEARCH_ROOTS = ("docs", "theory", "paper", "README.md", "CLAUDE.md")
+
+# Prose extensions to walk. `.tex` is here for `paper/`: a LaTeX source is a
+# narrative document like any other, and a `{fig:...}` tag in it is checked
+# by the same rule.
+DOC_SUFFIXES = (".md", ".tex")
 
 
 def _registered_documents():
@@ -381,8 +436,8 @@ def _registered_documents():
     return {doc for _name, _figs, docs, _req in PHASES for doc in docs}
 
 
-def _discoverable_markdown_files():
-    """Every `.md` file under `DOC_SEARCH_ROOTS`, repo-relative
+def _discoverable_documents():
+    """Every `DOC_SUFFIXES` file under `DOC_SEARCH_ROOTS`, repo-relative
     (forward-slash), excluding `UNREGISTERED_DOC_PREFIXES`.
 
     Returns:
@@ -392,9 +447,11 @@ def _discoverable_markdown_files():
     for root_name in DOC_SEARCH_ROOTS:
         root_path = ROOT / root_name
         if root_path.is_file():
-            candidates = [root_path]
+            candidates = [root_path] if root_path.suffix in DOC_SUFFIXES else []
         elif root_path.is_dir():
-            candidates = sorted(root_path.rglob("*.md"))
+            candidates = sorted(
+                p for suffix in DOC_SUFFIXES for p in root_path.rglob(f"*{suffix}")
+            )
         else:
             continue
         for path in candidates:
@@ -424,7 +481,7 @@ def test_every_tagged_document_is_registered():
     """
     registered = _registered_documents()
     unregistered = []
-    for relative in _discoverable_markdown_files():
+    for relative in _discoverable_documents():
         text = (ROOT / relative).read_text()
         if TAG.search(text) and relative not in registered:
             unregistered.append(relative)
@@ -434,4 +491,49 @@ def test_every_tagged_document_is_registered():
         "for drift: " + ", ".join(unregistered) + " -- add a PHASES row (or "
         "add the document to an existing phase's row) that names it, "
         "pointing at the figures file it should be checked against"
+    )
+
+
+def _claim_checker_prose_paths():
+    """The prose trees `scripts/check_claims.py` reads, as repo-relative
+    forward-slash strings.
+
+    Imported from the script rather than restated, so the two lists cannot be
+    kept in step by memory alone.
+    """
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import check_claims  # noqa: PLC0415
+
+    return tuple(check_claims.SEARCH_DIRS) + tuple(check_claims.SEARCH_FILES)
+
+
+def test_doc_search_roots_cover_the_claim_checker_trees():
+    """Everywhere `scripts/check_claims.py` looks for prose must be walked
+    here too.
+
+    The repository held two hardcoded answers to "where does narrative prose
+    live" -- `DOC_SEARCH_ROOTS` in this file and `SEARCH_DIRS`/`SEARCH_FILES`
+    in `scripts/check_claims.py` -- and they disagreed: `paper/` was a prose
+    tree for the claim checker and invisible to the drift discovery, which is
+    the tree where an unbound number costs the most. Two hardcoded lists
+    drifting apart is the defect this branch fixed twice already
+    (`tests/conftest.py`'s `GATE_MODULES`, `PHASES` itself), so it is asserted
+    rather than remembered.
+
+    Coverage is one-directional on purpose. Every claim-checker path must be
+    under some `DOC_SEARCH_ROOTS` entry; the converse is not required,
+    because this file walks whole trees (`docs/`) where the claim checker
+    names individual files inside them (`docs/roadmap.md`), and walking more
+    prose for figure tags than for claim references is not a defect.
+    """
+    roots = DOC_SEARCH_ROOTS
+    uncovered = [
+        path for path in _claim_checker_prose_paths()
+        if not any(path == r or path.startswith(r + "/") for r in roots)
+    ]
+    assert not uncovered, (
+        "scripts/check_claims.py treats these as prose trees but "
+        "DOC_SEARCH_ROOTS in tests/test_figure_tags.py does not walk them, "
+        "so a {fig:...} tag in one of them would never be discovered: "
+        + ", ".join(uncovered)
     )
