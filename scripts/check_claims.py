@@ -7,6 +7,7 @@ for a conjecture to acquire the tone of a result. This makes that drift
 mechanically detectable.
 """
 
+import hashlib
 import json
 import re
 import sys
@@ -253,6 +254,52 @@ def _theorem_evidence_problem(root: Path, cid: str, evidence: str) -> str | None
     )
 
 
+def _artifact_problem(
+    root: Path, cid: str, token: str, manifest_hashes: dict[str, str]
+) -> str | None:
+    """Return a problem string for one cited data artifact, or None.
+
+    A `verified-numeric` claim's evidence is only evidence if the artifact it
+    names is actually there and is the file the manifest recorded. Checking the
+    basename against the manifest -- which is all this did before -- passes on a
+    clean clone where the artifact was never tracked.
+
+    Args:
+        root: repository root.
+        cid: the claim id, for the message.
+        token: the artifact path token found in the evidence text.
+        manifest_hashes: file basename to recorded SHA-256.
+
+    Returns:
+        A problem description, or None if the artifact exists and matches.
+    """
+    name = Path(token).name
+    candidates = [root / "data" / name, root / "figures" / name]
+    found = next((c for c in candidates if c.is_file()), None)
+    if found is None:
+        return (
+            f"claim '{cid}': status verified-numeric and its evidence names "
+            f"{name}, but that artifact is not present. Evidence that is absent "
+            f"on a clean checkout is not evidence -- track it, or regenerate it "
+            f"with the script data/manifest.json records for it."
+        )
+    recorded = manifest_hashes.get(name, "")
+    if not recorded:
+        return (
+            f"claim '{cid}': data/manifest.json records no sha256 for {name}, "
+            f"so its contents cannot be checked against what was generated"
+        )
+    actual = hashlib.sha256(found.read_bytes()).hexdigest()
+    if actual != recorded:
+        return (
+            f"claim '{cid}': {name} does not match the sha256 data/manifest.json "
+            f"recorded at generation time (recorded {recorded[:16]}..., found "
+            f"{actual[:16]}...). Either the artifact drifted from the claim that "
+            f"cites it, or it was regenerated without updating the manifest."
+        )
+    return None
+
+
 def validate(root: Path) -> list[str]:
     """Return a list of problems; empty means the ledger is valid."""
     problems: list[str] = []
@@ -293,8 +340,11 @@ def validate(root: Path) -> list[str]:
 
     manifest_path = root / "data" / "manifest.json"
     manifest_files = set()
+    manifest_hashes: dict[str, str] = {}
     if manifest_path.exists():
-        manifest_files = {e["file"] for e in json.loads(manifest_path.read_text())}
+        entries = json.loads(manifest_path.read_text())
+        manifest_files = {e["file"] for e in entries}
+        manifest_hashes = {e["file"]: e.get("sha256", "") for e in entries}
     for claim in claims:
         if claim.get("status") == "verified-numeric":
             evidence = claim.get("evidence", "")
@@ -312,6 +362,17 @@ def validate(root: Path) -> list[str]:
                     f"claim '{claim.get('id')}': status verified-numeric but its "
                     f"evidence names a data artifact not recorded in data/manifest.json"
                 )
+            else:
+                # Membership in the manifest is not evidence: for years this
+                # check passed on a clean clone where the artifact itself was
+                # absent, because only the basename was compared. A cited
+                # artifact must be present AND match the bytes the manifest
+                # recorded at generation time.
+                for token in data_tokens:
+                    problem = _artifact_problem(root, claim.get("id"), token,
+                                                manifest_hashes)
+                    if problem:
+                        problems.append(problem)
         if claim.get("status") == "theorem":
             problem = _theorem_evidence_problem(
                 root, claim.get("id"), claim.get("evidence", "")

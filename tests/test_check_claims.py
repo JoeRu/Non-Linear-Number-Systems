@@ -49,6 +49,26 @@ def test_missing_field_is_reported(tmp_path):
     assert any("evidence" in p or "source" in p for p in validate(tmp_path))
 
 
+
+def _manifest_with_results_csv(root):
+    """Write data/results.csv and a manifest entry whose sha256 matches it.
+
+    The universal-quantifier fixtures below cite this artifact. They are about
+    the quantifier guard, not about provenance, so the artifact has to actually
+    exist -- `check_claims.py` now requires every cited artifact to be present
+    and to match its recorded hash.
+    """
+    import hashlib
+    import json
+
+    body = b"N,value\n2,1\n"
+    (root / "data").mkdir(parents=True, exist_ok=True)
+    (root / "data" / "results.csv").write_bytes(body)
+    return json.dumps(
+        [{"file": "results.csv", "sha256": hashlib.sha256(body).hexdigest()}]
+    )
+
+
 def test_verified_numeric_needs_manifest(tmp_path):
     claims = (
         '- id: alpha\n  statement: "A."\n  status: verified-numeric\n'
@@ -247,7 +267,7 @@ def test_unqualified_universal_word_citing_verified_numeric_is_rejected(tmp_path
     # is verified-numeric, not conjecture/heuristic.
     docs = {
         "theory/x.md": "Every N satisfies this property {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -259,7 +279,7 @@ def test_range_qualified_universal_word_citing_verified_numeric_passes(tmp_path)
     # actually measured over.
     docs = {
         "theory/x.md": "Every N <= 1000 satisfies this property {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     assert validate(tmp_path) == []
@@ -275,7 +295,7 @@ def test_unobserved_is_not_a_false_exemption(tmp_path):
             "Every N satisfies this property; the result was unobserved "
             "{claim:kappa}."
         ),
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -290,7 +310,7 @@ def test_unrelated_lte_is_not_a_false_exemption(tmp_path):
             "Every N satisfies this property; a condition <= 1000 applies "
             "{claim:kappa}."
         ),
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -306,7 +326,7 @@ def test_range_marker_in_different_sentence_does_not_exempt(tmp_path):
             "Every N satisfies this property {claim:kappa}. "
             "A different measurement used n <= 500 elsewhere."
         ),
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -319,7 +339,7 @@ def test_jedes_is_recognized_as_universal(tmp_path):
     # both listed.
     docs = {
         "theory/x.md": "Jedes N erfüllt diese Eigenschaft {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -329,7 +349,7 @@ def test_jedes_is_recognized_as_universal(tmp_path):
 def test_alles_is_recognized_as_universal(tmp_path):
     docs = {
         "theory/x.md": "Alles daran bestätigt sich {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -359,7 +379,7 @@ def test_bare_observed_qualification_is_rejected(tmp_path):
             "Every N satisfies this property; the result was observed "
             "{claim:kappa}."
         ),
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -373,7 +393,7 @@ def test_unrelated_single_letter_variable_does_not_exempt(tmp_path):
     # qualifier for an unrelated universal claim.
     docs = {
         "theory/x.md": "Every N satisfies this property; a <= 1000 {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -386,7 +406,7 @@ def test_latex_le_range_expression_is_accepted(tmp_path):
     # recognized as a real range qualifier, not rejected as unscoped prose.
     docs = {
         "theory/x.md": r"Every $N \le 10^6$ satisfies this property {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     assert validate(tmp_path) == []
@@ -397,7 +417,7 @@ def test_jeden_is_recognized_as_universal(tmp_path):
     # "jeder"/"jedes" -- another inflection that must trigger the guard.
     docs = {
         "theory/x.md": "Für jeden N gilt diese Eigenschaft {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -411,7 +431,7 @@ def test_each_is_recognized_as_universal(tmp_path):
     # UNIVERSAL_QUANTIFIER_WORDS.
     docs = {
         "theory/x.md": "The result holds at each place {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -424,7 +444,7 @@ def test_muessen_is_recognized_as_universal(tmp_path):
     # project's German prose and must trigger the guard too.
     docs = {
         "theory/x.md": "Die Werte müssen positiv sein {claim:kappa}.",
-        "data/manifest.json": json.dumps([{"file": "results.csv"}]),
+        "data/manifest.json": _manifest_with_results_csv(tmp_path),
     }
     _write(tmp_path, VERIFIED_NUMERIC, docs)
     problems = validate(tmp_path)
@@ -498,3 +518,73 @@ def test_no_search_file_is_also_covered_by_a_search_dir():
                 f"{relative} is already reached by SEARCH_DIRS entry "
                 f"'{directory}'; listing it in SEARCH_FILES double-scans it"
             )
+
+
+# --- cited artifacts must exist and match the manifest -----------------------
+#
+# Before these, `verified-numeric` evidence was validated by testing the
+# artifact's basename against data/manifest.json and nothing else. Ten claims
+# in this repository cited four artifacts that were never tracked, so on a
+# clean clone the validator printed `claims.yaml OK` while every one of those
+# artifacts was absent. Membership in a manifest is not evidence.
+
+NUMERIC = """- id: alpha
+  statement: "Measured over the sampled range."
+  status: verified-numeric
+  evidence: "data/thing.csv via scripts/run_thing.py"
+  source: "this project"
+"""
+
+
+def _with_artifact(root, body: bytes = b"n,v\n1,2\n"):
+    """Write a ledger citing data/thing.csv, plus the artifact and manifest."""
+    import hashlib
+    import json
+
+    _write(root, NUMERIC)
+    (root / "data").mkdir(parents=True, exist_ok=True)
+    (root / "data" / "thing.csv").write_bytes(body)
+    (root / "data" / "manifest.json").write_text(
+        json.dumps(
+            [
+                {
+                    "file": "thing.csv",
+                    "script": "scripts/run_thing.py",
+                    "sha256": hashlib.sha256(body).hexdigest(),
+                }
+            ]
+        )
+    )
+
+
+def test_cited_artifact_present_and_matching_passes(tmp_path):
+    _with_artifact(tmp_path)
+    assert validate(tmp_path) == []
+
+
+def test_cited_artifact_that_is_absent_is_reported(tmp_path):
+    """The clean-clone case: manifest says it exists, the tree does not have it."""
+    _with_artifact(tmp_path)
+    (tmp_path / "data" / "thing.csv").unlink()
+    problems = validate(tmp_path)
+    assert any("not present" in p and "thing.csv" in p for p in problems), problems
+
+
+def test_cited_artifact_whose_bytes_drifted_is_reported(tmp_path):
+    """The artifact is there, but it is no longer the file that was generated."""
+    _with_artifact(tmp_path)
+    (tmp_path / "data" / "thing.csv").write_bytes(b"n,v\n1,999\n")
+    problems = validate(tmp_path)
+    assert any("does not match the sha256" in p for p in problems), problems
+
+
+def test_cited_artifact_without_a_recorded_hash_is_reported(tmp_path):
+    """A manifest entry with no sha256 cannot certify anything."""
+    import json
+
+    _with_artifact(tmp_path)
+    manifest = tmp_path / "data" / "manifest.json"
+    entries = json.loads(manifest.read_text())
+    entries[0].pop("sha256")
+    manifest.write_text(json.dumps(entries))
+    assert any("records no sha256" in p for p in validate(tmp_path))

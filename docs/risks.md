@@ -299,19 +299,24 @@ summary, or fresh files with stale hashes.
   spec was corrected to describe per-file atomicity accurately rather than
   claiming all-or-nothing.
 
-**Risk to the roadmap.** Low, but not for the reason this entry originally
-gave. It claimed `check_claims.py` would catch a mixed generation "via a hash
-mismatch". It does not, and never did: for a `verified-numeric` claim it checks
-that the artifact *basename* named in the evidence appears in
-`data/manifest.json`, and nothing more. It never recomputes a SHA-256, so a
-file whose contents have moved on from the hash recorded beside it passes
-untouched. What does compare a file against its recorded hash is
-`tests/test_phase2_bounds.py::test_the_tracked_oracle_matches_its_manifest_provenance`,
-and only for the one tracked artifact the Phase 2 gate reads. The rest of a
-mixed generation would surface, if at all, through a bound check failing or a
-`{fig:}` literal drifting — not through the manifest. The cost remains a
-confusing debugging session rather than a wrong published number, because the
-artifacts are regenerable in about five minutes.
+**Risk to the roadmap.** Low. This entry originally claimed `check_claims.py`
+would catch a mixed generation "via a hash mismatch"; for a long time that was
+false, and the entry was corrected to say so. It is now true, by a different
+route than the entry first imagined.
+
+`check_claims.py` used to test only that the artifact *basename* named in a
+`verified-numeric` claim's evidence appeared in `data/manifest.json`. That is
+membership in an index, not evidence: an external review found ten claims
+citing four artifacts that were never tracked, so on a clean clone the
+validator printed `claims.yaml OK` while every cited artifact was absent. The
+validator now requires each cited artifact to **exist** and to match the
+SHA-256 `data/manifest.json` recorded for it, and the four cited artifacts are
+tracked (24 KB in total). A file whose contents have moved on from its recorded
+hash now fails by name, and so does one that is missing.
+
+The cost of a mixed generation therefore surfaces immediately rather than
+through a bound check failing or a `{fig:}` literal drifting, and remains a
+regeneration of about five minutes rather than a wrong published number.
 
 **Revisit when:** `scripts/run_phase1.py` is next modified, or when a claim
 first depends on more than one artifact from the same run — that is the point
