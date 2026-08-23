@@ -41,12 +41,12 @@
   },
   "fluctuation-median": {
     "description": "median of R_c(N+1)/R_c(N) over the computed range",
-    "precision": 6,
+    "precision": 4,
     "value": 1.0000325762401059
   },
   "fluctuation-min": {
     "description": "minimum local ratio over the computed range",
-    "precision": 6,
+    "precision": 4,
     "value": 0.9853200404565814
   },
   "n-max": {

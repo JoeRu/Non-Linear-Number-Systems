@@ -1,10 +1,10 @@
 {
   "n_max": 1000000,
-  "git_rev": "818013d79eb4af4b02ec78f7a0a8db0e2954f45d",
+  "git_rev": "241d356d2fe29639c1f91848a0101fa91efacdc2",
   "crosscheck": "dp==gf pointwise for all N <= 1000000",
-  "gf_seconds": 8.6,
-  "dp_seconds": 311.6,
-  "peak_rss_mb": 273,
+  "gf_seconds": 11.2,
+  "dp_seconds": 277.9,
+  "peak_rss_mb": 274,
   "census": {
     "increasing": 504441,
     "flat": 11,

@@ -316,12 +316,12 @@ def main() -> int:
         },
         "fluctuation-median": {
             "value": summary["fluctuation_quantiles"]["median"],
-            "precision": 6,
+            "precision": 4,
             "description": "median of R_c(N+1)/R_c(N) over the computed range",
         },
         "fluctuation-min": {
             "value": summary["fluctuation_quantiles"]["min"],
-            "precision": 6,
+            "precision": 4,
             "description": "minimum local ratio over the computed range",
         },
         "fluctuation-max": {
