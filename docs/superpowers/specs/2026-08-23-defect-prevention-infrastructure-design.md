@@ -62,6 +62,11 @@ weakest measured track record here, so it receives the least of this design.
 | D6 | One new CLAUDE.md rule, one amendment — no more | See §1.2 |
 | D7 | Class F goes to project memory, not CLAUDE.md | It is about how the assistant works across sessions, not about this repository |
 | D8 | Classes B/C/E extend the existing `claim-ledger` skill; no third skill | Two skills that get invoked beat three that do not |
+| D9 | Two seed tiers: a 4-mutation canary and the full 12 | The canary is cheap enough to run on every push; the full set gates a pull request |
+| D10 | The registry's **result** is fingerprinted and published externally, by CI | The registry cannot catch its own subversion: one commit can weaken a test and its mutation together and stay green. An external, dated record makes that visible |
+| D11 | A fingerprint change fails CI unless a tracked waiver explains it | Publishing alone is a log, not a gate. The waiver converts "a number changed" into "someone had to say why" |
+| D12 | The workflow also runs the suite and the claim validator on a fresh checkout; **no Lean** | A fresh-checkout run is the *structural* fix for the clean-clone class — it could not have skipped twelve comparisons silently. Lean needs a ~5 GB Mathlib cache for a layer that changes rarely and is already gated locally |
+| D13 | Machine-local hash files are rejected | They do not survive a clone, are invisible to CI and reviewers, and go stale silently — reproducing the very pattern being fixed |
 
 ---
 
@@ -134,11 +139,83 @@ Drawn from what actually failed, not from what is easy to mutate:
 | Corrupt one interior place value | `test_places_up_to_production_boundary` |
 | Make a `run_phase2` gate pass that should fail | the writes-nothing tests |
 
-### 3.6 Cost and cadence
+### 3.6 Two tiers
+
+| Tier | Contents | Cadence |
+|---|---|---|
+| **Canary (4)** | the four irreducible Phase 2 recurrences: dropped break-index term, disabled drift detector, skipped clean-clone comparisons, gutted T1/T3/T5 | every push |
+| **Full (12)** | the §3.5 set | every pull request, and on a schedule |
+
+Tiering is how a fast set quietly becomes the only set that ever runs. The full
+tier's job is therefore **required for merge**; its absence must be as visible
+as its failure.
+
+### 3.7 The external record, and why the registry needs one
+
+The registry as described in §3.1–§3.5 **cannot catch its own subversion.** A
+single commit can weaken a load-bearing test *and* its registered mutation
+together: the suite passes, the registry passes, nothing signals. That is the
+same failure class this spec exists to close, one level up.
+
+The fix is an external, dated record of what the registry actually *did*.
+
+**What is fingerprinted.** Not the registry's definition — which mutations
+exist — but its **result**: the mapping
+
+```
+{ mutation_name -> sorted node ids that actually went red }
+```
+
+The definition records intent; the result records execution. The full mapping is
+published for diagnosis, the SHA-256 of its canonical serialisation for
+comparison. This is the same intent-versus-execution distinction that D2 already
+made one level down.
+
+**Where it lives.** A GitHub Actions workflow artifact, dated and attributable.
+Not a file elsewhere on a developer's machine: that survives no clone, is
+invisible to CI and to reviewers, and goes stale in silence (D13).
+
+**How it binds.** Publishing alone is a log. The workflow **fails** when the
+fingerprint moves without a matching entry in a tracked waiver file naming what
+changed and why. Legitimate changes are frequent and cheap to record — adding a
+guard, retiring a mutation, renaming a node id — and each costs one line.
+
+**The honest limit.** This is tamper-*evidence*, not tamper-proofing. A
+determined change can weaken a test, weaken its mutation, and write a waiver
+saying so. What it cannot do is happen *silently*, which is how all four
+Phase 2 recurrences happened.
+
+### 3.8 Cost and cadence
 
 Marked slow. Run by a dedicated command and before opening a pull request — not
 on every `pytest`. Wall time is the honest price of a guard that has been seen
 red.
+
+---
+
+## 3A. Continuous integration
+
+This repository has no CI today; this is its first workflow. The tracked tree is
+0.8 MB and the suite runs in about 145 s, so the Python side is cheap.
+
+**On every push:** fresh checkout, install, `pytest`, `scripts/check_claims.py`,
+the canary mutation tier.
+
+**On every pull request:** the above plus the full mutation tier, publishing the
+result mapping and fingerprint as an artifact and enforcing the waiver (§3.7).
+
+**Not run:** `lake build`. The Lean layer needs a ~5 GB Mathlib cache and a long
+cold build, changes rarely, currently contains zero `sorry`s, and is already
+gated locally and before a pull request. Recorded as a deliberate gap, not an
+oversight — a Lean regression would reach `main` unremarked, and closing that is
+a follow-up whose cost is the cache.
+
+**Why the workflow earns its place beyond the mutations.** A run from a fresh
+checkout is the *structural* fix for the clean-clone class. The recurrence where
+twelve T1/T3/T5 comparisons silently skipped because the oracle was untracked
+could not have survived it — no mutation required, and no one needing to think
+of it. That property comes free with CI existing at all, and it is the single
+cheapest thing in this document.
 
 ---
 
@@ -251,6 +328,10 @@ not monotone, say so or quote the values.
 - Closing risk R-002 for the Phase 1 documents by extending the figure-tag
   mechanism to them.
 - Classical mutation testing over the whole suite.
+- Running `lake build` in CI (§3A) — deliberate, costed, and a named gap.
+- Publishing seed-set results as release assets. Worth revisiting at a phase
+  boundary, when a durable citable record has a use; the CI artifact covers the
+  gating need until then.
 
 ## 8. Acceptance criteria
 
@@ -265,4 +346,10 @@ not monotone, say so or quote the values.
 5. `CLAUDE.md` carries rule 11 and the rule 5 amendment, and nothing else new.
 6. The two memory files exist with `MEMORY.md` pointers.
 7. `claim-ledger` carries §6.1 and §6.2.
-8. Full suite green; `scripts/check_claims.py` OK; `lake build` clean.
+8. Both tiers are defined, and the canary tier is a strict subset of the full one.
+9. The workflow exists, runs on push and pull request, and publishes the result
+   mapping and fingerprint as an artifact.
+10. **The waiver gate is demonstrated:** a deliberate registry change with no
+    waiver entry fails CI, and the same change with one passes. The evidence is
+    the failing run, not a description of it.
+11. Full suite green; `scripts/check_claims.py` OK; `lake build` clean locally.
