@@ -117,7 +117,13 @@ reader to discover.
 
 **Revisit when:** Phase 4 regenerates data at a different `n_max`, which is
 the first moment drift can actually occur for either phase — both are now
-checked mechanically rather than by inspection.
+checked mechanically rather than by inspection; or when a later phase adds a
+narrative document that quotes generated figures without a matching row in
+`PHASES` (`tests/test_figure_tags.py`) — the mechanism only protects documents
+it has been told about, nothing enforces that a new one gets registered, and
+this project has already lost track of a hardcoded list of modules once this
+same session (`tests/conftest.py`'s `GATE_MODULES`, missing
+`tests/test_phase1_tables.py` until this task added it).
 
 ---
 

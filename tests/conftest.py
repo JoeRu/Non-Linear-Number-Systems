@@ -34,7 +34,7 @@ MARKER = "oracle_gate"
 # they are collected. Without this, deleting every marker -- or letting a
 # collection error take out the whole module -- would leave the guard with
 # nothing to complain about.
-GATE_MODULES = ("test_phase2_bounds.py", "test_figure_tags.py")
+GATE_MODULES = ("test_phase2_bounds.py", "test_figure_tags.py", "test_phase1_tables.py")
 
 
 def gate_violations(collected: int, executed: int, skipped: list[str]) -> list[str]:
