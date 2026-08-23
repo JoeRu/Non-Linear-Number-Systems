@@ -31,8 +31,11 @@ this page is the summary.
 >   machine, so tagging them would force a prose edit at each regeneration.
 >   The consequence is that prose must not quote them as specific values
 >   either — an untagged decimal is precisely what drifts unnoticed — so
->   `docs/phases/phase1_report.md` states them rounded to an order of
->   magnitude ("roughly nine seconds", "under 300 MB") and points at
+>   `docs/phases/phase1_report.md` states them only loosely: rounded to the
+>   nearest unit or given as a round threshold ("roughly nine seconds",
+>   "under 300 MB"), not reduced to an order of magnitude (which "roughly
+>   nine seconds" for a recorded `8.9` is not — an order-of-magnitude
+>   statement would read "about ten seconds"). It points at
 >   `data/phase1_summary.json` for the recorded values.
 > - **The place-jump and block-extrema tables** in
 >   `docs/phases/phase1_report.md`, which reproduce the `place_jumps` and

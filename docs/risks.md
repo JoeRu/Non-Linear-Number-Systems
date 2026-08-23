@@ -124,9 +124,18 @@ note rather than left for a reader to discover.
 census fraction three times with no tag — a narrative document containing
 hand-copied numbers, which is the literal title of this entry. Two of the
 three now carry `{fig:decreasing-fraction}`; the third was German prose using
-a decimal comma (`49,6 %`), which the tag regex cannot match, and was
+a decimal comma (`49,6 %`). The tag regex *does* match a comma literal placed
+directly in front of a tag — confirmed by running `TAG.search` on the
+roadmap's original wording, which had that literal immediately followed by
+the decreasing-fraction tag: the match captures `49,6`, and
+`_check_documents` then strips the comma (`literal.replace(",", "")`) to
+compare it as `496` against the figures file's `49.6`, so a tagged `49,6`
+would have been matched and rejected as drift, not ignored. It cannot be
+accommodated without making `49,6` ambiguous against the
+thousands-separator handling built into `[\d][\d,]*`, which is why it was
 rewritten to state the finding in words ("knapp die Hälfte der Schritte
-fällt") so that it no longer carries a number to drift.
+fällt") instead of tagging it, so that it no longer carries a number to
+drift.
 
 **What is bound, and what is not.** Bound: every `<literal> {fig:key}` tag in
 `docs/phase1.md`, `docs/phases/phase1_report.md`, `docs/roadmap.md`,
@@ -135,8 +144,10 @@ Phase 1 tables; and every key in either figures file, which must be quoted in
 some registered document or listed in `KEYS_KNOWINGLY_UNQUOTED` with a reason.
 Registration itself is enforced: `test_every_tagged_document_is_registered`
 walks `docs/`, `theory/`, `paper/`, `README.md` and `CLAUDE.md` (`.md` and
-`.tex`) and fails on a document that carries a literal-backed tag without a
-`PHASES` row.
+`.tex`), except for `docs/superpowers/`, a deliberate carve-out for dated
+historical specs and plans (`UNREGISTERED_DOC_PREFIXES` in
+`tests/test_figure_tags.py`), and fails on any other document that carries a
+literal-backed tag without a `PHASES` row.
 
 Not bound, and stated plainly because no mechanism covers it: **a number that
 is generated but never tagged.** The discovery test triggers on
