@@ -1,5 +1,8 @@
-# data/*.csv are written by Python's `csv` module, which terminates rows with
-# RFC-4180 CRLF. Two consequences, and one attribute each.
+# `data/phase1_data.csv` -- the only tracked CSV here -- is written by Python's
+# `csv` module, which terminates rows with RFC-4180 CRLF. (The Phase 2 CSVs are
+# gitignored and are written by joining on "\n", so they are unaffected either
+# way; the pattern below covers them only incidentally.) Two consequences, and
+# one attribute each.
 #
 # `-text` disables end-of-line conversion entirely. `data/phase1_data.csv` is
 # tracked (it is the exact-value oracle the Phase 2 bound tests run against)

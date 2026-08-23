@@ -125,8 +125,13 @@ def pytest_sessionfinish(session, exitstatus):
     problems = gate_violations(state.collected, state.executed, state.skipped)
     if not state.selection_narrowed:
         missing = [m for m in GATE_MODULES if m not in state.gate_modules_collected]
-        if missing and session.config.args:
-            # Only meaningful for a full run; a narrowed one is exempted above.
+        if missing:
+            # `state.selection_narrowed` already exempts narrowed runs, so no
+            # further condition belongs here. An earlier version also required
+            # `session.config.args` to be non-empty; that is redundant (pytest
+            # fills args from `testpaths`, so it is `['tests']` on a plain run)
+            # and would silently disable this check if `testpaths` were ever
+            # removed from pyproject.toml.
             problems.append(
                 "oracle-gate module(s) not collected at all: " + ", ".join(missing)
             )
