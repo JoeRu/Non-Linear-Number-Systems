@@ -273,8 +273,80 @@ def main() -> int:
         record(path, script="scripts/run_phase1.py", params=params,
                manifest_path=MANIFEST)
 
+    # Deliberately excluded: dp_seconds and gf_seconds. They are in `summary`
+    # and the documents mention them, but wall-clock timings change on every
+    # run. Tagging them would force a prose edit at each regeneration for no
+    # epistemic gain -- churn that looks like rigour and trains people to edit
+    # numbers to make a test pass, which is the opposite of the point.
+    figures = {
+        "n-max": {
+            "value": summary["n_max"],
+            "precision": 0,
+            "description": "largest N for which R_c was computed exactly",
+        },
+        "rc-bit-length": {
+            "value": summary["R_c_bit_length"],
+            "precision": 0,
+            "description": "bit length of R_c at the largest N",
+        },
+        "census-increasing": {
+            "value": summary["census"]["increasing"],
+            "precision": 0,
+            "description": "increasing steps of R_c over the computed range",
+        },
+        "census-decreasing": {
+            "value": summary["census"]["decreasing"],
+            "precision": 0,
+            "description": "decreasing steps of R_c over the computed range",
+        },
+        "census-flat": {
+            "value": summary["census"]["flat"],
+            "precision": 0,
+            "description": "flat steps of R_c over the computed range",
+        },
+        "census-steps": {
+            "value": summary["census"]["steps"],
+            "precision": 0,
+            "description": "total steps examined in the monotonicity census",
+        },
+        "decreasing-fraction": {
+            "value": 100.0 * summary["census"]["decreasing"] / summary["census"]["steps"],
+            "precision": 1,
+            "description": "percentage of steps that decrease, over the computed range",
+        },
+        "fluctuation-median": {
+            "value": summary["fluctuation_quantiles"]["median"],
+            "precision": 6,
+            "description": "median of R_c(N+1)/R_c(N) over the computed range",
+        },
+        "fluctuation-min": {
+            "value": summary["fluctuation_quantiles"]["min"],
+            "precision": 6,
+            "description": "minimum local ratio over the computed range",
+        },
+        "fluctuation-max": {
+            "value": summary["fluctuation_quantiles"]["max"],
+            "precision": 1,
+            "description": "maximum local ratio over the computed range",
+        },
+        "flat-step-count": {
+            "value": len(summary["flat_step_positions"]),
+            "precision": 0,
+            "description": "number of flat steps found",
+        },
+        "flat-step-last": {
+            "value": max(summary["flat_step_positions"]),
+            "precision": 0,
+            "description": "largest N at which a flat step occurs",
+        },
+    }
+    figures_path = REPO_ROOT / "data" / "phase1_figures.json"
+    atomic_write_text(figures_path, json.dumps(figures, indent=2, sort_keys=True) + "\n")
+    record(figures_path, script="scripts/run_phase1.py", params={"n_max": n_max},
+           manifest_path=MANIFEST)
+
     print(f"wrote {DATA_CSV.name}, {SUMMARY_JSON.name}, "
-          f"{FIG_GROWTH.name}, {FIG_FLUCT.name}")
+          f"{FIG_GROWTH.name}, {FIG_FLUCT.name}, {figures_path.name}")
     return 0
 
 

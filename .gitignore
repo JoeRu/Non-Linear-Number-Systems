@@ -35,6 +35,12 @@ data/*
 # a gitignored copy could not keep prose and data in step (risk R-002).
 !data/phase2_figures.json
 
+# data/phase1_figures.json is tracked for the same reason as the artifact
+# above: the Phase 1 documents quote it by key, and tests/test_figure_tags.py
+# fails when a quoted literal and the generated value disagree. A gitignored
+# figures file could not keep prose and data in step on a clean clone.
+!data/phase1_figures.json
+
 # The artifacts cited as evidence by `verified-numeric` claims are tracked too,
 # and for the same reason: `scripts/check_claims.py` now requires every cited
 # artifact to exist and to match its `data/manifest.json` SHA-256, so a claim

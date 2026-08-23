@@ -1,0 +1,62 @@
+{
+  "census-decreasing": {
+    "description": "decreasing steps of R_c over the computed range",
+    "precision": 0,
+    "value": 495548
+  },
+  "census-flat": {
+    "description": "flat steps of R_c over the computed range",
+    "precision": 0,
+    "value": 11
+  },
+  "census-increasing": {
+    "description": "increasing steps of R_c over the computed range",
+    "precision": 0,
+    "value": 504441
+  },
+  "census-steps": {
+    "description": "total steps examined in the monotonicity census",
+    "precision": 0,
+    "value": 1000000
+  },
+  "decreasing-fraction": {
+    "description": "percentage of steps that decrease, over the computed range",
+    "precision": 1,
+    "value": 49.5548
+  },
+  "flat-step-count": {
+    "description": "number of flat steps found",
+    "precision": 0,
+    "value": 11
+  },
+  "flat-step-last": {
+    "description": "largest N at which a flat step occurs",
+    "precision": 0,
+    "value": 78
+  },
+  "fluctuation-max": {
+    "description": "maximum local ratio over the computed range",
+    "precision": 1,
+    "value": 2.0
+  },
+  "fluctuation-median": {
+    "description": "median of R_c(N+1)/R_c(N) over the computed range",
+    "precision": 6,
+    "value": 1.0000325762401059
+  },
+  "fluctuation-min": {
+    "description": "minimum local ratio over the computed range",
+    "precision": 6,
+    "value": 0.9853200404565814
+  },
+  "n-max": {
+    "description": "largest N for which R_c was computed exactly",
+    "precision": 0,
+    "value": 1000000
+  },
+  "rc-bit-length": {
+    "description": "bit length of R_c at the largest N",
+    "precision": 0,
+    "value": 99
+  }
+}

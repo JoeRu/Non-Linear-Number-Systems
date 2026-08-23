@@ -22,7 +22,8 @@ import pytest
 import capfib.dp as dp_module
 import capfib.gf as gf_module
 
-REAL_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "run_phase1.py"
+ROOT = Path(__file__).resolve().parents[1]
+REAL_SCRIPT = ROOT / "scripts" / "run_phase1.py"
 
 # Sentinel content for artifacts that must not be created or touched by a
 # failed cross-check. Distinct from anything the script would ever write.
@@ -232,3 +233,24 @@ def test_n_max_below_2_is_rejected(bad_n_max):
     assert result.returncode == 2, \
         f"--n-max {bad_n_max} should be rejected by argparse (exit 2)"
     assert "--n-max must be >= 2" in result.stderr
+
+
+def test_run_phase1_emits_a_tracked_figures_file(tmp_path):
+    """Phase 1 must publish its quotable numbers the way Phase 2 does.
+
+    Risk R-002: the Phase 1 documents quote generated numbers with nothing
+    binding them to the artifacts, so regeneration cannot update the prose and
+    drift is silent. The figures file is what the tag test checks against.
+    """
+    import json
+
+    figures = ROOT / "data" / "phase1_figures.json"
+    assert figures.is_file(), (
+        "data/phase1_figures.json is absent; run scripts/run_phase1.py"
+    )
+    data = json.loads(figures.read_text())
+    assert data, "the figures file is empty"
+    for key, entry in data.items():
+        assert set(entry) >= {"value", "precision", "description"}, key
+        assert isinstance(entry["precision"], int), key
+        assert entry["description"].strip(), f"{key} has no description"
