@@ -278,6 +278,21 @@ def main() -> int:
     # run. Tagging them would force a prose edit at each regeneration for no
     # epistemic gain -- churn that looks like rigour and trains people to edit
     # numbers to make a test pass, which is the opposite of the point.
+    #
+    # Also deliberately excluded: the full `place_jumps` and `block_extrema`
+    # arrays and `flat_step_positions` list. The documents reproduce those in
+    # full as tables/lists read straight from data/phase1_summary.json; only
+    # the specific values pulled out into prose as headline figures (a
+    # handful of individual place-jump ratios, the block count, the extremes)
+    # are promoted to keys here and checked -- the same shape of choice Phase
+    # 2 made for its own per-sample residual sweep.
+    assert rows[-1]["N"] == n_max  # ladder() always includes n_max as its max
+    jump_by_place = {j["place"]: j["ratio"] for j in jumps}
+    assert 8 in jump_by_place, (
+        f"--n-max {n_max} does not reach Fibonacci place F=8; the "
+        f"place-jump-f2/f3/f8 figures below assume it does. Run with a "
+        f"larger --n-max, matching the range the documents describe."
+    )
     figures = {
         "n-max": {
             "value": summary["n_max"],
@@ -338,6 +353,61 @@ def main() -> int:
             "value": max(summary["flat_step_positions"]),
             "precision": 0,
             "description": "largest N at which a flat step occurs",
+        },
+        "fluctuation-p25": {
+            "value": summary["fluctuation_quantiles"]["p25"],
+            "precision": 4,
+            "description": "25th-percentile order statistic of R_c(N+1)/R_c(N) over the computed range",
+        },
+        "fluctuation-p75": {
+            "value": summary["fluctuation_quantiles"]["p75"],
+            "precision": 4,
+            "description": "75th-percentile order statistic of R_c(N+1)/R_c(N) over the computed range",
+        },
+        "min-count": {
+            "value": summary["min_count"],
+            "precision": 0,
+            "description": "minimum representation count over the computed range",
+        },
+        "block-count": {
+            "value": len(summary["block_extrema"]),
+            "precision": 0,
+            "description": "number of Fibonacci blocks with recorded extrema over the computed range",
+        },
+        "rc-value": {
+            "value": c[n_max],
+            "precision": 0,
+            "description": "exact value of R_c at the largest N computed",
+        },
+        "log-rc-at-nmax": {
+            "value": rows[-1]["log_R_c"],
+            "precision": 2,
+            "description": "log R_c(N) at the largest N computed",
+        },
+        "ratio-at-nmax": {
+            "value": rows[-1]["ratio"],
+            "precision": 4,
+            "description": "log R_c(N) / (log N)^2 at the largest N computed",
+        },
+        "place-jump-f2": {
+            "value": jump_by_place[2],
+            "precision": 1,
+            "description": "R_c(F)/R_c(F-1) at place F=2",
+        },
+        "place-jump-f3": {
+            "value": jump_by_place[3],
+            "precision": 1,
+            "description": "R_c(F)/R_c(F-1) at place F=3",
+        },
+        "place-jump-f8": {
+            "value": jump_by_place[8],
+            "precision": 3,
+            "description": "R_c(F)/R_c(F-1) at place F=8",
+        },
+        "place-jump-largest": {
+            "value": jumps[-1]["ratio"],
+            "precision": 6,
+            "description": "R_c(F)/R_c(F-1) at the largest distinct place in the computed range",
         },
     }
     figures_path = REPO_ROOT / "data" / "phase1_figures.json"

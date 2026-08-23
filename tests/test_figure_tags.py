@@ -21,17 +21,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # (name, figures file, documents, tags_required).
 #
-# `tags_required` is data, not a constant, because the two phases are at
-# different points in the tagging lifecycle right now: Phase 2's documents
-# are already tagged, and a document with zero tags is indistinguishable
-# from one whose tags were stripped -- both must fail (see
-# `_check_documents`'s `require_tags`). Phase 1's documents carry no tags
-# yet; a future task adds them. Marking that phase `tags_required=False` lets
-# its cases run and pass honestly in the meantime, instead of either (a)
-# hard-failing on a gap this task was not asked to close, or (b) special-
-# casing phase1 in the test bodies. When Phase 1's documents are tagged,
-# flipping this to True is the same kind of data change that adding a new
-# phase is -- not a change to test logic.
+# `tags_required` is data, not a constant, because a document with zero tags
+# is indistinguishable from one whose tags were stripped -- both must fail
+# (see `_check_documents`'s `require_tags`). Both phases are now tagged, so
+# both rows read `True` here; the field stays per-row rather than becoming a
+# bare boolean constant because a phase's documents can, in general, be
+# added and tagged on different schedules -- Phase 1 itself sat at `False`
+# while its documents were untagged, and this row is what got flipped once
+# they were (`docs/phase1.md`, `docs/phases/phase1_report.md`).
 #
 # That flip is not automatic, and forgetting it half-way is worse than
 # forgetting it outright: if one of a phase's documents gets tagged and the
@@ -43,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # lock, not the only one.
 PHASES = (
     ("phase1", ROOT / "data" / "phase1_figures.json",
-     ("docs/phase1.md", "docs/phases/phase1_report.md"), False),
+     ("docs/phase1.md", "docs/phases/phase1_report.md"), True),
     ("phase2", ROOT / "data" / "phase2_figures.json",
      ("docs/phase2.md", "docs/phases/phase2_bounds.md"), True),
 )
@@ -279,12 +276,14 @@ def test_every_real_document_carries_tags(phase):
     """And the real documents must each carry at least one, not merely be
     checkable in principle -- for phases where tags are required.
 
-    Phase 1's documents carry no tags yet (`tags_required=False`); the next
-    task adds them and flips that flag. Until then this case runs and
-    passes vacuously rather than being skipped, so a future document that
-    starts tagged but then loses its tags is still caught by
-    `test_every_tag_resolves_and_matches`'s `require_tags` check, and this
-    test still executes for the oracle-gate guard's purposes.
+    Both phases are `tags_required=True` now (Phase 1's documents were tagged
+    to close the open half of risk R-002), so this asserts for real on both.
+    The `if tags_required` guard stays rather than being dropped, so a future
+    phase added with `tags_required=False` -- documents not yet written or
+    tagged -- still runs this case and passes vacuously instead of being
+    skipped, and a document that starts tagged but later loses its tags is
+    still caught by `test_every_tag_resolves_and_matches`'s `require_tags`
+    check either way.
     """
     _name, figures_path, documents, tags_required = phase
     figures = _load(figures_path)

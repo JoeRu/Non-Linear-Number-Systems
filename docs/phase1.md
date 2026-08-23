@@ -11,6 +11,23 @@ Every figure below is read from `data/phase1_summary.json`, which is recorded in
 detailed write-up is [`docs/phases/phase1_report.md`](phases/phase1_report.md);
 this page is the summary.
 
+> **On the numbers below.** Every figure produced by `scripts/run_phase1.py` is
+> quoted with a `{fig:...}` tag and checked against `data/phase1_figures.json`
+> by `tests/test_figure_tags.py`; a quoted value that drifts from the generated
+> one fails the suite. Mathematical constants, section and equation numbers, and
+> values quoted from the literature carry no tag and are not machine-checked.
+> Wall-clock timings are excluded on purpose: they change on every run, so
+> tagging them would force a prose edit at each regeneration.
+>
+> Two further categories are generated but likewise untagged. `flat_step_positions`,
+> `place_jumps`, and `block_extrema` are reproduced in full below as a list and two
+> tables read straight from `data/phase1_summary.json`; only the specific values
+> pulled out of them into prose as headline figures — the block count, a handful of
+> individual place-jump ratios, the flat-step extremes — are promoted to a `{fig:}`
+> key and checked, not every cell of the source table. And the `dp==gf pointwise
+> for all N <= 1000000` line below is reproduced verbatim as the script's console
+> output, not tagged as a quoted figure.
+
 ---
 
 ## What licenses these numbers
@@ -42,9 +59,9 @@ cross-check. That shared dependency is pinned separately by boundary tests in
 
 | steps | increasing | flat | decreasing |
 |---|---|---|---|
-| 1,000,000 | 504,441 | 11 | 495,548 |
+| 1,000,000 {fig:census-steps} | 504,441 {fig:census-increasing} | 11 {fig:census-flat} | 495,548 {fig:census-decreasing} |
 
-**49.6% of steps strictly decrease.** The counting function is not monotone and
+**49.6 {fig:decreasing-fraction}% of steps strictly decrease.** The counting function is not monotone and
 not close to it — it is nearly a coin flip whether `R_c(N+1)` exceeds `R_c(N)`.
 
 Roadmap Phase 0 left this question open and made the choice of attack depend on
@@ -63,15 +80,16 @@ The local ratio `R_c(N+1)/R_c(N)` has these recorded order statistics:
 
 | min | p25 | median | p75 | max |
 |---|---|---|---|---|
-| 0.9853 | 0.9984 | 1.0000 | 1.0016 | 2.0 |
+| 0.9853 {fig:fluctuation-min} | 0.9984 {fig:fluctuation-p25} | 1.0000 {fig:fluctuation-median} | 1.0016 {fig:fluctuation-p75} | 2.0 {fig:fluctuation-max} |
 
 ## Result 2 — structure at the place values
 
 The ratio `R_c(F)/R_c(F−1)` was measured at every distinct place `F ≤ 10^6`:
-it is exactly 1.0 at `F = 2` (not a rise, and not a fall), above 1 and rising
-elsewhere below `F = 13` (1.5 at `F = 3`, 1.333 at `F = 8`), and monotonically
-decaying only from `F = 13` onward, reaching 1.000653 at `F = 832040`, the
-largest place in range. An earlier draft claimed decay everywhere, on the
+it is exactly 1.0 {fig:place-jump-f2} at `F = 2` (not a rise, and not a fall),
+above 1 and rising elsewhere below `F = 13` (1.5 {fig:place-jump-f3} at `F = 3`,
+1.333 {fig:place-jump-f8} at `F = 8`), and monotonically decaying only from
+`F = 13` onward, reaching 1.000653 {fig:place-jump-largest} at `F = 832040`,
+the largest place in range. An earlier draft claimed decay everywhere, on the
 strength of a sample that happened to begin at `F = 13`; the exhaustive check
 above found the two exceptions, and `tests/test_stats.py` now pins them so
 they cannot be quietly smoothed away {claim:place-jump-decay}.
@@ -79,24 +97,25 @@ they cannot be quietly smoothed away {claim:place-jump-decay}.
 ## Result 3 — extremal `N`, and a plateau that stops early
 
 Argmax and argmin of `R_c` within each Fibonacci block over `N ≤ 10^6` (29
-blocks in that range) are recorded in the summary {claim:block-extremal-n} —
+{fig:block-count} blocks in that range) are recorded in the summary {claim:block-extremal-n} —
 progress on open problem 2 of
 [`theory/01-background.md`](../theory/01-background.md) §14. Note the final block
 `[832040, 1000001)` is truncated by `n_max` rather than by the next place.
 
 A structural observation with no explanation offered: there are **exactly 11
-flat steps** over the measured range `N ≤ 10^6`, at
+{fig:flat-step-count} flat steps** over the measured range `N ≤ 10^6`, at
 
 ```
 N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78
 ```
 
-all of them below `N = 79` — nearly a million further steps over `N ≤ 10^6`
-produce no plateau at all {claim:flat-steps-end-early}.
+all of them at or below `N` = 78 {fig:flat-step-last} — nearly a million
+further steps over `N ≤ 10^6` produce no plateau at all
+{claim:flat-steps-end-early}.
 
 ## Completeness
 
-`min(counts) = 1` across the whole range — every `N ≤ 10^6` has at least one
+`min(counts)` = 1 {fig:min-count} across the whole range — every `N ≤ 10^6` has at least one
 representation, which is the Kempner–Fraenkel completeness condition holding in
 practice {claim:completeness-empirical}. This is a measurement over the
 computed range `N ≤ 10^6`, not the general statement. It was evidence toward the
@@ -112,8 +131,8 @@ It does not measure the leading asymptotic constant. Phase 0.5 already did that
 at `N = 10^3200`. At `N = 10^6` the ratio `log R_c(N)/(log N)^2` is far below its
 limit — squarely pre-asymptotic — so fitting the four-term expansion to this data
 would describe the pre-asymptotic regime convincingly and wrongly. `R_c(10^6)`
-is a 99-bit integer; the plan's assumption that exact counts would overflow was
-wrong, and no log-domain path was needed.
+is a 99 {fig:rc-bit-length}-bit integer; the plan's assumption that exact
+counts would overflow was wrong, and no log-domain path was needed.
 
 ## Reproducing it
 
