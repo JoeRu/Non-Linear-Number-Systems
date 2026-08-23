@@ -102,20 +102,28 @@ def ladder(n_max: int) -> list[int]:
 
 
 def _n_max_type(raw: str) -> int:
-    """argparse type for --n-max: reject anything below 2.
+    """argparse type for --n-max: reject anything below 8.
 
-    n_max=0 divides by zero in the decreasing-steps percentage; n_max in
-    {0, 1} leaves local_ratios empty, so the quantile indexing raises;
-    n_max=1 also divides by log(1)**2 == 0 in the CSV ratio column; negative
-    values leave the counts array empty, so min(c) raises. All of these are
-    confusing crashes deep in analysis code rather than a clear rejection at
-    the argument boundary.
+    Two floors, and the argument boundary enforces the higher of them.
+
+    Below 2 the analysis code crashes confusingly: n_max=0 divides by zero in
+    the decreasing-steps percentage; n_max in {0, 1} leaves local_ratios
+    empty, so the quantile indexing raises; n_max=1 divides by log(1)**2 == 0
+    in the CSV ratio column; negative values leave the counts array empty, so
+    min(c) raises.
+
+    Below 8 the run cannot produce its figures file: `place-jump-f8` needs the
+    place F=8, and a run that always writes figures cannot accept an argument
+    that guarantees it will refuse to. Accepting 2..7 and then failing a
+    runtime precondition made the CLI contract say one thing and the script do
+    another, so the floor lives here instead.
     """
     n = int(raw)
-    if n < 2:
+    if n < 8:
         raise argparse.ArgumentTypeError(
-            f"--n-max must be >= 2 (got {n}); N=0 and N=1 have no ratio to "
-            f"compute and negative N is not meaningful"
+            f"--n-max must be >= 8 (got {n}); below 2 there is no ratio to "
+            f"compute, and below 8 the run cannot reach Fibonacci place F=8, "
+            f"which the place-jump figures require"
         )
     return n
 
@@ -193,11 +201,14 @@ def main() -> int:
     jump_by_place = {j["place"]: j["ratio"] for j in jumps}
     if 8 not in jump_by_place:
         # The place-jump-f2/f3/f8 figures below assume the run reaches
-        # Fibonacci place F=8, i.e. n_max >= 8. --n-max legally accepts
-        # values down to 2 (see _n_max_type), so this is reachable, not
-        # theoretical -- and every other precondition in this function
-        # prints a clear message and returns 1 rather than crashing with a
-        # raw traceback, so this one follows suit instead of asserting.
+        # Fibonacci place F=8, i.e. n_max >= 8. _n_max_type now rejects
+        # anything below 8, so no CLI invocation reaches here; this stays as
+        # the second line of defence for callers that import main() and
+        # build args themselves, and because a figures file silently missing
+        # a key is worse than a refusal. Every other precondition in this
+        # function prints a clear message and returns 1 rather than crashing
+        # with a raw traceback, so this one follows suit instead of
+        # asserting.
         print(f"PRECONDITION FAILED: --n-max {n_max} does not reach "
               f"Fibonacci place F=8; the place-jump-f2/f3/f8 figures assume "
               f"it does.")
@@ -413,7 +424,12 @@ def main() -> int:
             "description": "number of Fibonacci blocks with recorded extrema over the computed range",
         },
         "rc-value": {
-            "value": c[n_max],
+            # Serialised as a string, matching how phase1_summary.json stores
+            # R_c_at_n_max. It is a 99-bit integer: Python's json reads it
+            # losslessly either way, but a JSON consumer backed by doubles
+            # silently rounds anything past 2**53, and this artifact is meant
+            # to be readable outside this repository.
+            "value": str(c[n_max]),
             "precision": 0,
             "description": "exact value of R_c at the largest N computed",
         },

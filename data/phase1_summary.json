@@ -1,9 +1,9 @@
 {
   "n_max": 1000000,
-  "git_rev": "e881df57a7c0bf6b9eac924b9598e65f89f09b40",
+  "git_rev": "80b7aac431fdb1d0b85ea15bbdb093d067aec9c9",
   "crosscheck": "dp==gf pointwise for all N <= 1000000",
-  "gf_seconds": 8.9,
-  "dp_seconds": 286.1,
+  "gf_seconds": 10.0,
+  "dp_seconds": 293.1,
   "peak_rss_mb": 274,
   "census": {
     "increasing": 504441,

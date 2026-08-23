@@ -108,11 +108,20 @@ def _load(figures_path):
 
 
 def _format(entry):
-    """Render a stored figure at its recorded precision."""
+    """Render a stored figure at its recorded precision.
+
+    A value stored as a string is passed through unchanged. Figures that
+    exceed a double's exact-integer range are serialised as strings so a
+    JSON consumer backed by doubles cannot silently round them, and rounding
+    such a value here to "render" it would reintroduce exactly that loss.
+    """
+    value = entry["value"]
+    if isinstance(value, str):
+        return value
     precision = entry["precision"]
     if precision == 0:
-        return str(int(round(entry["value"])))
-    return f"{entry['value']:.{precision}f}"
+        return str(int(round(value)))
+    return f"{value:.{precision}f}"
 
 
 def _split_by_existence(root, documents):
@@ -501,10 +510,19 @@ def _claim_checker_prose_paths():
     Imported from the script rather than restated, so the two lists cannot be
     kept in step by memory alone.
     """
-    sys.path.insert(0, str(ROOT / "scripts"))
-    import check_claims  # noqa: PLC0415
+    scripts_dir = str(ROOT / "scripts")
+    sys.path.insert(0, scripts_dir)
+    try:
+        import check_claims  # noqa: PLC0415
 
-    return tuple(check_claims.SEARCH_DIRS) + tuple(check_claims.SEARCH_FILES)
+        return tuple(check_claims.SEARCH_DIRS) + tuple(check_claims.SEARCH_FILES)
+    finally:
+        # Leaving the entry behind makes later imports in the same session
+        # order-dependent on whether this test ran.
+        try:
+            sys.path.remove(scripts_dir)
+        except ValueError:
+            pass
 
 
 def test_doc_search_roots_cover_the_claim_checker_trees():

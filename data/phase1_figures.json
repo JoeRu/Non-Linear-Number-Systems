@@ -112,6 +112,6 @@
   "rc-value": {
     "description": "exact value of R_c at the largest N computed",
     "precision": 0,
-    "value": 489526578056005407591009119276
+    "value": "489526578056005407591009119276"
   }
 }
