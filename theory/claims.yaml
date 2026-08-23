@@ -19,26 +19,38 @@
 - id: completeness-no-gaps
   statement: "Every integer in [0, sum_{k<=n} F_k^2] has at least one representation."
   status: theorem
-  evidence: "Kempner-Fraenkel condition F_k <= 1 + F_{k-1} F_k; theory/01-background.md §3"
+  evidence: "Overlapping-interval induction in theory/01-background.md §3, valid for the duplicated 1-place; formalised in Lean as exists_numeral_of_le in lean/NonLinearNumberSystems/Completeness.lean"
   source: "Fraenkel 1985, Systems of Numeration"
 
 - id: leading-constant
-  statement: "log R_c(N) ~ (log N)^2 / (4 log phi)."
-  status: conjecture
-  evidence: "docs/roadmap.md Phase 3 heuristic; see claim gate-local-slope"
-  source: "this project"
+  statement: "log R_c(N) ~ (log N)^2 / (4 log phi). Equivalently, the limit of log R_c(N)/(log N)^2 exists and equals 1/(4 log phi) = 0.5195217... . This is C5; it is a statement about the limit, not a pointwise one, and it says nothing about any individual N."
+  status: theorem
+  evidence: "Proved in docs/phases/phase2_bounds.md section 8 (Lemma F, T5, C5), the lower half being new and the upper half being T2; the completeness step Lemma F rests on is formalised in Lean as exists_numeral_of_le in lean/NonLinearNumberSystems/Completeness.lean"
+  source: "this project, Phase 2"
 
 - id: gate-local-slope
-  statement: "The leading coefficient of the Legendre-transform upper bound on log R_c(N) measures 0.518710 at N = 10^3200, rising monotonically toward 1/(4 log phi) = 0.519522. This bounds C_c from above, excluding 1/(2 log phi); excluding 1/(8 log phi) additionally requires saddle-tightness."
+  statement: "The local slope of the Legendre-transform upper bound on log R_c(N) against (log N)^2 measures 0.518710 at N = 10^3200, rising monotonically across the sampled exponents 50..3200 toward 1/(4 log phi) = 0.519522. This is a measurement of the transform at finitely many N. It does NOT bound C_c: a leading coefficient is a limit, and finitely many sampled slopes constrain no limit. Both rival candidates are excluded on paper instead -- 1/(2 log phi) = 1.039022 by T2 together with T1, and 1/(8 log phi) = 0.259761 by C5 (claim leading-constant), unconditionally and by a route that does not pass through this measurement at all. Note the direction, since it was once recorded backwards: the measured slopes lie BELOW 1/(2 log phi) and ABOVE 1/(8 log phi)."
   status: verified-numeric
   evidence: "data/phase0_5_gate.csv via scripts/run_phase0_gate.py"
   source: "docs/phases/phase0_5_gate.md"
 
 - id: saddle-tightness
-  statement: "The saddle-point correction to min_s [sN + log F_c(e^-s)] is of lower order than (log N)^2, so the Legendre transform and log R_c(N) share a leading coefficient."
-  status: heuristic
-  evidence: "Standard for generating functions of this type; not established here. Required before the Phase 0.5 measurement can bound C_c from below as well as above."
+  statement: "The saddle-point correction to min_s [sN + log F_c(e^-s)] is of lower order than (log N)^2, so the Legendre transform and log R_c(N) share the leading coefficient 1/(4 log phi)."
+  status: theorem
+  evidence: "Follows from T1, T2 and T5 of docs/phases/phase2_bounds.md. T1 puts log R_c(N) at or below the transform. T2 applied at s = t/(2 log phi N) puts the transform at or below t^2/(4 log phi) - t log t/(2 log phi) + O(t), with t = log N, since that s is one candidate in the minimum. T5 puts log R_c(N) at or above t^2/(4 log phi) - t log t/(2 log phi) - 7.5 t. The t^2 and t log t terms cancel between the two, so the correction is O(t) = O(log N) -- stronger than the o((log N)^2) this claim asserts, and stronger than the O(t log t) a looser reading gives. Measured, the correction is close to log N itself. The chernoff_certified column of data/phase2_bounds.csv is log_R_bound_certified(n) -- a certified upper bound evaluated at a numerically located minimiser, hence at or above Lambda(N), so the ratio it yields over-estimates the correction. That ratio, (chernoff_certified - log R_c)/log N, runs 1.379, 1.085, 1.025, 0.999, 0.987, 0.981 at N = 8, 10^2, 10^3, 10^4, 10^5, 10^6. This is a consequence of Phase 2, not of the Phase 5 saddle-point analysis it was originally expected to need."
+  source: "this project, Phase 2"
+
+- id: saddle-correction-constant
+  statement: "The saddle-point correction D(N) = Lambda(N) - log R_c(N), where Lambda(N) = min_s [sN + log F_c(e^-s)], has a determined leading coefficient in log N -- that is, D(N)/log N converges. The ORDER is settled by Phase 2 (0 <= D(N) <= K log N, see claim saddle-tightness); what is open is the constant, and whether the ratio converges at all. This is NOT the same question as claim secondary-term-constant, and the two must not be identified."
+  status: open
+  evidence: "Not established. The order follows from T1, T2 and T5 of docs/phases/phase2_bounds.md; the constant does not, because T2's error term is a bound O(t) and never an asymptotic constant, while T5's is -7.5 t, so the two do not meet. Numerically the measured ratio (which over-estimates D(N)/log N, since the CSV column is a certified bound at or above Lambda) is still drifting downward through 0.981 at N = 10^6, so the numerics name no candidate constant either."
   source: "Phase 5 rigorisation target"
+
+- id: secondary-term-constant
+  statement: "c_2 exists in log R_c(N) = (log N)^2/(4 log phi) - (log N)(loglog N)/(2 log phi) + c_2 log N + o(log N). This is the c_2 of research question (B) in theory/00-definitions.md. Under the normalisation used in docs/roadmap.md Phase 3, which factors 1/log phi out of every term, the same constant is written C_2."
+  status: open
+  evidence: "Not established. Phase 2 pins the first two coefficients -- T2's effective form and T5 carry the same t^2 and t log t terms, with t = log N -- but bounds the remainder only by an unspecified O(t) from above (T2) and by -7.5 t from below (T5). Writing Lambda(N) = t^2/(4 log phi) - t log t/(2 log phi) + E(N), one has c_2 = lim (E(N) - D(N))/t whenever both limits exist, so this is a strictly different open question from claim saddle-correction-constant: settling D's coefficient would not settle c_2 unless E's coefficient were also known, and E's is not -- T2 bounds E, it does not evaluate it."
+  source: "research question (B); Phase 5 rigorisation target"
 
 - id: dp-gf-agree-to-nmax
   statement: "capfib.dp and capfib.gf agree on every coefficient of R_c(N) for N <= 1000000."
@@ -53,9 +65,9 @@
   source: "this project, Phase 1"
 
 - id: place-jump-decay
-  statement: "R_c(F)/R_c(F-1) at distinct place values equals exactly 1.0 at F=2, rises at F=3 and F=8, and decays monotonically toward 1 only from F=13 onward. It does NOT exceed 1 at every place, and is NOT monotone overall."
+  statement: "Over the distinct place values F <= 1000000, R_c(F)/R_c(F-1) equals exactly 1.0 at F=2, rises at F=3 and F=8, and decays monotonically from F=13 up to the largest place in that range, F=832040. It does NOT exceed 1 at every place in the range, and is NOT monotone over it. The decay is an observation over the measured range; no behaviour beyond F=832040 is asserted, and neither is a limit."
   status: verified-numeric
-  evidence: "data/phase1_summary.json (place_jumps field), checked exhaustively over every distinct place F <= 1000000"
+  evidence: "data/phase1_summary.json (place_jumps field), checked exhaustively at every distinct place F <= 1000000 -- 30 places, the largest 832040"
   source: "this project, Phase 1"
 
 - id: block-extremal-n
@@ -83,7 +95,25 @@
   source: "this project, Phase 1"
 
 - id: completeness-empirical
-  statement: "min(counts) = 1 over N <= 1000000: every N in this range has at least one representation. This is a measurement over the computed range, not the general completeness statement -- the Lean theorem exists_numeral_of_le (see claim completeness-no-gaps) remains a `sorry`. This claim is evidence toward that theorem, not a substitute for it."
+  statement: "min(counts) = 1 over N <= 1000000: every N in this range has at least one representation. This is a measurement over the computed range, not the general completeness statement. It was evidence toward the Lean theorem exists_numeral_of_le (see claim completeness-no-gaps), which Phase 2 proved with no `sorry`; it is not a substitute for that proof."
   status: verified-numeric
   evidence: "data/phase1_summary.json (min_count field)"
   source: "this project, Phase 1"
+
+- id: sandwich-bounds
+  statement: "1/(8 log phi) <= liminf log R_c(N)/(log N)^2 <= limsup log R_c(N)/(log N)^2 <= 1/(4 log phi). This is C4. It bounds the liminf and limsup only and on its own does not assert that the limit exists; existence, and the value 1/(4 log phi), come from C5 (claim leading-constant), which supersedes C4's lower half and is proved by a different construction. C4 remains true and is retained: T3's lower bound stands as proved, and C4 is the weaker statement T5 improves on."
+  status: theorem
+  evidence: "Proved in docs/phases/phase2_bounds.md (T1, T2, T3, C4); the fixup step is formalised in Lean as exists_numeral_of_le in lean/NonLinearNumberSystems/Completeness.lean"
+  source: "this project, Phase 2"
+
+- id: chernoff-effective-verified
+  statement: "The certified Chernoff bound log R_c(N) <= s N + log F_c(e^-s) was checked against the exact value at each of the 37 sampled N in data/phase1_data.csv, which span 2 to 1000000, and held -- strictly -- at each of them. The smallest slack over the sample is 1.94, at N = 2. This is a check at 37 points, not at every N <= 1000000."
+  status: verified-numeric
+  evidence: "data/phase2_bounds.csv via scripts/run_phase2.py, gated on the float and certified evaluations agreeing to 1e-12 in the same run"
+  source: "this project, Phase 2"
+
+- id: product-residual-sampled
+  statement: "The residual log F_c(e^-s) - (log(1/s))^2/(4 log phi) was evaluated at eight sampled values of t = log(1/s) in [10, 1280]. Over the full sweep its spread is 0.018236, driven by the single pre-asymptotic point t = 10, where it reads 3.209239; over the seven samples with t >= 20 it sits at 3.227397 with a spread of 1.78e-4. This is a sampled observation at those eight points: it is not a proved O(1) error term (T2 establishes O(T), and nothing here upgrades that), and it says nothing about s between or beyond the samples."
+  status: verified-numeric
+  evidence: "data/phase2_residual.csv via scripts/run_phase2.py, each sampled point gated on the float and certified evaluations agreeing to 1e-12"
+  source: "this project, Phase 2"

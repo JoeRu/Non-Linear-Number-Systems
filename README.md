@@ -7,6 +7,21 @@ The problem sits between two solved cases: binary partitions (Mahler 1940, de Br
 and uncapped Fibonacci partitions (Coons–Kristensen–Laursen 2023). The position-dependent
 cap breaks the simplifications both rely on.
 
+## Where the programme stands
+
+Phase 2 settles the leading constant: the limit of `log R_c(N)/(log N)^2` exists and equals
+`1/(4 log phi) = 0.5195217...` ({claim:leading-constant}). It is a statement about the
+limit and nothing more — it pins no individual value of `R_c(N)`, and the secondary term
+is still open. The proof is a sandwich: a Chernoff upper bound against an explicit
+lower-bound construction, written out in
+[`docs/phases/phase2_bounds.md`](docs/phases/phase2_bounds.md) and summarised in
+[`docs/phase2.md`](docs/phase2.md), which is the place to start.
+
+The asymptotics are paper proofs. What is machine-checked is the elementary combinatorial
+layer they rest on — the place recurrence, `sum_{k<=n} F_k^2 = F_n F_{n+1}`, completeness,
+and non-uniqueness — formalised in Lean under `lean/` with no `sorry`. `theory/claims.yaml`
+records which is which, and `scripts/check_claims.py` enforces it.
+
 ## Layout
 
 | Path | Contents |

@@ -10,4 +10,5 @@ cd "$REPO_ROOT/lean"
 lake build
 
 echo ""
-echo "Build successful!  All theorems type-check (modulo sorry)."
+echo "Build successful!  All declarations type-check."
+echo "(lake build warns on any declaration that uses 'sorry'; read the output above.)"

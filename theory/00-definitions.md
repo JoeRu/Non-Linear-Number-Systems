@@ -13,7 +13,12 @@ Defined in code exactly once, in `capfib/fib.py`.
 
 - `R_c(N)` — the number of sequences `(d_k)` with `0 <= d_k <= F_k` and `sum_k d_k F_k = N`.
   The index `k` ranges over **all** places with `F_k <= N` {claim:place-range}.
-- `R_u(N)` — as above with `d_k` unbounded (Coons–Kristensen–Laursen 2023).
+- `R_u(N)` — as above with `d_k` unbounded. Related to the partition function of
+  Coons–Kristensen–Laursen 2023, but **not yet verified to be the same object**: their `p_F(n)`
+  counts multisets of Fibonacci numbers, whereas `R_u` counts digit sequences over places
+  including both `F_1 = 1` and `F_2 = 1`, so the two differ by a splitting factor. The factor is
+  expected to be `o(exp((log N)^2))` and therefore harmless to leading order; establishing that
+  requires the paper, which this project does not hold.
 - `b(N)` — the binary partition function (Mahler 1940, de Bruijn 1948).
 
 ## Generating function
@@ -23,7 +28,11 @@ Defined in code exactly once, in `capfib/fib.py`.
 
 ## Research questions
 
-- **(A)** Does `C_c` exist with `log R_c(N) ~ C_c (log N)^2`?
+- **(A)** Does `C_c` exist with `log R_c(N) ~ C_c (log N)^2`? — **answered, Phase 2:**
+  yes, and `C_c = 1/(4 log phi)` ({claim:leading-constant}, C5 of
+  `docs/phases/phase2_bounds.md` §8). The weaker two-sided bound on the liminf and
+  limsup ({claim:sandwich-bounds}, C4) is a distinct and still-true statement, and it
+  is what C5 improves on.
 - **(B)** `log R_c(N) = C_c (log N)^2 + c_1 log N loglog N + c_2 log N + osc + o(1)`?
 - **(C)** If oscillations exist, are they periodic in `log_phi N`, and with what period?
 
@@ -33,9 +42,11 @@ Primary focus: (A) and (B). (C) is deferred to Phase 6.
 
 | Statement | Status |
 |---|---|
-| `log R_u(N) ~ (log N)^2 / (2 log phi)` | theorem, cited (CKL 2023) |
+| `log R_u(N) ~ (log N)^2 / (2 log phi)` | cited (CKL 2023), **pending verification** that `R_u` is their object |
 | Completeness: no gaps on `[0, sum F_k^2]` | theorem {claim:completeness-no-gaps} |
 | `sum_{k<=n} F_k^2 = F_n F_{n+1}` | theorem {claim:sum-of-squares} |
-| `C_c = 1 / (4 log phi)` | conjecture {claim:leading-constant} |
-| Saddle-point bound tightness | heuristic {claim:saddle-tightness} |
+| `C_c = 1 / (4 log phi)` | theorem {claim:leading-constant} (Phase 2, C5) |
+| Saddle-point bound tightness (correction is `o((log N)^2)`) | theorem {claim:saddle-tightness} (Phase 2, from T1+T2+T5) |
+| Saddle-point correction has a determined coefficient in `log N` | open {claim:saddle-correction-constant} |
+| `c_2` exists in the expansion of question (B) | open {claim:secondary-term-constant} — a *different* question from the row above |
 | Oscillation structure | open |

@@ -55,10 +55,29 @@ wording, or write a paragraph that leans on a conjecture, read it yourself and
 ask whether a reader would come away believing something stronger than the
 ledger says. That judgement is not automatable and the check does not replace it.
 
+**Promotion silently removes the guard.** The hedging check applies only to
+paragraphs citing a `conjecture` or `heuristic`. The moment a claim is promoted
+to `theorem`, every paragraph citing it stops being checked — in the same commit
+that makes those paragraphs stale, because they were written to hedge a claim
+that no longer needs hedging. So a promotion is exactly when the prose most
+needs re-reading and exactly when the tool stops looking. This is structural,
+not a one-off: every future promotion repeats it. Observed on this project when
+`leading-constant` moved from `conjecture` to `theorem` in Phase 2. **After
+promoting any claim, grep for its id and read every citing paragraph by hand.**
+
 Strengthening candidates, if this ever bites: split on list items and table
 rows rather than blank lines; scope the hedge to the sentence containing the
 citation; detect negation around the marker.
 
-The distinction this enforces is the epistemic content of the project. Phase 3
-produces a heuristic; Phase 5 produces the theorem. Months separate them —
-long enough for the difference to blur without a mechanical check.
+The distinction this enforces is the epistemic content of the project, and the
+roadmap's original division of labour — Phase 3 produces the heuristic, Phase 5
+produces the theorem — no longer describes where things stand. C5 of
+`docs/phases/phase2_bounds.md` §8 proved the leading constant in **Phase 2**,
+elementarily and without a saddle point, so `leading-constant` is a `theorem`
+already. What Phase 3 still owes is an *explanation* of that constant from the
+saddle point, and what Phase 5 still owes is the secondary term
+(`saddle-correction-constant` and `secondary-term-constant`, both open).
+
+That a phase can deliver a result years earlier than planned is exactly why
+the check is mechanical: the statuses moved, and every paragraph written
+against the old plan went stale in the same commit.

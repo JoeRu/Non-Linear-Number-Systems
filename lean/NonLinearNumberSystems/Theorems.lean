@@ -10,16 +10,38 @@
   * `place_add_two`          — the place values satisfy the Fibonacci recurrence
   * `sum_sq_place`           — `∑_{k ≤ n} F_k² = F_n · F_{n+1}` (not in Mathlib)
   * `value_le_sum_sq`        — an `n`-place numeral cannot exceed that bound
+  * `exists_numeral_of_le`   — completeness: every `N` up to that bound is
+                                represented, by greedy descent
   * `exists_two_numerals_same_value` — **"1 > 1"**: two distinct numerals share
                                 a value, because F 1 = F 2 = 1
   * `value_not_injective`    — the evaluation map is not injective
+  * `countReps_le_uncapped`  — `countReps n N ≤ countRepsUncapped n N`: at a
+                                FIXED number of places `n`, capping digits
+                                cannot create representations, so the capped
+                                count is bounded by the uncapped one. Note the
+                                length index: this is the length-indexed
+                                inequality, **not** the all-places
+                                `R_c(N) ≤ R_u(N)` of §1 of the technical note,
+                                and no Lean theorem here bridges the two
+                                (`R_c(N)` sums over every place `F_k ≤ N`, not
+                                over a fixed length). Not a step of the Phase 2
+                                upper bound either, which is sharper and is a
+                                *paper* result — proved on paper in
+                                `docs/phases/phase2_bounds.md` (T2), not here,
+                                so it carries none of the machine-checked
+                                force the rest of this section does. This
+                                declaration supports only the comparison
+                                against Coons–Kristensen–Laursen. See
+                                `docs/phase2.md` §"It does not use
+                                Coons–Kristensen–Laursen" for the same
+                                statement of scope.
 
   ## What is open
 
-  * `exists_numeral_of_le`   — completeness (Phase 2); the greedy descent
-  * `countReps_le_uncapped`  — `R_c(N) ≤ R_u(N)` (Phase 2)
+  Nothing. The Lean development contains no `sorry`.
 
-  Each open statement carries a `sorry` and a proof sketch. A `sorry` is a
+  Any statement added here without a proof carries a `sorry` and a proof
+  sketch, and is listed in this section until it is discharged. A `sorry` is a
   statement; replacing one with a wrong proof is worse than leaving it open.
 
   ## What is deliberately NOT here

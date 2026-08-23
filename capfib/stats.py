@@ -52,8 +52,13 @@ def local_ratios(counts: Sequence[int]) -> list[float]:
     """r[n] = counts[n+1] / counts[n] for n = 0 .. len-2.
 
     The division is guarded by an explicit check (raising `ValueError`) rather
-    than by appealing to completeness: completeness is still a `sorry` in the
-    Lean development, so it is not something this code may lean on.
+    than by appealing to completeness. Completeness now holds -- it is proved
+    in Lean as `exists_numeral_of_le`, with no `sorry` -- but this function
+    still does not depend on it: it accepts an arbitrary counts array, which
+    the caller may have built over any range or by any route, so `min(counts)
+    >= 1` is a precondition on the argument rather than a consequence of a
+    theorem about R_c. Checking it here is local, cheap, and gives a named
+    error instead of a ZeroDivisionError from inside a comprehension.
     """
     if min(counts) < 1:
         raise ValueError("counts must be positive; local_ratios would divide by zero")
@@ -66,9 +71,13 @@ def place_jumps(counts: Sequence[int]) -> list[dict]:
     Distinctness matters: F_1 = F_2 = 1 is a single place, and F = 1 has no
     predecessor in range.
 
-    The result is NOT monotone. Measured: the ratio is exactly 1.0 at F = 2,
-    rises at F = 3 and again at F = 8, and only decays monotonically from
-    F = 13 onward. Reporting it as a clean decay law would be wrong.
+    The result is NOT monotone. Measured over the distinct places F <= 10^6
+    (30 place values, of which 29 have a predecessor in range): the ratio is
+    exactly 1.0 at F = 2, rises at F = 3 and again at F = 8, and decays
+    monotonically from F = 13 up to the largest place measured, F = 832040.
+    That is a finite observation over that range, not a law: nothing here
+    establishes the decay continues beyond it. Reporting it as a clean decay
+    law would be wrong twice over.
     """
     n_max = len(counts) - 1
     out: list[dict] = []

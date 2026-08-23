@@ -1,0 +1,112 @@
+{
+  "chernoff-certified-nmax": {
+    "description": "certified Chernoff bound at the largest N verified",
+    "precision": 4,
+    "value": 81.9137461608127
+  },
+  "chernoff-slack-nmax": {
+    "description": "certified bound minus exact log R_c at the largest N verified",
+    "precision": 4,
+    "value": 13.55050989314185
+  },
+  "counting-places-nmax": {
+    "description": "number of counting places at the largest N verified",
+    "precision": 0,
+    "value": 14
+  },
+  "fixup-block-nmax": {
+    "description": "fixup block boundary a at the largest N verified",
+    "precision": 0,
+    "value": 16
+  },
+  "flatness-slack-a-max": {
+    "description": "largest block length at which Lemma F's slack was measured",
+    "precision": 0,
+    "value": 16
+  },
+  "flatness-slack-slope": {
+    "description": "least-squares slope, per unit of a, of Lemma F's slack lambda a^2/2 - log(exact band minimum of B(a, .)) over a = 8..16; Lemma F proves this slope is at most 3.5057",
+    "precision": 4,
+    "value": 1.5230255273797673
+  },
+  "log-rc-nmax": {
+    "description": "exact log R_c at the largest N verified",
+    "precision": 4,
+    "value": 68.36323626767086
+  },
+  "lower-constant": {
+    "description": "1 / (8 log phi), the T3 lower constant",
+    "precision": 4,
+    "value": 0.2597608651543784
+  },
+  "n-max-verified": {
+    "description": "largest N at which the certified bound was verified",
+    "precision": 0,
+    "value": 1000000
+  },
+  "ratio-nmax": {
+    "description": "log R_c(N) / (log N)^2 at the largest N verified",
+    "precision": 4,
+    "value": 0.35816961126809205
+  },
+  "residual-asymptotic-centre": {
+    "description": "mean residual over the samples with t >= 20 (the asymptotic regime; excludes the pre-asymptotic t=10 point)",
+    "precision": 4,
+    "value": 3.227396794550702
+  },
+  "residual-asymptotic-spread": {
+    "description": "max minus min residual over the samples with t >= 20",
+    "precision": 6,
+    "value": 0.0001781687401205545
+  },
+  "residual-asymptotic-t-min": {
+    "description": "smallest sampled t in the asymptotic-regime subset (t >= RESIDUAL_ASYMPTOTIC_T_MIN)",
+    "precision": 0,
+    "value": 20.0
+  },
+  "residual-centre": {
+    "description": "mean residual of log F_c against its leading term over the sampled t",
+    "precision": 4,
+    "value": 3.225127125158062
+  },
+  "residual-full-spread": {
+    "description": "max minus min residual over all sampled t in [10, 1280], including the pre-asymptotic t=10 point",
+    "precision": 6,
+    "value": 0.018236084771913852
+  },
+  "residual-t-max": {
+    "description": "largest sampled t = log(1/s) in the residual sweep",
+    "precision": 0,
+    "value": 1280.0
+  },
+  "residual-t-min": {
+    "description": "smallest sampled t = log(1/s) in the residual sweep",
+    "precision": 0,
+    "value": 10.0
+  },
+  "t3-lower-nmax": {
+    "description": "T3 construction evaluated at the largest N verified",
+    "precision": 3,
+    "value": 17.774241561357528
+  },
+  "t5-block-nmax": {
+    "description": "T5 block boundary a at the largest N verified",
+    "precision": 0,
+    "value": 16
+  },
+  "t5-log-block-nmax": {
+    "description": "the T5 construction's block factor -- the proved flatness bound on log B(a, m) -- at the largest N verified",
+    "precision": 3,
+    "value": 24.765166560659768
+  },
+  "t5-lower-nmax": {
+    "description": "T5 construction evaluated at the largest N verified",
+    "precision": 3,
+    "value": 39.80228549800129
+  },
+  "upper-constant": {
+    "description": "1 / (4 log phi), the T2 upper constant",
+    "precision": 4,
+    "value": 0.5195217303087568
+  }
+}

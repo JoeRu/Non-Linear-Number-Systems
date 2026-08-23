@@ -114,16 +114,29 @@ with no gaps.
 
 For the article's four places: `1 + 1 + 4 + 9 = 15 = F₄·F₅ = 3·5`. ✓
 
-**Why there are no gaps.** A digit system with place values `u₁ < u₂ < …` and digit
-bounds `m₁, m₂, …` represents every integer up to `Σ m_k u_k` without gaps precisely when
+**Why there are no gaps.** Let `S_n = Σ_{k≤n} F_k²` be the capacity of the first `n` places.
+Every integer in `[0, S_n]` is representable, by induction on `n`. For `n = 0` the range is
+`{0}`. For the step, given `N ≤ S_{n+1} = S_n + F_{n+1}²`, take the top digit
+`d_{n+1} = min(F_{n+1}, ⌊N / F_{n+1}⌋)`
+and the residue `r = N − d_{n+1} F_{n+1}`. If `N ≥ F_{n+1}²` then `d_{n+1} = F_{n+1}` and
+`r = N − F_{n+1}² ≤ S_n`. Otherwise `d_{n+1} = ⌊N/F_{n+1}⌋`, so `r = N mod F_{n+1} < F_{n+1} ≤ S_n`
+for `n ≥ 1` (and `r = 0` for `n = 0`, where the place value is 1). Either way the induction
+hypothesis applies to `r`.
 
-```
-u_k  ≤  1 + Σ_{j<k} m_j u_j        for every k
-```
+The overlapping-interval induction above is elementary and self-contained. The completeness
+condition for numeration systems more generally is due to Kempner and Fraenkel (Fraenkel 1985);
+the form usually stated, `u_k ≤ 1 + Σ_{j<k} m_j u_j` for `u_1 < u_2 < …`, assumes strictly
+increasing place values — which is why the induction is written out here rather than invoked,
+since `F_1 = F_2 = 1` does not satisfy that hypothesis.
 
-(the Kempner–Fraenkel completeness condition; the greedy algorithm then always
-succeeds). Here `u_k = m_k = F_k`, so the condition reads `F_k ≤ 1 + F_{k−1}F_k`, which is
-true for all *k* with enormous room to spare. That slack is exactly the redundancy.
+The condition the induction above actually needs, `F_n ≤ 1 + Σ_{j<n} F_j²`, holds for every `n`,
+but the slack is not uniform: at `n = 1` it is a tight equality, `F_1 = 1 ≤ 1 + 0 = 1`, since the
+capacity of zero preceding places is exactly 0 — that is the duplicated-1-place boundary this
+argument is built to cover. From `n = 2` onward the slack grows without bound. That slack,
+wherever it appears, is exactly the redundancy.
+
+This argument is formalised in Lean as `exists_numeral_of_le`
+(`lean/NonLinearNumberSystems/Completeness.lean`).
 
 **Impact.** Completeness is the property that makes this a genuine numeration system
 rather than a curiosity. Note that the *ordinary* Fibonacci base (digits `{0,1}`) is
@@ -526,6 +539,13 @@ this exact form.
    Conjecture worth testing numerically: `log R(N) ~ c·(log N)²` with an explicit *c*,
    with bounded oscillation in the fractional part of `log_φ N`.
 
+   **Answered in part (Phase 2).** The first half is settled: the limit exists and
+   `c = 1/(4 log phi)` ({claim:leading-constant}, C5 of
+   `docs/phases/phase2_bounds.md` §8). The oscillation half is untouched and is
+   still question (C) of `theory/00-definitions.md`. The rest of this section is
+   left as it was written — it is a reading record of the article, not a status
+   board.
+
 2. **Extremal numerals.** Which integers have the most / fewest representations at each
    length? (From the table: for *n* = 10 the maximum is 510 384 against an average of
    319 595 — the distribution is not sharply concentrated. Which *N* achieves it?)
@@ -600,8 +620,11 @@ for n in range(1, 11):
           "gaps:", counts.count(0))
 ```
 
-Running this reproduces the table in §4, and confirms `counts.count(0) == 0` at every
-length — the completeness claim of §3, verified empirically.
+Running this reproduces the table in §4, and confirms `counts.count(0) == 0` at each of
+the lengths the loop covers, `n = 1` to `10`. That is the completeness claim of §3
+checked over those ten lengths, not at every length: the loop is finite. Completeness
+itself is not left resting on it — it is proved for all lengths in Lean, as
+`exists_numeral_of_le`, with no `sorry`.
 
 ---
 

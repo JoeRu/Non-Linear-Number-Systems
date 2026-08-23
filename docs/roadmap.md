@@ -51,6 +51,7 @@ dafür schon existiert.
 - [x] Fibonacci-Konvention festgelegt: $F_1=F_2=1$, $F_3=2$, $F_4=3$, $F_5=5$ — `425b503`, `860dd5b`
 - [x] $R_c$, $R_u$, $b$ präzise definiert; $R_c$ über **alle** Stellen $F_k \le N$ — `625ce82`
 - [x] Forschungsfragen (A), (B), (C) formuliert — `625ce82`
+      ((A) „Existiert $C_c$?“ ist seit Phase 2 **beantwortet**: ja, $C_c = 1/(4\log\varphi)$ — `43397a2`)
 - [x] Deliverable `theory/00-definitions.md` — `625ce82`
 - [x] Bekannt / Konjektur / offen im Ledger getrennt — `625ce82`
 
@@ -59,6 +60,9 @@ dafür schon existiert.
 - [x] `scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png` — `1d218a6`
 - [x] Messung: lokale Steigung **0.518710** bei $N = 10^{3200}$ gegen $1/(4\log\varphi) = 0.519522$ {claim:gate-local-slope} — `1d218a6`
 - [x] Ergebnis korrekt als *obere* Schranke formuliert; $1/(8\log\varphi)$ nur unter Sattelpunkt-Straffheit ausgeschlossen — `1b4dca0`, `3c97822`
+      (**Nachtrag Phase 2:** Der Vorbehalt ist entfallen — C5 schließt $1/(8\log\varphi)$
+      unbedingt aus, auf einem Weg, der diese Messung gar nicht benutzt; die Messung selbst
+      ist davon unberührt — `30da98a`)
 - [x] Deliverable `docs/phases/phase0_5_gate.md` — `1d218a6`, `1b4dca0`, `3c97822`
 - [x] Roadmap an die revidierte Phasenfolge angepasst — `860dd5b`
 
@@ -90,16 +94,40 @@ Erledigt:
       Route A bleibt die primäre Route für den strengen Asymptotik-Beweis
       (siehe Phase 5) — `8601426`
 
-### Phase 2 — Elementare Schranken 🟡 Aussagen formuliert, Beweise offen
+### Phase 2 — Elementare Schranken ✅ Sandwich geschlossen, Grenzwert bewiesen
 
 - [x] $\sum_{k \le n} F_k^2 = F_n F_{n+1}$ **in Lean bewiesen** (nicht in Mathlib vorhanden) — `53f8030`
-- [x] $R_c(N) \le R_u(N)$ als Lean-Aussage formuliert (`countReps_le_uncapped`, mit Beweisskizze) — `53f8030`
-- [x] Vollständigkeit als Lean-Aussage formuliert (`exists_numeral_of_le`, mit Beweisskizze) — `53f8030`
+- [x] `countReps_le_uncapped` **in Lean bewiesen**, ohne `sorry` — `53f8030`, `3a1b8c1`.
+      Bewiesen ist die **längenindizierte** Ungleichung `countReps n N ≤ countRepsUncapped n N`
+      bei festem $n$, **nicht** das All-Stellen-$R_c(N) \le R_u(N)$ (Trap 1 in `CLAUDE.md`,
+      Unterscheidung in `phase2_bounds.md` §7). Der Satz ist außerdem **nicht tragend**:
+      T1/T2 beweisen die obere Schranke direkt und ohne CKL-Zitat, die Ungleichung stützt
+      nur die qualitative CKL-Bemerkung.
+- [x] Vollständigkeit **in Lean bewiesen**, ohne `sorry` (`exists_numeral_of_le`, gieriger Abstieg) — `53f8030`, `613da4f`
 - [x] Zusatz: „1 > 1“ formal bewiesen — zwei verschiedene Numerale mit gleichem Wert (`exists_two_numerals_same_value`) — `53f8030`
-- [ ] Obere Schranke aus Coons–Kristensen–Laursen zitierfähig ausformuliert
-- [ ] Untere Schranke: konstruktiver Beweis (Kern der Phase)
-- [ ] `phase2_bounds.md` mit beiden Sätzen und Fehlertermen
-- [ ] Zusammenführung: welcher Wert von $C'$ ergibt sich?
+- [x] Obere Schranke **ohne** Coons–Kristensen–Laursen: T1 (effektive Chernoff-Schranke) und T2
+      (asymptotisch), Koeffizient $1/(4\log\varphi)$ — `9d282c1`
+- [x] Untere Schranke: konstruktiver Beweis T3 (Zwei-Block-Konstruktion L1), Koeffizient
+      $1/(8\log\varphi)$ für $N \ge 10000$, mit $(C, N_0) = (2, 10000)$ — `9d282c1`
+- [x] `phase2_bounds.md` mit T1, T2, T3, C4 und expliziten Fehlertermen — `9d282c1`, `4f93517`, `48cb082`
+- [x] Zertifizierte numerische Konfrontation (Intervallarithmetik, Gate 1e-12) an den
+      37 Stichprobenwerten aus `data/phase1_data.csv` — `2a5ee43`, `9ac2198`, `199d7dd`
+- [x] Zusammenführung: C4 liefert — **falls** $C_c$ überhaupt existiert — $C' \in [4,8]$;
+      C4 selbst behauptet die Existenz nicht — `9d282c1`
+- [x] Zusammenfassung `docs/phase2.md`, Ledger-Einträge `sandwich-bounds`,
+      `chernoff-effective-verified`, `product-residual-sampled` — `c4743bc`
+- [x] **Sandwich geschlossen** (Route L2b): Flachheitslemma F — der Block $[1,a]$ ist auf
+      seinem mittleren Band flach, $B(a,m) \ge \exp(\lambda a^2/2 - O(a))$ gleichmäßig in
+      $m$ — und daraus T5: $\log R_c(N) \ge t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$
+      für $N \ge 10000$, $t = \log N$. Route L2a schließt **nicht**; wo sie stehenbleibt,
+      ist in `phase2_bounds.md` §8.6 festgehalten — `43397a2`
+- [x] **Existenz von $C_c$ bewiesen** — Forschungsfrage (A) damit **beantwortet**: C5 zeigt,
+      dass $\lim_N \log R_c(N)/(\log N)^2$ existiert und $= 1/(4\log\varphi)$ ist. Damit
+      gilt $C' = 4$ **unbedingt**, nicht mehr unter Existenzvorbehalt. C4 bleibt als
+      schwächere, weiterhin wahre Aussage bestehen (Limes inferior / superior), T3 ebenso
+      — T5 ersetzt sie nicht, sondern verbessert sie — `43397a2`
+- [x] Ledger: `leading-constant` von `conjecture` auf `theorem` gehoben, `sandwich-bounds`
+      gegen C5 abgegrenzt — `43397a2`
 
 ### Phase 3 — Sattelpunkt-Heuristik ⬜ offen
 
@@ -107,9 +135,19 @@ Erledigt:
 - [ ] Legendre-Transformation zur Konstante hergeleitet
 - [ ] `phase3_heuristic.md` mit expliziter Heuristik-Warnung
 - [ ] Sekundärterm-Entwicklung ($C_1$, $C_2$)
+      (**Nachtrag Phase 2:** Der $\log N\log\log N$-Term ist bereits festgelegt — T2s
+      effektive Form und T5 tragen denselben Koeffizienten, also gilt
+      $\log R_c(N) = t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$ mit $t=\log N$.
+      **Achtung auf die Normierung:** in der unten in diesem Abschnitt benutzten Schreibweise,
+      die $1/\log\varphi$ ausklammert, heißt das $C_1 = -1/2$; in der Schreibweise der
+      Forschungsfrage (B) in `theory/00-definitions.md`, die nichts ausklammert, heißt
+      dieselbe Aussage $c_1 = -1/(2\log\varphi)$. Offen bleibt $C_2$ bzw. $c_2$ — Ledger
+      `secondary-term-constant`, nicht `saddle-correction-constant`; das sind zwei
+      verschiedene Fragen.)
 
-Hinweis: Die Konstante ist durch Phase 0.5 bereits *gemessen*. Phase 3 muss sie
-nun *erklären*, nicht vorhersagen.
+Hinweis: Die Konstante ist durch Phase 0.5 bereits *gemessen* und seit Phase 2 auch
+*bewiesen* (C5, `phase2_bounds.md` §8). Phase 3 muss sie nun *erklären*, nicht
+vorhersagen und nicht etablieren.
 
 ### Phase 4 — Numerische Konfrontation ⬜ offen
 
@@ -125,7 +163,29 @@ nun *erklären*, nicht vorhersagen.
 - [ ] Route A: Mellin-Transformation und $\zeta_F^{(F+1)}$
 - [ ] Route B: Taubersätze für $S_c(N)$
 - [ ] Route C: Funktionalgleichung (explorativ)
-- [ ] **Sattelpunkt-Straffheit** beweisen — erst dann schließt die Phase-0.5-Messung auch $1/(8\log\varphi)$ aus (siehe `theory/claims.yaml`, `saddle-tightness`)
+- [x] **Sattelpunkt-Straffheit bewiesen** — `saddle-tightness` ist seit Phase 2 ein
+      `theorem`, nicht mehr eine Heuristik. Mit $t=\log N$ und
+      $\Lambda(N) = \min_s\,[sN + \log F_c(e^{-s})]$: T1 legt $\log R_c(N)$ unter
+      $\Lambda(N)$; T2, ausgewertet bei $s = t/(2\lambda N)$, legt $\Lambda(N)$ unter
+      $t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$ — dieses $s$ ist ein Kandidat im
+      Minimum; T5 legt $\log R_c(N)$ über $t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$.
+      Die $t^2$- **und** die $t\log t$-Terme heben sich weg, die Sattelpunkt-Korrektur ist
+      also $O(t) = O(\log N)$, insbesondere $o(t^2)$, und beide teilen den
+      Leitkoeffizienten. (Die gröbere Lesart $O(t\log t)$ ist falsch — $\Lambda(N)$ ist
+      **nicht** $t^2/(4\lambda) + O(t)$, der Term $-t\log t/(2\lambda)$ ist nicht $O(t)$.)
+      Der ursprüngliche Zweck des Punktes — $1/(8\log\varphi)$ auszuschließen — ist
+      ohnehin entfallen, weil C5 diesen Wert unbedingt ausschließt — `43397a2`, `30da98a`
+- [ ] **Zwei feinere Aussagen, beide weiterhin offen.** Die *Ordnung* der
+      Sattelpunkt-Korrektur ist durch Phase 2 mitbewiesen — sie ist $O(\log N)$, weil sich
+      die $t^2$- und $t\log t$-Terme zwischen T2 und T5 wegheben. Offen sind zwei
+      **verschiedene** Konstanten, und sie dürfen nicht gleichgesetzt werden:
+      `saddle-correction-constant` (hat $\Lambda(N) - \log R_c(N)$ einen bestimmten
+      Leitkoeffizienten in $\log N$?) und `secondary-term-constant` (existiert $c_2$ in
+      der Entwicklung von $\log R_c(N)$?). Beide im Ledger mit Status `open`, keine von
+      beiden Teil von `saddle-tightness`, das die gröbere und inzwischen bewiesene Aussage
+      macht. Sie unterscheiden sich um den Leitkoeffizienten von
+      $\Lambda(N) - [t^2/(4\lambda) - t\log t/(2\lambda)]$, der selbst unbewiesen ist:
+      T2s $O(t)$ ist eine Schranke, keine Asymptotik.
 
 ### Phase 6 — Oszillationen ⬜ offen
 
@@ -329,6 +389,12 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    
    Dies ist sofort zitierbar und benötigt keinen Beweis.
 
+   **Korrektur (Phase 2):** Diese Route wurde nicht genommen. T1 und T2 in
+   [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) beweisen den schärferen
+   Koeffizienten $1/(4\log\varphi)$ direkt aus der erzeugenden Funktion, ohne CKL und ohne
+   $R_c \le R_u$. Die Identifikation unseres $R_u$ mit dem $p_F$ von Coons–Kristensen–Laursen
+   ist in `theory/00-definitions.md` weiterhin als *pending verification* geführt.
+
 2. **Untere Schranke — konstruktive Methode:**  
    Partitioniere die Positionen $k$ in zwei Klassen:
    - **Bindet-Klasse $\mathcal{B}$:** $F_k \le N^{1/4}$ (hier kann der Cap die Verfügbarkeit ernsthaft einschränken).  
@@ -339,19 +405,63 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    
    Untere Schranke aus expliziter Injektion:  
    Für beliebiges $M \in \mathcal{B}$ zähle alle $(d_k)_{k\in\mathcal{B}}$ mit $\sum_{k\in\mathcal{B}}d_k F_k = N - M$.  
-   Dies gibt mindestens $R_u(N-M)$ Möglichkeiten, und wir können $M$ modulo $|\mathcal{B}|$ variieren, um Injektivität zu sichern.  
+
+   **Korrektur (Phase 2):** Der ursprünglich hier stehende Schritt — „dies gibt mindestens
+   $R_u(N-M)$ Möglichkeiten" — läuft in die falsche Richtung und steht so nicht zur Verfügung.
+   Das Kappen entfernt Darstellungen, liefert also $R_c \le R_u$; $R_u$ kann $R_c$ daher nicht
+   von unten beschränken. Die Konstruktion, die trägt, ist die Zwei-Block-Konstruktion L1 in
+   [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) §4: ein Fixup-Block $[1,a]$ mit
+   $F_a F_{a+1} \ge N$ plus eine rechteckige freie Familie auf den übrigen Stellen.
    
    Feinere Analyse: Nutze spezielle Struktur von $\mathcal{N}$ (geometrisches Wachstum der Fibonacci), um zu zeigen:
    $$\log R_c(N) \ge \frac{(\log N)^2}{4\log\varphi}(1-o(1)) + O(\log N).$$
    
    **Detaillierter Beweis erforderlich**, aber konzeptionell machbar mit Standard-Bijektionen.
 
+   **Korrektur (Phase 2):** Erreicht wurde $1/(8\log\varphi)$, nicht $1/(4\log\varphi)$ — L1
+   verbraucht die kappenbindenden Stellen im Fixup-Block. Der Faktor 2 ist für L1 in der
+   angegebenen Form strukturell; ihn zurückzugewinnen erfordert eine andere Blockaufteilung
+   (L2a / L2b, `phase2_bounds.md` §4.4), nicht schärfere Abschätzungen.
+
+   **Nachtrag (Phase 2, Stretch):** $1/(4\log\varphi)$ *ist* von unten erreichbar. Route L2b
+   liefert es — nicht durch eine andere Reservierung, sondern indem der Block gezählt statt
+   reserviert wird (Lemma F, T5 in `phase2_bounds.md` §8). Die hier skizzierte Aussage
+   $\log R_c(N) \ge \frac{(\log N)^2}{4\log\varphi}(1-o(1))$ ist damit bewiesen; der Weg
+   dorthin führte aber nicht über „Standard-Bijektionen“, sondern über eine gleichmäßige
+   untere Schranke für die Blockzählfunktion.
+
 3. **Konvergenz der Schranken:**  
    Falls obere und untere Schranke auf denselben Hauptterm hindeuten, hast du:
-   $$C_c = \frac{(\log N)^2}{C'\log\varphi} \quad \text{für explizites } C' \in [2,4].$$
-   Falls $C'=2$: Cap hat keinen Effekt auf die Führungsordnung (überraschend!).  
-   Falls $C'=4$: Cap halbiert die Konstante (vermutete Heuristik aus Phase 3).  
-   Falls $C'\in(2,4)$: Subtilere Effekt-Messung erforderlich.
+   $$C_c = \frac{1}{C'\log\varphi} \quad \text{für explizites } C'.$$
+
+   **Korrektur (Phase 2), zwei Punkte.** Erstens stand hier
+   $C_c = (\log N)^2/(C'\log\varphi)$ — ein $(\log N)^2$ gehört nicht in eine Konstante.
+   Zweitens ist das erwartete Intervall $C' \in [2,4]$ durch C4 ersetzt: **falls** $C_c$
+   existiert, gilt $C' \in [4,8]$. Die Parametrisierung setzt die Existenz voraus; C4
+   beschränkt nur Limes inferior und Limes superior und sagt über die Existenz nichts aus.
+
+   **Nachtrag (Phase 2, Stretch):** Der Existenzvorbehalt ist entfallen. C5
+   (`phase2_bounds.md` §8) beweist, dass der Grenzwert existiert; damit gilt
+   $C' = 4$ **unbedingt**. Die Unterscheidung bleibt trotzdem wichtig und wird nicht
+   eingeebnet: C4 beschränkt Limes inferior und Limes superior, C5 behauptet die Existenz
+   des Grenzwerts — zwei verschiedene Aussagen, und genau die zweite musste T5 zusätzlich
+   zur Konstanten liefern.
+
+   Das ist **keine** Verschärfung von $[2,4]$: der obere Koeffizient wurde von
+   $1/(2\log\varphi)$ (aus CKL zitiert) auf $1/(4\log\varphi)$ verschärft, der untere von
+   $1/(4\log\varphi)$ (aus der obigen Skizze) auf $1/(8\log\varphi)$ abgeschwächt. Die
+   beiden Intervalle sind nicht ineinander enthalten — sie berühren sich bei $C' = 4$ und
+   sind sonst disjunkt.
+
+   Falls $C'=4$: der obere Endpunkt des bewiesenen Intervalls wird angenommen — genau die
+   Phase-3-Konjektur $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$.
+
+   Falls $C'=8$: der untere Endpunkt wird angenommen, L1 wäre also bereits scharf.
+
+   **Nachtrag (Phase 2, Stretch):** Es ist $C' = 4$; die frühere Phase-3-Konjektur ist als
+   C5 bewiesen (Ledger: `leading-constant`, Status `theorem`). $C'=8$ ist damit
+   ausgeschlossen — L1 ist nicht scharf. Die obige Fallunterscheidung ist damit
+   erledigt: $C'\in(4,8)$ war eine der offenen Möglichkeiten und ist ausgeschlossen.
 
 ### Deliverables
 
@@ -372,6 +482,13 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
 ---
 
 ## Phase 3 — Die Sattelpunkt-Heuristik (Herzstück)
+
+> **Nachtrag (Phase 2).** Wo dieser Abschnitt „Konjektur" sagt, ist der Status vor Phase 2
+> gemeint. $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$ ist bewiesen (C5, Ledger
+> `leading-constant`, Status `theorem`), und ebenso die Straffheit der Sattelpunktschranke
+> (`saddle-tightness`). Phase 3 bleibt sinnvoll und ändert nur ihr Ziel: die Konstante
+> *erklären* statt sie zu *raten*, und den Sekundärterm angreifen, wo tatsächlich noch
+> etwas offen ist (`saddle-correction-constant`, `secondary-term-constant`).
 
 **Zeithorizont:** 3–4 Wochen  
 **Kritikalität:** SEHR HOCH — Liefert die Konjektur und Intuition für Phase 5
@@ -469,7 +586,14 @@ $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k}
    > Da es sich um eine *obere* Schranke handelt, schließt dies $1/(2\log\varphi)$ unmittelbar aus;
    > der Ausschluss von $1/(8\log\varphi)$ setzt zusätzlich voraus, dass die Sattelpunkt-Korrektur
    > von niedrigerer Ordnung ist — erwartet, aber in Phase 0.5 nicht bewiesen.
-   > Siehe `docs/phases/phase0_5_gate.md`. Das bleibt eine Konjektur — Phase 5 hat sie noch zu beweisen.
+   > Siehe `docs/phases/phase0_5_gate.md`.
+   >
+   > **Nachtrag (Phase 2):** Die eingerahmte Aussage ist **kein** Konjektur-Statement mehr —
+   > sie ist als C5 bewiesen (`phase2_bounds.md` §8, Ledger `leading-constant`, Status
+   > `theorem`), und zwar elementar und ohne Sattelpunkt. Für Phase 3 ändert das die
+   > Aufgabe, nicht ihren Wert: die Konstante ist nun zu *erklären*, nicht mehr zu
+   > *etablieren*. Die numerische Stütze oben bleibt, was sie war — eine Messung, kein
+   > Beweis.
 
 3. **Sekundär-Entwicklung (optional, aber wertvoll):**  
    Falls die Heuristik auch Logarithmische Terme anderer Ordnung andeutet, z.B.
@@ -484,6 +608,12 @@ $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k}
 ---
 
 ## Phase 4 — Numerische Konfrontation (parallel zu Phase 3)
+
+> **Nachtrag (Phase 2).** „Die Konjektur" heißt hier durchgehend die Aussage, die vor
+> Phase 2 eine war; sie ist als C5 bewiesen. Die numerische Arbeit dieser Phase verliert
+> dadurch nichts: sie wird von einem Konjekturtest zu einer *Konfrontation* eines Theorems
+> mit Daten, und der Sekundärterm samt Oszillation, auf den sie eigentlich zielt, ist
+> weiterhin offen.
 
 **Zeithorizont:** 2–3 Wochen  
 **Kritikalität:** HOCH — Quantitatives Feedback auf die Konjektur
@@ -560,6 +690,10 @@ $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k}
 ---
 
 ## Phase 5 — Rigorisierung: Drei Angriffsrouten
+
+> **Nachtrag (Phase 2).** Der Leitkoeffizient braucht diese Phase nicht mehr — C5 beweist
+> ihn elementar. Was hier zu holen bleibt, ist alles unterhalb davon: der Sekundärterm
+> (`saddle-correction-constant`, `secondary-term-constant`) und die Oszillationsstruktur.
 
 **Zeithorizont:** Monate (3–6, je nach Route)  
 **Kritikalität:** KRITISCH — Unterschied zwischen Konjektur und Theorem
@@ -745,7 +879,7 @@ sobald sie verfolgt wird.
    
    Die Heuristik aus Phase 3 suggeriert, dass die Konstante $C_c(\alpha)$ interpoliert zwischen:
    - $\alpha=0$: $d_k\le c$ (alle Positionen gleich gecappt) → andere Asymptotik?  
-   - $\alpha=1$: $d_k\le c F_k$ (unserer Fall) → $\frac{1}{4\log\varphi}$ (Konjektur)  
+   - $\alpha=1$: $d_k\le c F_k$ (unserer Fall) → $\frac{1}{4\log\varphi}$ (**bewiesen**, C5, Phase 2)
    - $\alpha\to\infty$: $d_k\le c F_k^\infty$ (praktisch unkappot) → $\frac{1}{2\log\varphi}$ (Coons–Kristensen–Laursen).
    
    Formuliere ein *parametrisches Theorem* mit $C_c(\alpha)$ als Funktion von $\alpha$ und verifiziere/beweise es für Grenzfälle.
@@ -759,7 +893,7 @@ sobald sie verfolgt wird.
 3. **Papierstruktur**  
    - **Introduktion:** Ihr Zahlensystem; Motivation (Repräsentations-Zählung); Platzierung im Literatur-Kontext (Mahler, de Bruijn, CKL, Navas).  
    - **Bekannte Anker:** Definieren, Satzbericht bestätigen für Fibonacci-uncapped und binär.  
-   - **Hauptresultat:** Sandwich-Theorem (Phase 2); Heuristik (Phase 3); Haupttheorem mit Beweis (Phase 5).  
+   - **Hauptresultat:** Sandwich-Theorem und Haupttheorem mit Beweis (beide Phase 2: C4 und C5, elementar, ohne Sattelpunkt); Heuristik als *Erklärung* der Konstante (Phase 3); Sekundärterm (Phase 5, offen).
    - **Numerik:** Phase 4 Experimente.  
    - **Oszillationen:** Phase 6 verfeinert Theorem.  
    - **Verallgemeinerung:** $\alpha$-Interpolation; allgemeine Rekurrenzen (skizziert).  
@@ -797,6 +931,8 @@ Phase 3 (3–4 Wochen) ← kritisches Herzstück
 Phase 4 (2–3 Wochen) — Numerik-Feedback
     ↓
 **Entscheidungspunkt:** Konjektur robust genug für Phase 5?
+        (hinfällig für den Leitkoeffizienten — Phase 2 hat ihn bewiesen;
+         gilt weiter für den Sekundärterm)
     ↓ Ja
 Phase 5A (4–6 Monate) — Mellin + Dirichletreihen
     ↓
@@ -807,7 +943,8 @@ Phase 7 (2–3 Monate) — Writeup und Verallgemeinerung
 
 **Zusammenfassung Zeithorizont:**  
 - **Kurzfristig (4–6 Wochen):** Phase 0–2 liefern Sandwich-Theorem + Beweis für Größenordnung.  
-- **Mittelfristig (3–4 Monate zusätzlich):** Phase 3–4 etablieren robuste numerische Konjektur.  
+- **Mittelfristig (3–4 Monate zusätzlich):** Phase 3–4 etablieren robuste numerische Konjektur.
+  (Phase 2 hat den Leitkoeffizienten bereits bewiesen; gemeint ist ab jetzt der Sekundärterm.)
 - **Langfristig (6–12 Monate):** Phase 5–7 erzielen vollständigen Beweis und publikationsfähiges Papier.
 
 ---

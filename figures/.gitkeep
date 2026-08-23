@@ -1,0 +1,10 @@
+This directory is tracked but its contents are not: figures/*.png and
+figures/*.pdf are gitignored because they are regenerated, never hand-edited.
+
+This placeholder exists so the directory is present on a clean checkout.
+scripts/run_phase2.py writes figures/phase2_sandwich.png through an atomic
+rename, which requires the parent directory to already exist; without this file
+the documented reproduction recipe failed on a fresh clone at the very last
+step, after the CSVs and their manifest entries had already been written.
+The script also mkdir()s the directory itself -- belt and braces, since either
+alone is enough and neither is expensive.

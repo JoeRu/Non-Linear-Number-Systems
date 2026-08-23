@@ -18,7 +18,16 @@ VALID_STATUS = {"cited", "verified-numeric", "heuristic", "conjecture", "theorem
 REQUIRED_FIELDS = ("id", "statement", "status", "evidence", "source")
 REFERENCE = re.compile(r"\{claim:([a-z0-9-]+)\}")
 SEARCH_DIRS = ("theory", "docs/phases", "paper")
-SEARCH_FILES = ("docs/roadmap.md", "README.md", "CLAUDE.md", "docs/phase1.md")
+# Root-level Markdown that no SEARCH_DIRS entry reaches. Anything already
+# under theory/, docs/phases/ or paper/ must NOT be listed here as well: it
+# would be scanned twice and every problem in it reported twice.
+SEARCH_FILES = (
+    "docs/roadmap.md",
+    "README.md",
+    "CLAUDE.md",
+    "docs/phase1.md",
+    "docs/phase2.md",
+)
 FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
 DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
 
@@ -26,7 +35,15 @@ DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
 # under one of these directories, or a Lean declaration name -- and the
 # location has to actually exist, not merely look like one (shape alone lets
 # a fabricated `theory/nonexistent.md` or an invented Lean name pass).
-THEOREM_PATH_TOKEN_RE = re.compile(r"(?:theory|paper|lean)/[\w./-]+")
+#
+# `docs/phases` is included alongside `theory`, `paper`, and `lean` (Ruling
+# B, task 7) because a Phase 2 `theorem` claim's proof lives in
+# `docs/phases/phase2_bounds.md`, not in `theory/`, `paper/`, or `lean/`.
+# Without this, such a claim would validate only because its evidence string
+# *also* happens to name a Lean file proving a smaller, different statement
+# -- validation by coincidence, exactly the failure mode docs/risks.md R-004
+# warns about.
+THEOREM_PATH_TOKEN_RE = re.compile(r"(?:theory|paper|lean|docs/phases)/[\w./-]+")
 # A dotted, namespaced identifier such as `NonLinearNumberSystems.Fibonacci.foo`
 # -- the shape of a Lean declaration name, as distinct from a file path (no
 # slash) or an ordinary sentence (no dots between words).
@@ -132,9 +149,10 @@ def _has_range_qualifier(sentence: str) -> bool:
 
 
 def _extract_theorem_path_tokens(evidence: str) -> list[str]:
-    """Extract theory/, paper/, lean/-prefixed path tokens from evidence text,
-    stripping trailing sentence punctuation a regex match would otherwise
-    swallow (e.g. "...theory/x.md." at the end of a sentence)."""
+    """Extract theory/, paper/, lean/, docs/phases/-prefixed path tokens from
+    evidence text, stripping trailing sentence punctuation a regex match
+    would otherwise swallow (e.g. "...theory/x.md." at the end of a
+    sentence)."""
     tokens = []
     for m in THEOREM_PATH_TOKEN_RE.finditer(evidence):
         tok = m.group(0).rstrip(").,;:'\"")
@@ -184,19 +202,22 @@ def _lean_declaration_exists(root: Path, decl: str) -> bool:
 
 def _theorem_evidence_problem(root: Path, cid: str, evidence: str) -> str | None:
     """Return a problem string for a `theorem` claim's evidence, or None if
-    it checks out. A `theory/`, `paper/`, or `lean/` path must exist on disk;
-    a bare Lean declaration name must be found declared in a project `.lean`
-    file. Shape alone (matching the pattern) is not enough -- both the
-    pattern and the referent must hold."""
+    it checks out. A `theory/`, `paper/`, `lean/`, or `docs/phases/` path
+    must exist on disk; a bare Lean declaration name must be found declared
+    in a project `.lean` file. Shape alone (matching the pattern) is not
+    enough -- both the pattern and the referent must hold."""
     path_tokens = _extract_theorem_path_tokens(evidence)
     if path_tokens:
         root_resolved = root.resolve()
         # A candidate allowed root only counts if it is itself contained in
-        # the repo -- otherwise theory/, paper/, or lean/ being a symlink to
-        # somewhere outside the repository would make that outside location
-        # an "allowed root" and let an external file pass.
+        # the repo -- otherwise theory/, paper/, lean/, or docs/phases/ being
+        # a symlink to somewhere outside the repository would make that
+        # outside location an "allowed root" and let an external file pass.
         allowed_roots = [
-            r for r in ((root / d).resolve() for d in ("theory", "paper", "lean"))
+            r for r in (
+                (root / d).resolve()
+                for d in ("theory", "paper", "lean", "docs/phases")
+            )
             if r.is_relative_to(root_resolved)
         ]
         for tok in path_tokens:
@@ -204,7 +225,8 @@ def _theorem_evidence_problem(root: Path, cid: str, evidence: str) -> str | None
             if not any(target.is_relative_to(a) for a in allowed_roots):
                 return (
                     f"claim '{cid}': status theorem but its evidence references "
-                    f"'{tok}', which resolves outside theory/, paper/ and lean/"
+                    f"'{tok}', which resolves outside theory/, paper/, lean/ "
+                    f"and docs/phases/"
                 )
             if not target.is_file():
                 return (
@@ -226,8 +248,8 @@ def _theorem_evidence_problem(root: Path, cid: str, evidence: str) -> str | None
     return (
         f"claim '{cid}': status theorem but its evidence does not reference "
         f"a checkable proof location (an existing path under theory/, paper/, "
-        f"or lean/, or a Lean declaration name found in lean/) -- a test "
-        f"file or prose alone is not enough"
+        f"lean/, or docs/phases/, or a Lean declaration name found in lean/) "
+        f"-- a test file or prose alone is not enough"
     )
 
 
