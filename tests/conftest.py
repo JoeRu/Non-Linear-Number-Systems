@@ -100,6 +100,22 @@ def pytest_collection_modifyitems(config, items):
         if name in GATE_MODULES:
             state.gate_modules_collected.add(name)
     # An explicit set of node ids on the command line is narrowing too.
+    #
+    # This is also why a run scoped to a single module that fails to
+    # collect -- `pytest tests/test_phase1_tables.py` when that file has a
+    # bad import -- prints no ORACLE GATE FAILURE at all, for either check
+    # in `pytest_sessionfinish` below: `config.args` is `['tests/test_...py']`
+    # regardless of whether that file actually collects, so this branch
+    # still runs and still sets `selection_narrowed = True` on an empty (or
+    # partial) `items` list. That is a deliberate consequence of narrowing
+    # being about *what the caller asked pytest to run*, not about whether
+    # collection of it succeeded -- not an accident of collection aborting
+    # before this hook runs. The `GATE_MODULES` module-collection check
+    # below only has something to say about a module that disappeared from
+    # a run that was not narrowed to begin with; see
+    # `tests/test_oracle_gate_guard.py::test_a_single_module_run_is_exempt_from_the_module_check`
+    # and its sibling `test_a_module_that_fails_to_collect_is_named_by_the_gate`
+    # for the demonstration of both halves.
     if config.args and any(
         "::" in a or a.endswith(".py") for a in config.args
     ):

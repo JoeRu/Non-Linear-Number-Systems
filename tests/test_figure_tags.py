@@ -340,3 +340,98 @@ def test_tags_required_matches_document_state(phase):
         f"phase is tagged -- otherwise the untagged sibling's numbers stay "
         f"unchecked indefinitely while this whole file reports green"
     )
+
+
+# --- Discovery: a document that quotes a figure but is not in PHASES -------
+#
+# Everything above assumes a document worth checking is already named in a
+# `PHASES` row. Nothing about `PHASES` or `_check_documents` discovers a
+# document on its own -- it is a closed, hardcoded tuple, and a future
+# phase's narrative document quoting real generated figures is exactly as
+# unprotected as if it were never written, until someone remembers to add a
+# row for it. This was demonstrated directly during review: a scratch file
+# `docs/phases/phase3_scratch.md` containing `999 {fig:n-max}` -- a wrong
+# value against a real n_max of `1000000` -- made every test in this file
+# pass, because nothing here ever looks at a document PHASES does not name.
+#
+# Directories that legitimately quote a `{fig:...}` figure without being
+# registered. Kept short and explicit, not a broad pattern, per review:
+#   - `docs/superpowers/`: dated specs and plans are historical snapshots of
+#     prose written *at* a past commit (some genuinely embed real,
+#     literal-backed tags, e.g. the plan for this very task) -- registering
+#     them would mean validating a finished plan's numbers forever after the
+#     work it describes is done.
+#   - `.superpowers/`: this session's scratch workspace. Gitignored, so
+#     usually absent on a fresh clone, but excluded by path too in case a
+#     task is running with it present.
+UNREGISTERED_DOC_PREFIXES = ("docs/superpowers/", ".superpowers/")
+
+# Root files/directories that can hold narrative prose quoting generated
+# figures. Not the whole repository -- walking `.venv/`, `.git/`, or
+# `capfib.egg-info/` would be slow and finds nothing relevant. Extend this
+# list the day a real document appears somewhere new; that is a one-line
+# change, not a redesign.
+DOC_SEARCH_ROOTS = ("docs", "theory", "README.md", "CLAUDE.md")
+
+
+def _registered_documents():
+    """The set of document paths named by some `PHASES` row, repo-relative
+    with forward slashes -- the same format `DOC_SEARCH_ROOTS` files are
+    reported in below, so a straight set-membership check is enough."""
+    return {doc for _name, _figs, docs, _req in PHASES for doc in docs}
+
+
+def _discoverable_markdown_files():
+    """Every `.md` file under `DOC_SEARCH_ROOTS`, repo-relative
+    (forward-slash), excluding `UNREGISTERED_DOC_PREFIXES`.
+
+    Returns:
+        A sorted list of repo-relative path strings.
+    """
+    found = []
+    for root_name in DOC_SEARCH_ROOTS:
+        root_path = ROOT / root_name
+        if root_path.is_file():
+            candidates = [root_path]
+        elif root_path.is_dir():
+            candidates = sorted(root_path.rglob("*.md"))
+        else:
+            continue
+        for path in candidates:
+            relative = path.relative_to(ROOT).as_posix()
+            if any(relative.startswith(prefix) for prefix in UNREGISTERED_DOC_PREFIXES):
+                continue
+            found.append(relative)
+    return sorted(found)
+
+
+@pytest.mark.oracle_gate
+def test_every_tagged_document_is_registered():
+    """A document that quotes a real, literal-backed `{fig:...}` figure must
+    be named by some `PHASES` row, or nothing ever checks it for drift.
+
+    Deliberately uses `TAG` (literal + tag), not `BARE_TAG`, as the
+    "quotes a figure" signal -- the same distinction `_check_documents`
+    draws elsewhere in this file. `docs/risks.md` mentions the bare
+    `{fig:key}` syntax three times while describing this very mechanism in
+    prose (e.g. "a bare `{fig:key}` with no literal in front of it fails
+    too"); none of those are preceded by a numeric literal, so `TAG` does
+    not match them and `docs/risks.md` is correctly not flagged for needing
+    a `PHASES` row it has no figures file to check against. A document that
+    *does* carry a literal-backed tag is, by construction, a document whose
+    number can silently drift the moment `PHASES` fails to name it -- which
+    is the exact gap this test closes.
+    """
+    registered = _registered_documents()
+    unregistered = []
+    for relative in _discoverable_markdown_files():
+        text = (ROOT / relative).read_text()
+        if TAG.search(text) and relative not in registered:
+            unregistered.append(relative)
+    assert not unregistered, (
+        "document(s) quote a generated {fig:...} figure but no PHASES row "
+        "in tests/test_figure_tags.py names them, so nothing checks them "
+        "for drift: " + ", ".join(unregistered) + " -- add a PHASES row (or "
+        "add the document to an existing phase's row) that names it, "
+        "pointing at the figures file it should be checked against"
+    )
