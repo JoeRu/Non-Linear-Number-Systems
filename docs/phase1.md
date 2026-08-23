@@ -19,14 +19,17 @@ this page is the summary.
 > Wall-clock timings are excluded on purpose: they change on every run, so
 > tagging them would force a prose edit at each regeneration.
 >
-> Two further categories are generated but likewise untagged. `flat_step_positions`,
-> `place_jumps`, and `block_extrema` are reproduced in full below as a list and two
-> tables read straight from `data/phase1_summary.json`; only the specific values
-> pulled out of them into prose as headline figures — the block count, a handful of
-> individual place-jump ratios, the flat-step extremes — are promoted to a `{fig:}`
-> key and checked, not every cell of the source table. And the `dp==gf pointwise
-> for all N <= 1000000` line below is reproduced verbatim as the script's console
-> output, not tagged as a quoted figure.
+> Two further categories are generated but not tagged with `{fig:...}` —
+> checked a different way instead. The place-jump and block-extrema tables in
+> `docs/phases/phase1_report.md` reproduce the `place_jumps` and
+> `block_extrema` arrays from `data/phase1_summary.json` in full (28 and 29
+> rows); `tests/test_phase1_tables.py` compares every cell of both tables
+> against that file directly, rather than requiring one `{fig:...}` per cell.
+> The `flat_step_positions` list here and the `dp==gf pointwise for all
+> N <= 1000000` line below are reproduced verbatim and are not separately
+> checked; only the specific values pulled out of the tables and lists into
+> prose as headline figures — the block count, a handful of individual
+> place-jump ratios, the flat-step extremes — carry a `{fig:...}`.
 
 ---
 

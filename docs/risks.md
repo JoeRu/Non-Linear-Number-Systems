@@ -47,7 +47,7 @@ trace to the same artifact.
 
 ## R-002 — Narrative documents contain hand-copied numbers
 
-**Status:** mitigated for the Phase 2 documents, open for the Phase 1 ones · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
+**Status:** mitigated for both phases · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
 
 **Description.** `docs/phase1.md` and `docs/phases/phase1_report.md` embed the
 census, the place-jump table and the block-extrema table as literal Markdown.
@@ -93,18 +93,31 @@ the hand-copied number and the artifact can no longer drift apart silently.
 `docs/phase2.md` refers to this entry as handled; that reference is accurate
 for Phase 2 and for Phase 2 only.
 
-**Mitigation missing — Phase 1 documents.** `docs/phase1.md` and
-`docs/phases/phase1_report.md` carry no `{fig:...}` tags and there is no
-Phase 1 figures artifact for them to be checked against; their census,
-place-jump and block-extrema tables are still literal Markdown, unchecked.
-Retro-fitting the mechanism means regenerating Phase 1 with a figures
-artifact, which is Phase 1 work. Both positions above therefore still stand
-for those two documents, and the entry stays open for them.
+**Mitigation in place — Phase 1 documents.** The census and the headline
+figures pulled out of the two tables (specific place-jump ratios, the block
+count, the flat-step extremes, and others) are tagged the same way as Phase
+2: `data/phase1_figures.json` is tracked, and `tests/test_figure_tags.py`
+resolves every `<literal> {fig:key}` tag in `docs/phase1.md` and
+`docs/phases/phase1_report.md` against it. That mechanism does not, by
+itself, reach the place-jump and block-extrema tables themselves — tagging
+every cell of a 28-row and a 29-row table would mean on the order of a
+hundred more keys, for tables that exist so a reader does not have to go
+spelunking in `data/phase1_summary.json`. Those two tables are instead
+covered by `tests/test_phase1_tables.py`, which locates each table in
+`docs/phases/phase1_report.md` by an `<!-- table:... -->` anchor, parses
+every row, and compares every cell against `data/phase1_summary.json`'s
+`place_jumps` and `block_extrema` arrays directly — no tag required, and
+nothing in either table can drift from the artifact unnoticed. Between the
+two mechanisms, all three things this entry names (the census, the
+place-jump table, the block-extrema table) are now checked; the remaining
+untagged residue (the `flat_step_positions` list, mathematical constants,
+structural numbers, literature values, wall-clock timings) is stated
+explicitly in `docs/phase1.md`'s own residue note rather than left for a
+reader to discover.
 
-**Revisit when:** Phase 4 regenerates data at a different `n_max`, which is the
-first moment drift can actually occur — and which now bears only on the Phase 1
-documents, since the Phase 2 ones would fail their figure-tag test instead of
-drifting quietly.
+**Revisit when:** Phase 4 regenerates data at a different `n_max`, which is
+the first moment drift can actually occur for either phase — both are now
+checked mechanically rather than by inspection.
 
 ---
 

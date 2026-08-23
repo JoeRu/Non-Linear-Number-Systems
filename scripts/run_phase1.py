@@ -190,6 +190,20 @@ def main() -> int:
         print("skip-crosscheck set: analyses ran, nothing written.")
         return 0
 
+    jump_by_place = {j["place"]: j["ratio"] for j in jumps}
+    if 8 not in jump_by_place:
+        # The place-jump-f2/f3/f8 figures below assume the run reaches
+        # Fibonacci place F=8, i.e. n_max >= 8. --n-max legally accepts
+        # values down to 2 (see _n_max_type), so this is reachable, not
+        # theoretical -- and every other precondition in this function
+        # prints a clear message and returns 1 rather than crashing with a
+        # raw traceback, so this one follows suit instead of asserting.
+        print(f"PRECONDITION FAILED: --n-max {n_max} does not reach "
+              f"Fibonacci place F=8; the place-jump-f2/f3/f8 figures assume "
+              f"it does.")
+        print("Writing nothing.")
+        return 1
+
     rows = []
     for n in ladder(n_max):
         log_n = math.log(n)
@@ -281,18 +295,15 @@ def main() -> int:
     #
     # Also deliberately excluded: the full `place_jumps` and `block_extrema`
     # arrays and `flat_step_positions` list. The documents reproduce those in
-    # full as tables/lists read straight from data/phase1_summary.json; only
-    # the specific values pulled out into prose as headline figures (a
-    # handful of individual place-jump ratios, the block count, the extremes)
-    # are promoted to keys here and checked -- the same shape of choice Phase
-    # 2 made for its own per-sample residual sweep.
+    # full as tables/lists read straight from data/phase1_summary.json;
+    # `tests/test_phase1_tables.py` checks every cell of both tables against
+    # this file directly (anchored on the `<!-- table:... -->` markers in
+    # `docs/phases/phase1_report.md`), so they do not need a `{fig:key}` per
+    # cell -- that would be on the order of a hundred more keys. Only the
+    # specific values pulled out of them into prose as headline figures (a
+    # handful of individual place-jump ratios, the block count, the flat-step
+    # extremes) are promoted to a key here and checked that way instead.
     assert rows[-1]["N"] == n_max  # ladder() always includes n_max as its max
-    jump_by_place = {j["place"]: j["ratio"] for j in jumps}
-    assert 8 in jump_by_place, (
-        f"--n-max {n_max} does not reach Fibonacci place F=8; the "
-        f"place-jump-f2/f3/f8 figures below assume it does. Run with a "
-        f"larger --n-max, matching the range the documents describe."
-    )
     figures = {
         "n-max": {
             "value": summary["n_max"],

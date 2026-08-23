@@ -47,9 +47,9 @@ directly against the growth curve (`figures/phase1_growth.png`).
 
 *Structural note.* Exactly 11 {fig:flat-step-count} flat steps occur over
 `N <= 10^6` (`data/phase1_summary.json`, `census` and `flat_step_positions`
-fields), at `N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67,` 78 {fig:flat-step-last}
--- the largest in the list {claim:flat-steps-end-early}. This is recorded as
-the observation it is; Phase 1 does not speculate about why.
+fields), at `N = 2, 7, 12, 15, 20, 28, 33, 36, 57, 67, 78` -- the largest
+being `N` = 78 {fig:flat-step-last} {claim:flat-steps-end-early}. This is
+recorded as the observation it is; Phase 1 does not speculate about why.
 
 *Quantiles of the step ratio.* `data/phase1_summary.json` records
 `fluctuation_quantiles` for `R_c(N+1)/R_c(N)` over `N <= 10^6`: min
@@ -69,6 +69,7 @@ extremes reach as low as 0.9853 {fig:fluctuation-min} and as high as
 **Result 2 — structure at place values.** The ratio `R_c(F)/R_c(F-1)` at each
 distinct Fibonacci place `F <= 1000000`:
 
+<!-- table:place-jumps -->
 | place `F` | ratio `R_c(F)/R_c(F-1)` |
 |---|---|
 | 2 | 1.000000 |
@@ -110,6 +111,7 @@ everywhere on the strength of a sample that began at `F = 13`.
 **Result 3 — extremal N.** Argmax and argmin of `R_c` within each Fibonacci
 block `[F, F')`, ties broken toward the smallest `N`:
 
+<!-- table:block-extrema -->
 | block `[lo, hi)` | argmax | max | argmin | min |
 |---|---|---|---|---|
 | [1, 2) | 1 | 2 | 1 | 2 |
