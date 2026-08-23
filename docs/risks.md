@@ -81,7 +81,7 @@ prose is written); or a transclusion step at build time (heavier, and makes the
 sources unreadable in isolation).
 
 **Mitigation in place — Phase 2 documents only.** Phase 2 built the first of
-those two candidates. `tests/test_phase2_figures.py` resolves every
+those two candidates. `tests/test_figure_tags.py` resolves every
 `<literal> {fig:key}` tag in `docs/phase2.md` and
 `docs/phases/phase2_bounds.md` against `data/phase2_figures.json`, renders the
 stored value at its recorded precision, and requires an exact string match; a

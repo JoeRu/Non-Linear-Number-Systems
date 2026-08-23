@@ -23,7 +23,7 @@ C4 is likewise a statement about the liminf and limsup and about nothing else.
 
 The proofs are in [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md);
 this page is the summary and quotes it. Every generated number below is read
-from `data/phase2_figures.json` by key, and `tests/test_phase2_figures.py`
+from `data/phase2_figures.json` by key, and `tests/test_figure_tags.py`
 requires the literal in the prose to match the stored value exactly.
 
 ---

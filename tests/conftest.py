@@ -5,9 +5,10 @@ silently did not run.
 
 1. `tests/test_interval.py` compared intervals in a way that was blind to a
    dropped term.
-2. `tests/test_phase2_figures.py` called `pytest.skip` inside its document
-   loop, which disabled the R-002 drift detector whenever an unrelated
-   document was absent.
+2. `tests/test_phase2_figures.py` (now `tests/test_figure_tags.py`, table-
+   driven over both phases) called `pytest.skip` inside its document loop,
+   which disabled the R-002 drift detector whenever an unrelated document
+   was absent.
 3. `data/phase1_data.csv` was gitignored, so on a clean clone the twelve
    comparisons of the certified T1 bound, T3 and T5 against exact values
    skipped. `59 passed, 12 skipped` is what a fresh checkout saw, and it is
@@ -33,7 +34,7 @@ MARKER = "oracle_gate"
 # they are collected. Without this, deleting every marker -- or letting a
 # collection error take out the whole module -- would leave the guard with
 # nothing to complain about.
-GATE_MODULES = ("test_phase2_bounds.py", "test_phase2_figures.py")
+GATE_MODULES = ("test_phase2_bounds.py", "test_figure_tags.py")
 
 
 def gate_violations(collected: int, executed: int, skipped: list[str]) -> list[str]:
