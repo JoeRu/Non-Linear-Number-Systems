@@ -171,12 +171,51 @@ def test_ci_job_names_match_the_inventory():
     )
 
 
-def test_a_successful_but_unprivileged_read_is_not_a_pass():
-    """A 200 response with `bypass_actors` absent means the token was not shown
-    them, which is not the same as there being none — and treating it as none
-    is the "unread equals none" defect this script exists to prevent.
+def test_main_treats_an_unprivileged_ruleset_read_as_unverified(
+    monkeypatch, tmp_path, capsys
+):
+    """`main()` must not read an absent `bypass_actors` key as an empty list.
+
+    `GET /repos/{owner}/{repo}/rulesets/{id}` returns 200 with the key absent
+    when the caller cannot see bypass actors. Defaulting that to `[]` reports
+    "no bypass actors" for a ruleset that may well have some -- unread treated
+    as none, which is the defect class this script exists to prevent.
+
+    This test drives `main()` rather than recomputing its expression, so
+    reinstating the default fails here. An earlier version recomputed
+    `payload.get("bypass_actors")` in the test body; it passed against the
+    defect and guarded nothing.
     """
-    payload = {"name": "prod", "enforcement": "active"}   # 200, key absent
-    actors = payload.get("bypass_actors")                 # mirrors main() line 202
-    problems = crc.evaluate(INVENTORY, [_rule(ALL_THREE)], {1: actors})
-    assert any("could not be read" in p for p in problems)
+    inventory = tmp_path / "required-checks.yml"
+    inventory.write_text(
+        "branch: main\n"
+        "expected_integration_id: 15368\n"
+        "contexts:\n"
+        "  - name: tests\n"
+        "    ships_in: plan-a\n"
+        "  - name: required-checks\n"
+        "    ships_in: plan-a\n"
+        "  - name: mutations-full\n"
+        "    ships_in: plan-b\n"
+    )
+
+    def fake_fetch(url, token):
+        if "/rules/branches/" in url:
+            return [_rule(ALL_THREE)], None
+        if "/rulesets/" in url:
+            # A 200 from a caller not privileged to see bypass actors: the key
+            # is absent, not empty.
+            return {"name": "prod", "enforcement": "active"}, None
+        raise AssertionError(f"unexpected url {url}")
+
+    monkeypatch.setattr(crc, "fetch", fake_fetch)
+
+    exit_code = crc.main(["--repo", "owner/name", "--inventory", str(inventory)])
+    output = capsys.readouterr().out
+
+    assert exit_code == 1, (
+        "an unverifiable bypass-actor list must fail the check, not pass it"
+    )
+    assert "could not be read" in output, (
+        f"expected the unread-bypass problem, got:\n{output}"
+    )
