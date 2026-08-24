@@ -5,6 +5,7 @@ whose own correctness depends on a live API cannot be part of the suite, and
 the point of this verifier is that it is checkable.
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -220,6 +221,104 @@ def test_no_job_is_conditional_or_dependent(workflow):
             )
 
 
+# Steps whose absence would empty a status context: job name -> the substring
+# identifying the step that does the work that context is named for.
+CORE_STEPS = {
+    # check_claims.py is deliberately excluded: it carries
+    # `if: ${{ !cancelled() }}` on purpose (spec: it must still run when
+    # pytest fails, so both signals are visible), and that is not the false
+    # positive this test guards against. Only the step that runs the suite
+    # itself is required to be unconditional here.
+    "tests": ("pytest",),
+    "required-checks": ("check_required_contexts.py",),
+}
+
+
+def test_the_core_ci_steps_are_unconditional():
+    """A conditional core step empties the gate while the job still reports success.
+
+    The job-level ban on `if:` is not enough: `if: false` on the step that runs
+    the suite skips the suite, the job concludes success, and the required
+    context goes green with nothing behind it. The claim-validator step is
+    deliberately conditional (`!cancelled()`), which is why this asserts the
+    named core steps rather than banning step conditions outright.
+    """
+    import yaml as _yaml
+
+    jobs = _yaml.safe_load((WORKFLOWS / "ci.yml").read_text())["jobs"]
+    by_name = {job["name"]: job for job in jobs.values()}
+
+    for job_name, markers in CORE_STEPS.items():
+        for marker in markers:
+            matching = [
+                step
+                for step in (by_name[job_name].get("steps") or [])
+                if marker in str(step.get("run", ""))
+            ]
+            assert matching, (
+                f"job {job_name!r} no longer has a step running {marker!r}"
+            )
+            for step in matching:
+                assert "if" not in step, (
+                    f"the step running {marker!r} in job {job_name!r} is "
+                    f"conditional. A skipped core step leaves the job green "
+                    f"with the work undone, which is the false positive this "
+                    f"file exists to prevent"
+                )
+
+
+def test_the_elan_installer_is_pinned_and_verified_before_execution():
+    """The installer runs as root-equivalent on a runner holding the repo token.
+
+    An earlier version piped elan-init.sh from the mutable `master` branch into
+    sh, after checkout had already installed the repository credential. Pinning
+    it to an immutable release and checking the digest is the fix; this asserts
+    the fix, including that verification precedes execution -- a checksum
+    checked after the archive is unpacked proves nothing.
+    """
+    import yaml as _yaml
+
+    document = _yaml.safe_load((WORKFLOWS / "nightly.yml").read_text())
+    steps = [
+        step
+        for job in document["jobs"].values()
+        for step in (job.get("steps") or [])
+        if "elan" in str(step.get("run", ""))
+    ]
+    assert steps, "nightly.yml no longer installs elan"
+    script = "\n".join(str(step.get("run", "")) for step in steps)
+    env = {}
+    for step in steps:
+        env.update(step.get("env") or {})
+
+    assert "raw.githubusercontent.com" not in script, (
+        "the elan installer is fetched from a mutable ref again; a force-update "
+        "of that branch would run arbitrary code on a runner that already holds "
+        "this repository's credential"
+    )
+    assert "releases/download" in script, (
+        "the elan installer is no longer fetched from an immutable release asset"
+    )
+    assert env.get("ELAN_VERSION"), "the elan release version is no longer pinned"
+    assert re.fullmatch(r"[0-9a-f]{64}", env.get("ELAN_SHA256", "") or ""), (
+        "the elan release checksum is missing or is not a sha256 digest"
+    )
+
+    lines = [line.strip() for line in script.splitlines()]
+    verify = next(
+        (i for i, line in enumerate(lines) if "sha256sum -c" in line), None
+    )
+    execute = next(
+        (i for i, line in enumerate(lines) if line.startswith("./elan-init")), None
+    )
+    assert verify is not None, "the elan checksum is no longer verified"
+    assert execute is not None, "the elan installer is no longer executed"
+    assert verify < execute, (
+        "the elan archive is executed before its checksum is verified, so a "
+        "substituted asset would run before the check could reject it"
+    )
+
+
 def test_ci_job_names_match_the_inventory():
     """Context names come from the job's `name:`, so a rename breaks the gate."""
     import yaml as _yaml
@@ -246,22 +345,47 @@ def test_the_ci_jobs_still_run_what_their_names_promise():
     jobs = _yaml.safe_load((WORKFLOWS / "ci.yml").read_text())["jobs"]
     by_name = {job["name"]: job for job in jobs.values()}
 
-    def _commands(job):
-        return " ".join(
-            str(step.get("run", "")) for step in (job.get("steps") or [])
-        )
+    def _command_lines(job):
+        return [
+            line.strip()
+            for step in (job.get("steps") or [])
+            for line in str(step.get("run", "")).splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
 
-    tests_commands = _commands(by_name["tests"])
-    assert "pytest" in tests_commands, (
+    # Print commands whose first word means "the rest of this line is a
+    # string to display", not "run the rest of this line".
+    _PRINTERS = {"echo", "printf"}
+
+    def _invokes(job, fragment):
+        """True when a real command line invokes `fragment`.
+
+        Line-level and comment-stripped: an earlier version joined the raw run
+        text and substring-matched, so `echo check_required_contexts.py` would
+        have satisfied it. The nightly command test carried the same defect and
+        was fixed the same way -- but line-scoping alone is not enough, because
+        `echo check_required_contexts.py` is still one line that contains the
+        fragment. A line is only a real invocation when its own first word is
+        not a printer that would make the rest of the line inert text.
+        """
+        for line in _command_lines(job):
+            if fragment not in line:
+                continue
+            first_word = line.split(None, 1)[0] if line.split() else ""
+            if first_word in _PRINTERS:
+                continue
+            return True
+        return False
+
+    assert _invokes(by_name["tests"], "pytest"), (
         "ci.yml's `tests` job no longer runs pytest; the context would still "
         "report, so a required check would pass with no suite behind it"
     )
-    assert "check_claims.py" in tests_commands, (
+    assert _invokes(by_name["tests"], "check_claims.py"), (
         "ci.yml's `tests` job no longer runs the claim validator"
     )
 
-    verifier_commands = _commands(by_name["required-checks"])
-    assert "check_required_contexts.py" in verifier_commands, (
+    assert _invokes(by_name["required-checks"], "check_required_contexts.py"), (
         "ci.yml's `required-checks` job no longer runs the verifier; an empty "
         "job reports success, which is the false positive this whole file exists "
         "to prevent"
@@ -286,7 +410,19 @@ def test_ci_declares_the_events_it_promises():
     import yaml as _yaml
 
     triggers = _triggers(_yaml.safe_load((WORKFLOWS / "ci.yml").read_text()))
+    push = triggers.get("push")
     assert "push" in triggers, "ci.yml no longer runs on push"
+    if isinstance(push, dict):
+        assert not push.get("branches-ignore"), (
+            f"ci.yml's push trigger excludes branches "
+            f"({push['branches-ignore']}), so the fresh-checkout run -- the "
+            f"structural fix this workflow exists for -- would not fire on them"
+        )
+        branches = push.get("branches")
+        assert branches is None or "**" in branches, (
+            f"ci.yml's push trigger is narrowed to {branches}; it ran on all "
+            f"branches, and narrowing it silently drops coverage"
+        )
     assert "pull_request" in triggers, "ci.yml no longer runs on pull requests"
     types = (triggers.get("pull_request") or {}).get("types") or []
     for required in ("opened", "synchronize", "reopened", "edited"):
@@ -308,7 +444,20 @@ def test_the_nightly_declares_its_schedule_and_still_builds_lean():
 
     document = _yaml.safe_load((WORKFLOWS / "nightly.yml").read_text())
     triggers = _triggers(document)
-    assert "schedule" in triggers, "nightly.yml no longer runs on a schedule"
+    schedule = triggers.get("schedule")
+    assert schedule, (
+        "nightly.yml has no active schedule. D12 keeps `lake build` off the "
+        "merge path, so an empty or absent schedule removes the Lean layer's "
+        "only CI coverage entirely"
+    )
+    assert any(entry.get("cron") for entry in schedule), (
+        "nightly.yml's schedule contains no cron entry, so it never fires"
+    )
+    assert "workflow_dispatch" in triggers, (
+        "nightly.yml can no longer be triggered manually; the rollout's "
+        "post-merge Lean verification depends on it, because a scheduled run "
+        "cannot be waited for"
+    )
     for forbidden in ("push", "pull_request"):
         assert forbidden not in triggers, (
             f"nightly.yml now runs on {forbidden!r}. Spec D12 keeps `lake build` "
@@ -378,6 +527,14 @@ def test_the_nightly_declares_its_schedule_and_still_builds_lean():
         "its dependency. The order is the fix, not an accident"
     )
     assert second.startswith("lake exe cache get")
+
+    assert _runs("git diff --quiet -- lake-manifest.json") or any(
+        "lake-manifest.json" in line for line in lines
+    ), (
+        "nightly.yml no longer checks whether `lake update` rewrote the "
+        "dependency lock; without it a scheduled run can validate a different "
+        "Mathlib than this repository pins and report success"
+    )
 
 
 def test_main_treats_an_unprivileged_ruleset_read_as_unverified(

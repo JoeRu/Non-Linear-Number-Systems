@@ -86,6 +86,22 @@ jobs:
         # dependency.
         run: lake update
 
+      - name: Fail if dependency resolution moved the lock
+        working-directory: lean
+        # lake-manifest.json is the tracked lock. `lake update` above re-resolves
+        # refs and can rewrite it, so a scheduled run could validate a different
+        # Mathlib than this repository pins and still report success. Detecting
+        # the drift is the point: a nightly that silently builds something else
+        # is worse than one that fails.
+        run: |
+          if ! git diff --quiet -- lake-manifest.json; then
+            echo "PROBLEM: lake update rewrote lake-manifest.json"
+            git --no-pager diff -- lake-manifest.json
+            echo "The nightly would have built a revision this repository does not pin."
+            exit 1
+          fi
+          echo "lock unchanged: $(git rev-parse --short HEAD) manifest intact"
+
       - name: Fetch prebuilt Mathlib artifacts
         working-directory: lean
         # Mathlib is pinned to the official v4.14.0 tag, so its build cache has
