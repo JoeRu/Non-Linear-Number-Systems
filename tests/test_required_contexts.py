@@ -142,8 +142,12 @@ def test_no_job_is_conditional_or_dependent(workflow):
     import yaml as _yaml
 
     path = WORKFLOWS / workflow
-    if not path.exists():
-        pytest.skip(f"{workflow} not written yet")
+    assert path.exists(), (
+        f"{workflow} is missing. Both workflows are tracked, so an absent one "
+        f"is a deletion or a rename, not a file that has not been written yet "
+        f"-- and skipping over it would silently retire this guard for "
+        f"everything in that file"
+    )
     jobs = _yaml.safe_load(path.read_text())["jobs"]
     for name, job in jobs.items():
         assert "if" not in job, (

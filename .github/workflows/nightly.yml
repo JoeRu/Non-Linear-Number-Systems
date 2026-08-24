@@ -1,0 +1,74 @@
+# The Lean layer is built on a schedule, never on push or pull request.
+#
+# Spec D12: Mathlib needs a large cache (measured: lean/.lake is 5.1 GB) and
+# the layer changes rarely, so a nightly build bounds an unremarked regression
+# to a day for the price of one cache, rather than one per pull request. The
+# gap is deliberate and named in section 3A -- a Lean regression does reach
+# main unremarked until the next run.
+#
+# The Python job is repeated here rather than reused. It is cheap, and it
+# catches something the push workflow cannot: a dependency released since the
+# last commit. Nothing in this repository is pinned beyond a lower bound.
+name: Nightly
+
+on:
+  schedule:
+    # 03:00 UTC daily.
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: nightly-python
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the package and its test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Run the test suite
+        run: python -m pytest -q
+      - name: Validate the claim ledger
+        if: ${{ !cancelled() }}
+        run: python scripts/check_claims.py
+
+  lean:
+    name: nightly-lean
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install elan
+        run: |
+          curl -sSfL \
+            https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Report the pinned toolchain
+        working-directory: lean
+        run: |
+          echo "toolchain: $(cat lean-toolchain)"
+          lake --version
+
+      - name: Fetch prebuilt Mathlib artifacts
+        working-directory: lean
+        # Mathlib is pinned to the official v4.14.0 tag, so its own build cache
+        # has artifacts for exactly this revision -- a cold build of ~5 GB is
+        # avoidable. `cache get` is best-effort: if it misses, `lake build`
+        # below still produces a correct answer, only slowly.
+        run: lake exe cache get || echo "cache miss; lake build will compile"
+
+      - name: Build
+        working-directory: lean
+        run: lake build
