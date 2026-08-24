@@ -410,7 +410,9 @@ on a clean clone said nothing about any of them. An acceptance criterion reading
   doing; not this spec.
 - **Property-based testing over declared domains**, per §3.7's third residue.
 - **Classical mutation testing over the whole suite.**
-- **Release assets.** Revisit at a phase boundary.
+- **Release assets.** Revisit at a phase boundary. **Answered, 2026-08-24:**
+  the boundary arrived when Phase 2 merged, and §9.2 decides them out rather
+  than resetting the trigger. Read that section, not this line.
 
 ## 8. Acceptance criteria
 
@@ -445,6 +447,122 @@ resembling it.
     open half.
 12. Full suite green; `scripts/check_claims.py` OK **on a fresh clone**;
     `lake build` clean.
+
+---
+
+## 9. Amendment — 2026-08-24
+
+Written after §3's first half shipped and §7's phase-boundary trigger fired.
+This section resolves three items the body left underdetermined. It changes no
+decision in §2 and no acceptance criterion in §8.
+
+### 9.1 State at the time of this amendment
+
+Delivered on `main`: AC10 (both memory files with `MEMORY.md` pointers, and
+`claim-ledger` §6.1/§6.2) and AC11 (the Phase 1 documents brought under the
+figure-tag mechanism, closing R-002's open half) — PRs #7 and #8. Delivered
+ahead of this spec because it was live on `main`: artifact existence-and-hash
+checking in `check_claims.py` (`4375689`).
+
+Outstanding: AC1–AC9 and AC12. Nothing of the registry exists yet — no
+`tests/properties.py`, no mutation package, no `load_bearing` marker, no
+`.github/workflows`.
+
+**The §3.5 seed set was re-checked against the tree, because the R-002 work
+renamed test modules after this spec was written.** All thirteen rows still
+name live anchors: `data/phase1_data.csv`, `data/phase2_figures.json`,
+`test_enclosure_contains_an_independently_summed_reference` (`tests/test_interval.py`),
+`test_places_up_to_production_boundary` (`tests/test_fib.py`),
+`THEOREM_PATH_TOKEN_RE` (`scripts/check_claims.py`),
+`tests/test_oracle_gate_guard.py`, `tests/test_epistemic_staleness.py` — a
+module, not a test function — and the figure-tag tests, which now live in
+`tests/test_figure_tags.py` rather than the `test_phase2_figures.py` the spec
+was drafted against. No seed row needs replacing; one needs its path updated
+when the mutation is written.
+
+### 9.2 The baseline fingerprint is a tracked file (resolves §3.7)
+
+§3.7 requires the workflow to fail "when the fingerprint moves without a matching
+waiver". That presupposes a stored baseline to compare against, which the body
+never locates. D13 rejects machine-local hash files. The baseline is therefore
+tracked in the repository, at `.superpowers/registry/fingerprint.json`, and is
+updated in the same commit as the waiver authorising the move.
+
+The reason is the one §3.7 already gives for wanting a waiver at all: the
+mechanism's value is *the diff a reviewer reads*. A tracked baseline puts the
+fingerprint change and its justification in a single reviewable diff, and it
+survives a clone as D13 demands. A CI-artifact-only record provides neither —
+artifacts expire, and they never appear in a diff.
+
+It sits inside the trust domain of the change under review. §3.7 residue 2
+already states that boundary and names branch protection as the mitigation; this
+choice does not widen it.
+
+**Release assets: decided, not deferred again.** §7 parked them with "revisit at
+a phase boundary". Phase 2 merged on 2026-08-23, so this is that boundary, and
+the trigger is being answered rather than reset. They stay out. Reading the
+baseline from a Release would put the releases API and a write token on the merge
+path and would take the baseline out of the reviewer's diff — surrendering
+§3.7's stated purpose to buy a trust-domain improvement that residue 2 has
+already recorded as unclosed. Publishing a dated Release at a phase close
+remains available as a citation convenience for the paper; nothing depends on it.
+
+### 9.3 AC8 states a requirement without a mechanism
+
+AC8 requires the full tier's status check to be required for merge, with the
+configuration "verified, not assumed — a non-required job satisfies 'the workflow
+exists' while blocking nothing". The body states this and supplies no mechanism,
+and the pytest suite cannot supply one: whether a check is required is a fact
+about the repository's ruleset, not about this tree.
+
+The verification is a workflow job that queries
+`repos/{owner}/{repo}/rulesets` using the workflow's own `GITHUB_TOKEN` and fails
+when its own check name is absent from the required set. This is §3.1's reverse
+direction applied to configuration — the job asserts its own *required-ness*
+rather than its own existence, because a job quantifying over itself is exactly
+the check AC8 warns is worthless.
+
+Availability confirmed at the time of writing: the repository is public, Actions
+are enabled with `allowed_actions: all`, and the rulesets endpoint responds.
+
+### 9.4 Delivery order: two plans, continuous integration first
+
+The remaining work ships as two plans, not one.
+
+**Plan A — continuous integration.** The §3A workflow on push and pull request
+(fresh checkout, install, `pytest`, `scripts/check_claims.py`), the §9.3
+required-check verification job, the scheduled run including `lake build`, and
+the §4 **rule 5 amendment** — which is about a gate's *absence* and so belongs
+with the fresh-checkout run rather than with the registry.
+
+**Plan B — the mutation registry.** §3.1–§3.8 entire: `tests/properties.py` and
+the `load_bearing` marker, the scratch-tree harness, the thirteen seed mutations,
+the meta-tests, the fingerprint and one-shot waiver checker, both tiers wired
+into the workflow Plan A created, and the §4 **rule 11**.
+
+The order follows from what §3A already says about its own contents: the
+fresh-checkout run "is the *structural* fix for the clean-clone class … no
+mutation required, and no one needing to think of it. That property comes free
+with CI existing at all, and it is the single cheapest thing in this document."
+Shipping the cheapest structural fix behind the most expensive one is the wrong
+way round. The split also bounds risk — the ~5 GB Mathlib cache is the one
+genuinely uncertain piece, and it is better discovered on a four-task plan than
+a fifteen-task one — and it keeps each diff small enough to be reviewed, which
+is not hypothetical: Copilot reported "24/25 files reviewed" on PR #8 without
+naming the file it skipped.
+
+**The risk in splitting is §3.6's own warning, one level up.** "Tiering is how a
+fast set quietly becomes the only set that ever runs" applies to plans as
+readily as to mutation tiers: Plan A is the cheap tier, and Plan B is what
+quietly never happens. Two things hold against it. Rule 11 ships **with** Plan B,
+so no rule in force depends on a registry that does not exist and Plan A cannot
+masquerade as completion. And Plan A does not declare the required-check set
+finished — Plan B adds the mutation job to it, so the set is visibly incomplete
+until then.
+
+Acceptance criteria are unchanged and are not renegotiated by the split: AC12 is
+satisfied by Plan A, AC1–AC7 by Plan B, AC8 across both, and AC9 by both — rule 5
+in A, rule 11 in B. Neither plan is complete on its own, and §8 remains the bar.
 
 ---
 
