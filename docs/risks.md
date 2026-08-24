@@ -399,3 +399,76 @@ round will settle it. Record the ID, the description, both positions stated
 fairly, the cost to the roadmap objective if the project's position is wrong,
 and what should trigger a revisit. Do not use this file to park defects — a
 defect that everyone agrees is a defect gets fixed or tracked as an issue.
+
+---
+
+## R-007 — The required-check inventory reports Plan B's absence but cannot compel it
+
+**Status:** accepted · **Raised by:** Codex, 2026-08-24 · **Phase:** 2/3 boundary
+
+**Description.** The defect-prevention spec ships in two plans: Plan A, the
+non-mutation CI foundation, and Plan B, the mutation registry. Acceptance
+criterion 8 requires the full mutation tier's status check to be *required for
+merge*, which Plan A cannot satisfy — the tier does not exist, and GitHub will
+not accept a context as required until it has been reported at least once.
+
+§9.3's tracked inventory names every context that must be required, including
+the full tier's. After Plan A the verifier therefore fails on every run, naming
+the missing tier. That is a standing red, not a block.
+
+**Positions.**
+
+- *Codex:* a non-blocking signal does not reduce the probability of Plan B never
+  shipping. The remedy is to configure a deliberately failing placeholder under
+  the final full-tier context and mark it required, so every pull request is
+  blocked until Plan B replaces it. Only that is a delivery mitigation; the rest
+  is observability.
+- *Project:* correct on the mechanics, and the trade is still refused. Blocking
+  every merge on a single-maintainer repository would halt Phase 3 and Phase 4
+  research for as long as Plan B takes, to protect against a maintainer ignoring
+  a red check they see on every run. The standing red is chosen deliberately
+  over a stopped repository, and §3.6's own warning — that the cheap tier
+  becomes the only tier that ships — is acknowledged as applying here.
+
+**Risk to the roadmap.** Moderate, and it is a process risk rather than a
+mathematical one. If Plan B never ships, acceptance criteria 1–8 stay open, the
+mutation discipline that motivated the whole spec never exists, and the guards
+added in Phases 1 and 2 keep the property that made them worth writing down:
+none has been seen to fail. The mathematics is unaffected — no claim, proof or
+artifact depends on the registry — but the defect classes it was written to
+close stay open, and the evidence of Phases 1 and 2 is that they recur.
+
+**What would close it.** Plan B shipping. Failing that, a decision to accept the
+classes as open, recorded here rather than left implicit.
+
+## R-008 — Waivers are self-authorised
+
+**Status:** accepted · **Raised by:** Codex, 2026-08-24 · **Phase:** 2/3 boundary
+
+**Description.** §3.7's tamper-evidence rests on a coordinated weakening having
+to move the registry fingerprint and produce a waiver a reviewer reads. On a
+single-maintainer repository the author writes the production change, the test,
+the mutation, the fingerprint and the waiver, and no independent party reads any
+of it.
+
+**Positions.**
+
+- *Codex:* GitHub forbids an author approving their own pull request, so
+  required reviews or path-scoped CODEOWNERS over the registry, waiver, checker
+  and workflow paths would be genuinely enforceable. An earlier draft of the
+  spec called this control impossible here; that was false, and rejecting it
+  discards achievable independent authorisation.
+- *Project:* the finding is accepted — the obstacle is that no second
+  write-authorised reviewer exists on this project, which is a staffing decision
+  the spec cannot make. §9.2 now names the object a *waiver explanation*: it
+  forces a weakening to be written down and to appear in a diff, and it
+  authenticates nothing.
+
+**Risk to the roadmap.** Low for the mathematics, real for the guard system. The
+registry remains tamper-*evident* to a reader who looks, and offers no
+resistance to an author who does not want to be caught. Since the author here is
+also the person the guards exist to help, the practical exposure is a lapse of
+attention rather than an adversary.
+
+**What would close it.** Adding a second write-authorised reviewer and
+path-scoped CODEOWNERS over the registry, waiver, checker and workflow paths.

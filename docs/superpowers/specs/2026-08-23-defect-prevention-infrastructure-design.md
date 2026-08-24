@@ -191,8 +191,8 @@ existence is examined.
 | Every T3 `log_count` → `0.0` | the T3 product identity |
 | T5 → `T3 + 0.01` for `N >= 1000` | the large-`N` T5 property |
 | Drop the break-index term in `log_F_c_interval` | `test_enclosure_contains_an_independently_summed_reference` |
-| Remove `data/phase1_data.csv` | **session-level** (§3.2): the 12 comparisons skip and `pytest_sessionfinish` exits 1 with the SKIPPED violation text. The `test_oracle_gate_guard.py` tests do **not** go red — they exercise `gate_violations` over synthetic inputs and never read the CSV |
-| Weaken `gate_violations` to return `[]` | `tests/test_oracle_gate_guard.py` — the guard's own unit tests. Registered separately because the row above cannot kill them, and a guard whose helper is gutted must still be caught |
+| Remove `data/phase1_data.csv` | the 12 comparison node ids, as **assertions**. `_exact()` asserts on an absent CSV — the R-002 work converted it from a skip precisely so a clean clone could not run none of them and report green — so this is an ordinary node-level kill with the `absent -- it is tracked` signature. It is **not** session-level, and the `test_oracle_gate_guard.py` tests do **not** go red: they exercise `gate_violations` over synthetic inputs and never read the CSV |
+| Weaken `gate_violations` to return `[]` | exactly `test_a_skipped_gate_is_a_violation` and `test_collected_but_never_executed_is_a_violation`. Named as node ids, not as "the module": the module's other six tests do not all die from this, and §3.1 requires a mutation to kill every listed target. Registered separately because the CSV row cannot kill any of them, and a guard whose helper is gutted must still be caught |
 | Remove `data/phase2_figures.json` | the figure-tag tests |
 | Perturb `data/phase2_figures.json["chernoff-certified-nmax"]` | `test_every_tag_resolves_and_matches`. The key is pinned because it is **quoted**: `residual-centre` is the one phase2 key in `KEYS_KNOWINGLY_UNQUOTED`, and perturbing it survives every check |
 | Strip every `{fig:}` tag from a document | the zero-tag check |
@@ -452,12 +452,25 @@ resembling it.
    mutation kills **all** of its property's tests, not one of them.
 3. For each mutation the harness records: targets **passed** in the unmutated
    scratch tree, then failed under mutation **as assertions matching the
-   declared signature**. A run where a target errors, skips, times out or fails
-   to collect is a harness failure, not a kill.
+   declared signature**. A run where a *node* target errors, skips, times out or
+   fails to collect is a harness failure, not a kill. **Amended 2026-08-24
+   (§9.5 D):** a mutation declaring `must_fail_session` (§3.2) is killed by the
+   declared session exit status together with the declared violation-text
+   signature. Exactly one guard in this repository has no node-level signal —
+   the oracle gate fires when a marked test *skips*, and a skip makes no node
+   red — so this clause is the narrow exception that guard requires, not a
+   general relaxation. A session that exits non-zero for any other reason is
+   still a harness failure.
 4. Imports in the scratch run resolve beneath the scratch root — asserted, not
    assumed.
-5. The sibling-document mutation is present, and a `skip` under it is treated as
-   **survival**.
+5. The sibling-document mutation is present. **Amended 2026-08-24 (§9.5 D):**
+   the original wording — "a `skip` under it is treated as **survival**" — was
+   written when `test_every_tag_resolves_and_matches` skipped over an absent
+   document. It now asserts, so the property to guard has inverted: the mutation
+   reintroduces the `skip`, and the kill is the oracle gate catching it, since
+   `test_figure_tags.py` is in `GATE_MODULES`. A skip the gate does **not**
+   catch is survival. The old wording, applied to the new mutation, would have
+   declared its only possible kill a survival.
 6. The fingerprint includes mutation source, test source, failure signature,
    exemptions and the property inventory — demonstrated by showing that the
    coordinated-weakening transition of §3.7 **moves** it.
@@ -487,7 +500,9 @@ first half", which was false and contradicted §9.1's own next paragraph.
 This section resolves three items the body left underdetermined, and §9.5 records
 defects the review of this amendment found in §§1–8. It amends **D9** (§9.5 A)
 and changes no other §2 decision. It changes no §8 acceptance criterion, but
-§9.4 states which criteria each plan leaves unsatisfied.
+§9.4 states which criteria each plan leaves unsatisfied. It **amends AC3 and
+AC5** (§9.5 D); an earlier draft of this sentence claimed no §8 criterion
+changed, which was false once §3.2 gained a session-level kill.
 
 ### 9.1 State at the time of this amendment
 
@@ -515,10 +530,15 @@ go red, for the declared reason, under §3.1's rule that a mutation must kill
 
 - **Remove `data/phase1_data.csv`** listed "the oracle-gate guard" as a target.
   `tests/test_oracle_gate_guard.py` exercises `gate_violations` over synthetic
-  arguments and never reads the CSV, so it cannot go red. The real signal is
-  `pytest_sessionfinish` setting `session.exitstatus = 1` — a session, not a
-  node, which §3.2's model could not express until §9.5 C added it. Split into a
-  session-level row plus a separate row that guts `gate_violations` itself.
+  arguments and never reads the CSV, so it cannot go red. An earlier draft of
+  this bullet then claimed the real signal was the session gate firing on skips.
+  That was also wrong: `_exact()` **asserts** on an absent CSV — its docstring
+  says "this must fail rather than skip", because while it skipped a clean clone
+  ran none of the twelve comparisons and still reported green — and
+  `pytest_runtest_makereport` counts a failed call phase as *executed*, so
+  `state.skipped` stays empty and the gate never fires. The row is an ordinary
+  node-level kill over the twelve comparisons, plus a separate row naming the
+  two `gate_violations` unit tests that a gutted helper actually kills.
 - **Perturb one stored figure value** was underdetermined. `residual-centre` is
   in `KEYS_KNOWINGLY_UNQUOTED`, so perturbing it survives every check and proves
   nothing. Pinned to `chernoff-certified-nmax`, which the documents quote.
@@ -559,17 +579,47 @@ comparison must therefore read the base from outside the candidate's control:
 - Waiver identities are retained in an append-only ledger checked against
   protected history, so a previously-used waiver cannot be replayed — which is
   what §3.7's "rejected when … reused" and AC7 already require.
-- Initial-baseline creation, force-push, file deletion and multi-commit
-  behaviour are each defined, not left to the implementer.
+- **Multi-commit:** `base` is always the protected target SHA, never `HEAD^`.
+- **Initial baseline:** when no `fingerprint.json` exists at the base, the
+  transition is `genesis -> new`. It still requires a waiver, of a distinguished
+  `genesis` form, so the first baseline is authored deliberately rather than
+  arriving as an unremarked new file.
+- **Deletion:** removing `fingerprint.json` is a transition to `absent`, not an
+  exemption from the check. It requires a waiver like any other move; a missing
+  file never means "nothing to compare".
+- **Force-push:** if the push event's `before` SHA is not an ancestor of the
+  candidate, the comparison **fails closed** rather than falling back to the
+  candidate tree.
+- **Pull-request retargeting:** the waiver binds the target ref as well as the
+  base SHA, and the workflow runs on `pull_request` `edited` so a retarget
+  re-evaluates instead of inheriting a verdict computed against the old base.
+- **Merge queue:** `merge_group` is a separate event with its own provenance.
+  Either the workflow handles it explicitly or the merge queue is not enabled;
+  leaving it unhandled would let a queued merge bypass the comparison entirely.
+- **Obsolete bases:** the ruleset must set `strict_required_status_checks_policy`.
+  Under the loose policy GitHub permits merging a pull request whose checks ran
+  against a base that has since advanced, so a comparison against the *old*
+  protected target could be accepted after the target moved.
 
-**Self-authorisation is not closed, and is not claimed to be.** This repository
-has one maintainer, so a non-author approval requirement — CODEOWNERS, protected
-reviewers — cannot exist here; specifying one would be a control that cannot
-fire, which is the exact pattern §1.1 identifies as this project's recurring
-defect. The object is therefore best read as a **waiver explanation**: it forces
-a coordinated weakening to be written down and to appear in a diff, and it does
-not authenticate that anyone independent agreed. That is §3.7 residue 1, stated
-here rather than implied.
+An earlier draft replaced this list with the single sentence "Initial-baseline
+creation, force-push, file deletion and multi-commit behaviour are each defined,
+not left to the implementer" — a claim that they were defined, in place of
+defining them.
+
+**Self-authorisation is open, and the reason is staffing, not impossibility.**
+An earlier draft asserted that a non-author approval requirement "cannot exist
+here" because the repository has one maintainer. That is false. GitHub does not
+let an author approve their own pull request, so required reviews or path-scoped
+CODEOWNERS over the registry, waiver, checker and workflow paths would be
+genuinely enforceable — as soon as a second write-authorised reviewer exists.
+The obstacle is that no such person is on this project today, which is a
+staffing decision the spec cannot make and must not disguise as a technical
+limit.
+
+Until one exists, the object is a **waiver explanation**: it forces a
+coordinated weakening to be written down and to appear in a diff, and it
+authenticates nothing. That is §3.7 residue 1. Adding a reviewer is recorded as
+the available closure, not as unreachable.
 
 The reason for tracking the baseline at all is the one §3.7 already gives for
 wanting a waiver: the mechanism's value is *the diff a reviewer reads*. A tracked baseline puts the
@@ -620,21 +670,44 @@ The verification is a workflow job that:
 - fails when any inventory context is absent from the `required_status_checks`
   rule, checks the expected Actions `integration_id` so another producer cannot
   satisfy a context name, and rejects duplicate contexts;
-- runs **unconditionally** on pull requests. A job skipped by a job-level
-  condition reports success, so a required context can be satisfied by a job
-  that never ran — the same false positive in a different disguise.
+- runs **unconditionally** on pull requests — and so does the full-tier job
+  itself. A job skipped by a job-level condition reports success, so a required
+  context can be satisfied by a job that never ran; making only the verifier
+  unconditional leaves the job that matters skippable;
+- includes **itself** in the inventory, accepting that its own context is
+  configured during the bootstrap below rather than existing beforehand.
+  Excluding it would leave the verifier optional, which is the defect this
+  section exists to fix;
+- reads the ruleset's **bypass actors** and fails when any is configured for the
+  registry's contexts. A required check that a bypass actor may skip is not
+  required for merge, which is what AC8 asks about.
 
-**Rollout order matters and is stated.** Until the contexts are made required by
-external configuration, a verifier that discovers and reports non-requiredness
-blocks nothing itself. The order is: configure each context externally, rerun,
-then require a successful read-back before AC8 is accepted as met.
+**Rollout order matters, and the naive order does not work.** GitHub will not
+let a context be added as required until it has actually been reported — the
+producing app must have submitted a check recently — so "configure each context
+externally, then rerun", which an earlier draft stated, cannot be executed for a
+context no job has ever emitted. The achievable order is:
+
+1. Plan B's full-tier job runs at least once on a branch, emitting its context.
+2. Both contexts are then configured as required, with the strict policy set and
+   no bypass actors.
+3. The workflow reruns, and the verifier reads the configuration back.
+4. AC8 is accepted only on a successful read-back — never on the configuration
+   step alone.
+
+This is a further reason AC8 cannot close in Plan A: step 1 needs the registry.
 
 Verified at the time of writing: the repository is public, Actions are enabled
 with `allowed_actions: all`, and `GET /repos/JoeRu/Non-Linear-Number-Systems/rules/branches/main`
-returns HTTP 200. It returns `[]`, because no ruleset exists yet — so the shape
-of a `required_status_checks` rule is taken from GitHub's documentation and has
-**not** been observed on this repository. Creating a ruleset to observe it is a
-configuration change, not a spec activity, and belongs to Plan A's rollout.
+returns HTTP 200 with `[]`. That empty result on its own proves only that no
+*active applicable* rule exists — disabled, evaluate-mode and non-matching
+rulesets would also produce it. The stronger statement, that no ruleset exists
+at all, rests on `GET /repos/JoeRu/Non-Linear-Number-Systems/rulesets` also
+returning `[]`, since that endpoint enumerates rulesets regardless of state.
+
+Consequently the shape of a `required_status_checks` rule is taken from GitHub's
+documentation and has **not** been observed on this repository. Creating a
+ruleset to observe it is a configuration change, not a spec activity.
 
 ### 9.4 Delivery order: two plans, continuous integration first
 
@@ -700,9 +773,11 @@ Plan A the honest statement is that most of it is still open.
 
 ### 9.5 Defects this amendment's review found in §§1–8
 
-The Codex review of §9 (2026-08-24) also found three defects in the already-
-approved body. They are fixed in place; recorded here so the edits are
-attributable rather than silent.
+The two Codex reviews of §9 (2026-08-24) found defects in the already-approved
+body. They are recorded here so the edits are attributable rather than silent.
+A and B are closed. C was **wrong as first written** and its correction forced
+D, which amends two acceptance criteria — so the amendment does change §8, and
+§9.1 no longer says otherwise.
 
 **A. D9's cardinalities were stale.** D9 read "a 4-mutation canary and the full
 12". §3.5 held **13** rows at the time — the 2026-08-23 review had already
@@ -720,14 +795,30 @@ The measured cache size is 5.1 GB, and Mathlib is pinned to the official
 `v4.14.0` tag, so the scheduled job can fetch prebuilt oleans rather than cold-
 building — cheaper than the paragraph assumed.
 
-**C. §3.2's kill model could not express two of the seed mutations.** `must_fail`
-took pytest node ids, but the oracle gate fails a *session*, not a node:
-`pytest_sessionfinish` in `tests/conftest.py` inspects skips across
-`GATE_MODULES` and sets `session.exitstatus = 1`. The two mutations closest to
-the recurrences this spec exists for — removing the tracked oracle CSV, and
-turning the missing-document assertion back into a `skip` — are both
-session-level. §3.2 gained `must_fail_session`, and §3.3 extends the
-right-reason requirement to it.
+**C. §3.2's kill model could not express one seed mutation — not two.**
+`must_fail` took pytest node ids, but the oracle gate fails a *session*, not a
+node: `pytest_sessionfinish` in `tests/conftest.py` inspects skips across
+`GATE_MODULES` and sets `session.exitstatus = 1`, and a skip leaves every node
+green. §3.2 gained `must_fail_session` and §3.3 extends the right-reason
+requirement to it.
+
+The first draft of this entry claimed **two** such mutations, including the
+removal of `data/phase1_data.csv`. That was false, and the tree says so
+plainly: `_exact()` asserts on an absent CSV, with a docstring recording that it
+was converted from a skip for exactly this reason, and
+`pytest_runtest_makereport` counts a failed call phase as executed — so nothing
+skips and the gate never fires. That row is an ordinary node-level kill. Only
+the missing-document mutation, which reintroduces a `skip`, needs the session
+model.
+
+**D. Amending AC3 and AC5 (forced by C).** AC3 said any target that skips is a
+harness failure; AC5 said a `skip` under the sibling mutation is *survival*.
+Both predate the tree's conversion of that skip into an assertion. Left
+unchanged, they would have declared the session-level mutation's only possible
+kill a survival. AC3 now carries a narrow exception for a declared
+`must_fail_session`, and AC5 is inverted to the property that is now real: the
+mutation reintroduces the skip, the gate must catch it, and a skip the gate does
+not catch is survival.
 
 ---
 
@@ -772,5 +863,23 @@ before acting; the one rejection is recorded with its reason.
 | §9.1's "all thirteen rows name live anchors" checked the wrong property: existence, not registrability. Three rows cannot be registered as written | **Accepted, and it was the most valuable finding.** The CSV row's named guard tests run on synthetic input and cannot go red; the perturbation row was satisfiable by `residual-centre`, which no document quotes; and the sibling row dies at `assert not missing` before the drifted sibling is read — a wrong-reason kill of the recurrence this spec cites most. §3.5 revised to 15 rows; §9.1 rewritten. |
 | D9's cardinalities are stale, so §9's "changes no §2 decision" is untrue | **Accepted.** D9 content-addressed; §9.5 A records it as the one §2 amendment. |
 | §3A's "Not run: `lake build`" contradicts D12, §7 and AC8 | **Accepted.** §3A now reads "On the schedule only"; §9.5 B. |
+
+**2026-08-24, Codex `gpt-5.6-sol` effort `ultra`, second amendment gate.** Scoped
+re-review of the revisions above. Two findings restated (partly closed), three
+new defects — including one the first revision introduced.
+
+| Finding | Outcome |
+|---|---|
+| §9.2's "initial-baseline creation, force-push, file deletion and multi-commit behaviour are each defined" asserts they are defined without defining any of them | **Accepted.** All four are now written out, plus PR retargeting, `merge_group`, and `strict_required_status_checks_policy` — under the loose policy GitHub permits merging checks that ran against a base which has since advanced. |
+| "A non-author approval requirement cannot exist here" is false: GitHub forbids self-approval, so required reviews or CODEOWNERS become enforceable once a second write-authorised reviewer exists | **Accepted; the earlier rejection was wrong.** The obstacle is staffing, not impossibility, and §9.2 now says so. Recorded as available closure rather than unreachable. |
+| §9.3's rollout order is unachievable: GitHub will not accept a context as required until it has been reported, and after Plan A the full-tier context has never been emitted | **Accepted.** Order corrected to preflight → configure → rerun → read-back, which is a further reason AC8 cannot close in Plan A. |
+| §9.3 left the inventory silent about the verifier itself, made only the verifier unconditional, and ignored ruleset bypass actors | **Accepted.** All three fixed; a context a bypass actor may skip is not required for merge. |
+| The CSV mutation is impossible as written — `_exact()` asserts rather than skips, and a failed call phase counts as executed, so no SKIPPED signature appears | **Accepted, and it invalidated the first revision's central claim.** The tree is explicit: `_exact()`'s docstring records that it was converted from a skip so a clean clone could not run none of the twelve comparisons and still report green. The row is an ordinary node-level kill; only the missing-document mutation needs the session model. §9.5 C rewritten. |
+| The `gate_violations` row names a module, but only two of its eight tests die | **Accepted.** Named as exact node ids. |
+| The session-level mutation contradicts unchanged AC2, AC3 and AC5, which require node kills and call this very skip "survival" | **Accepted.** AC3 gains a narrow exception; AC5 is inverted to the property that is now real. §9 no longer claims it changes no acceptance criterion — §9.5 D. |
+| §9.3 infers "no ruleset exists" from an empty branch-rules result, which proves only that no *active applicable* rule exists | **Accepted.** The claim now rests on `GET /rulesets` also returning `[]`, which enumerates rulesets regardless of state. |
+| §9.5's blanket "they are fixed in place" was false once C proved wrong | **Accepted.** Preamble rewritten to say which entries closed and which forced further change. |
+| The §9.4 inventory improves observability but is non-blocking and therefore ignorable, so it does not close the risk of Plan B never shipping | **Acknowledged, not closed.** This is the residue of the deliberate choice not to block merges on a single-maintainer repository mid-Phase-3; §9.4 already states it. Recorded in `docs/risks.md` rather than argued further. |
+
 
 | Lean CI is load-bearing for the spec's own goal | **Partly accepted.** Added on the schedule rather than per pull request: it bounds the window to a day for one cache, and the Lean layer changes rarely. |
