@@ -234,6 +234,40 @@ def test_ci_job_names_match_the_inventory():
     )
 
 
+def test_the_ci_jobs_still_run_what_their_names_promise():
+    """A context whose job no longer runs anything is a green check with no gate.
+
+    `test_ci_job_names_match_the_inventory` proves the context names exist.
+    That is not the same as the work behind them existing, and the names are
+    what the required-check configuration keys on.
+    """
+    import yaml as _yaml
+
+    jobs = _yaml.safe_load((WORKFLOWS / "ci.yml").read_text())["jobs"]
+    by_name = {job["name"]: job for job in jobs.values()}
+
+    def _commands(job):
+        return " ".join(
+            str(step.get("run", "")) for step in (job.get("steps") or [])
+        )
+
+    tests_commands = _commands(by_name["tests"])
+    assert "pytest" in tests_commands, (
+        "ci.yml's `tests` job no longer runs pytest; the context would still "
+        "report, so a required check would pass with no suite behind it"
+    )
+    assert "check_claims.py" in tests_commands, (
+        "ci.yml's `tests` job no longer runs the claim validator"
+    )
+
+    verifier_commands = _commands(by_name["required-checks"])
+    assert "check_required_contexts.py" in verifier_commands, (
+        "ci.yml's `required-checks` job no longer runs the verifier; an empty "
+        "job reports success, which is the false positive this whole file exists "
+        "to prevent"
+    )
+
+
 def _triggers(document):
     """The `on:` mapping, whichever way PyYAML parsed the key.
 
@@ -255,10 +289,12 @@ def test_ci_declares_the_events_it_promises():
     assert "push" in triggers, "ci.yml no longer runs on push"
     assert "pull_request" in triggers, "ci.yml no longer runs on pull requests"
     types = (triggers.get("pull_request") or {}).get("types") or []
-    for required in ("opened", "synchronize", "reopened"):
+    for required in ("opened", "synchronize", "reopened", "edited"):
         assert required in types, (
             f"ci.yml's pull_request trigger no longer includes {required!r}; "
-            f"without it a pull request can be updated without re-running"
+            f"without `synchronize` a pull request can be updated without "
+            f"re-running, and without `edited` a retargeted pull request keeps "
+            f"a verdict computed against its old base"
         )
 
 
@@ -273,10 +309,23 @@ def test_the_nightly_declares_its_schedule_and_still_builds_lean():
     document = _yaml.safe_load((WORKFLOWS / "nightly.yml").read_text())
     triggers = _triggers(document)
     assert "schedule" in triggers, "nightly.yml no longer runs on a schedule"
+    for forbidden in ("push", "pull_request"):
+        assert forbidden not in triggers, (
+            f"nightly.yml now runs on {forbidden!r}. Spec D12 keeps `lake build` "
+            f"off the merge path deliberately -- Mathlib needs a ~5 GB cache and "
+            f"the layer changes rarely -- so adding a merge-path trigger here "
+            f"reverses a decision rather than extending coverage"
+        )
+
+    lean_jobs = [j for j in document["jobs"].values() if j.get("name") == "nightly-lean"]
+    assert len(lean_jobs) == 1, (
+        f"expected exactly one job named 'nightly-lean', found {len(lean_jobs)}"
+    )
+    lean_job = lean_jobs[0]
+
     lines = [
         line.strip()
-        for job in document["jobs"].values()
-        for step in (job.get("steps") or [])
+        for step in (lean_job.get("steps") or [])
         for line in str(step.get("run", "")).splitlines()
     ]
 
@@ -298,6 +347,37 @@ def test_the_nightly_declares_its_schedule_and_still_builds_lean():
         "nightly.yml no longer runs `lake update`; lean/.lake is gitignored, so "
         "without it Mathlib is never materialised on a fresh runner"
     )
+
+    lake_steps = [
+        step
+        for step in (lean_job.get("steps") or [])
+        if any(
+            line.strip().startswith("lake")
+            for line in str(step.get("run", "")).splitlines()
+        )
+    ]
+    assert lake_steps, "nightly-lean runs no lake command at all"
+    for step in lake_steps:
+        assert step.get("working-directory") == "lean", (
+            f"step {step.get('name')!r} runs lake outside `working-directory: "
+            f"lean`; the Lean project lives in lean/, so the command would "
+            f"target the repository root and build nothing"
+        )
+
+    order = [
+        index
+        for index, line in enumerate(lines)
+        if line.startswith("lake update") or line.startswith("lake exe cache get")
+    ]
+    first, second = lines[order[0]], lines[order[1]]
+    assert first.startswith("lake update"), (
+        "nightly.yml runs `lake exe cache get` before `lake update`. lean/.lake "
+        "is gitignored, so on a fresh runner the `cache` executable does not "
+        "exist yet -- it lives inside the Mathlib package -- and the `|| echo` "
+        "on the cache step would mask that while `lake build` proceeded without "
+        "its dependency. The order is the fix, not an accident"
+    )
+    assert second.startswith("lake exe cache get")
 
 
 def test_main_treats_an_unprivileged_ruleset_read_as_unverified(
