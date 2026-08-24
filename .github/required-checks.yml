@@ -1,0 +1,28 @@
+# Contexts that must be required for merge on the protected branch.
+#
+# This file is the *desired* configuration, not a description of the current
+# one. `scripts/check_required_contexts.py` reads it back against the
+# repository's active branch rules and fails while they disagree.
+#
+# `mutations-full` does not exist yet -- it ships with Plan B (the mutation
+# registry). Until then the verifier fails on every run and names it. That
+# standing red is deliberate: see spec section 9.4 and docs/risks.md R-007.
+# Deleting this entry to make CI green would be the defect this file exists
+# to prevent, so it is not an option.
+branch: main
+
+# GitHub Actions' app id. A context satisfied by any other producer is not the
+# check we asked for, so the producer is pinned rather than assumed.
+expected_integration_id: 15368
+
+contexts:
+  - name: tests
+    ships_in: plan-a
+    why: the suite and the claim validator, from a fresh checkout
+  - name: required-checks
+    ships_in: plan-a
+    why: this verifier; it is in its own inventory, because a verifier that
+      is itself optional verifies nothing
+  - name: mutations-full
+    ships_in: plan-b
+    why: the full mutation tier; acceptance criterion 8 is about this context

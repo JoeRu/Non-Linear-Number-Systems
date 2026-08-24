@@ -1,0 +1,117 @@
+# The Lean layer is built on a schedule, never on push or pull request.
+#
+# Spec D12: Mathlib needs a large cache (measured: lean/.lake is 5.1 GB) and
+# the layer changes rarely, so a nightly build bounds an unremarked regression
+# to a day for the price of one cache, rather than one per pull request. The
+# gap is deliberate and named in section 3A -- a Lean regression does reach
+# main unremarked until the next run.
+#
+# The Python job is repeated here rather than reused. It is cheap, and it
+# catches something the push workflow cannot: a dependency released since the
+# last commit. Nothing in this repository is pinned beyond a lower bound.
+name: Nightly
+
+on:
+  schedule:
+    # 03:00 UTC daily.
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: nightly-python
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the package and its test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Run the test suite
+        run: python -m pytest -q
+      - name: Validate the claim ledger
+        if: ${{ !cancelled() }}
+        run: python scripts/check_claims.py
+
+  lean:
+    name: nightly-lean
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install elan
+        env:
+          # Pinned to an immutable release asset with its checksum, rather than
+          # piping elan-init.sh from the mutable `master` branch into sh. The
+          # runner has already checked out this repository with its credential
+          # by this point, so a force-update of that branch would have been a
+          # supply-chain path into CI.
+          ELAN_VERSION: v4.2.3
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+        run: |
+          curl -sSfL \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-x86_64-unknown-linux-gnu.tar.gz" \
+            -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar xzf elan.tar.gz
+          ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Install the pinned toolchain
+        working-directory: lean
+        # elan was installed with --default-toolchain none, so nothing is
+        # provisioned yet. elan can auto-install from lean-toolchain on first
+        # use, but doing it explicitly keeps the failure -- if any -- on a step
+        # that names the toolchain rather than on an unrelated lake command.
+        run: |
+          elan toolchain install "$(cat lean-toolchain)"
+          echo "toolchain: $(cat lean-toolchain)"
+          lake --version
+
+      - name: Materialise dependencies
+        working-directory: lean
+        # lean/.lake/ is gitignored, so a fresh runner has no Mathlib and no
+        # `cache` executable -- that binary lives inside the Mathlib package.
+        # docs/lean_setup.md documents this as the step that fetches it.
+        # Without it `lake exe cache get` cannot run at all, and the `|| echo`
+        # below would mask that while `lake build` proceeded without its
+        # dependency.
+        run: lake update
+
+      - name: Fail if dependency resolution moved the lock
+        working-directory: lean
+        # lake-manifest.json is the tracked lock. `lake update` above re-resolves
+        # refs and can rewrite it, so a scheduled run could validate a different
+        # Mathlib than this repository pins and still report success. Detecting
+        # the drift is the point: a nightly that silently builds something else
+        # is worse than one that fails.
+        run: |
+          if ! git diff --quiet -- lake-manifest.json; then
+            echo "PROBLEM: lake update rewrote lake-manifest.json"
+            git --no-pager diff -- lake-manifest.json
+            echo "The nightly would have built a revision this repository does not pin."
+            exit 1
+          fi
+          echo "lock unchanged: $(git rev-parse --short HEAD) manifest intact"
+
+      - name: Fetch prebuilt Mathlib artifacts
+        working-directory: lean
+        # Mathlib is pinned to the official v4.14.0 tag, so its build cache has
+        # artifacts for exactly this revision, and a cold ~5 GB build is
+        # avoidable. Tolerating a non-zero exit here is safe ONLY because
+        # `lake update` above has already materialised the dependency: what
+        # remains is a genuine cache miss, which costs time and not
+        # correctness, and `lake build` below has no error tolerance of its own.
+        run: lake exe cache get || echo "cache miss; lake build will compile"
+
+      - name: Build
+        working-directory: lean
+        run: lake build

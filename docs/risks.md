@@ -399,3 +399,151 @@ round will settle it. Record the ID, the description, both positions stated
 fairly, the cost to the roadmap objective if the project's position is wrong,
 and what should trigger a revisit. Do not use this file to park defects — a
 defect that everyone agrees is a defect gets fixed or tracked as an issue.
+
+---
+
+## R-007 — The required-check inventory reports Plan B's absence but cannot compel it
+
+**Status:** accepted · **Raised by:** Codex, 2026-08-24 · **Phase:** 2/3 boundary
+
+**Description.** The defect-prevention spec ships in two plans: Plan A, the
+non-mutation CI foundation, and Plan B, the mutation registry. Acceptance
+criterion 8 requires the full mutation tier's status check to be *required for
+merge*, which Plan A cannot satisfy — the tier does not exist, and GitHub will
+not accept a context as required until it has been reported at least once.
+
+§9.3's tracked inventory names every context that must be required, including
+the full tier's. After Plan A the verifier therefore fails on every run, naming
+the missing tier. That is a standing red, not a block.
+
+**Positions.**
+
+- *Codex:* a non-blocking signal does not reduce the probability of Plan B never
+  shipping. The remedy is to configure a deliberately failing placeholder under
+  the final full-tier context and mark it required, so every pull request is
+  blocked until Plan B replaces it. Only that is a delivery mitigation; the rest
+  is observability.
+- *Project:* correct on the mechanics, and the trade is still refused. Blocking
+  every merge on a single-maintainer repository would halt Phase 3 and Phase 4
+  research for as long as Plan B takes, to protect against a maintainer ignoring
+  a red check they see on every run. The standing red is chosen deliberately
+  over a stopped repository, and §3.6's own warning — that the cheap tier
+  becomes the only tier that ships — is acknowledged as applying here.
+
+**Risk to the roadmap.** Moderate, and it is a process risk rather than a
+mathematical one. If Plan B never ships, acceptance criteria 1–8 stay open, the
+mutation discipline that motivated the whole spec never exists, and the guards
+added in Phases 1 and 2 keep the property that made them worth writing down:
+none has been seen to fail. The mathematics is unaffected — no claim, proof or
+artifact depends on the registry — but the defect classes it was written to
+close stay open, and the evidence of Phases 1 and 2 is that they recur.
+
+**Delivery record.** Plan A's implementation is complete on branch `ci-workflow`,
+pushed and proposed as PR #9 on 2026-08-24, and **not yet merged**:
+`.github/required-checks.yml`, `scripts/check_required_contexts.py`,
+`.github/workflows/ci.yml` and `nightly.yml` exist there. The first CI run
+confirmed both halves of the design: `tests` passed from a fresh checkout, and
+`required-checks` failed with exactly the four expected problems — no ruleset
+applies, and `tests`, `required-checks` and `mutations-full` are each not
+required — plus the `NOT CHECKED: ruleset bypass actors` line. That failure is
+the intended state and must not be resolved by editing the inventory.
+Acceptance criteria 8 and 9 remain open. **AC12's Python half is met** by that
+run; the Lean half is not, because no scheduled run has occurred and
+`nightly.yml` cannot be triggered until it is on the default branch.
+
+**What would close it.** Plan B shipping. Failing that, a decision to accept the
+classes as open, recorded here rather than left implicit.
+
+## R-008 — Waivers are self-authorised
+
+**Status:** accepted · **Raised by:** Codex, 2026-08-24 · **Phase:** 2/3 boundary
+
+**Description.** §3.7's tamper-evidence rests on a coordinated weakening having
+to move the registry fingerprint and produce a waiver a reviewer reads. On a
+single-maintainer repository the author writes the production change, the test,
+the mutation, the fingerprint and the waiver, and no independent party reads any
+of it.
+
+**Positions.**
+
+- *Codex:* GitHub forbids an author approving their own pull request, so
+  required reviews or path-scoped CODEOWNERS over the registry, waiver, checker
+  and workflow paths would be genuinely enforceable. An earlier draft of the
+  spec called this control impossible here; that was false, and rejecting it
+  discards achievable independent authorisation.
+- *Project:* the finding is accepted — the obstacle is that no second
+  write-authorised reviewer exists on this project, which is a staffing decision
+  the spec cannot make. §9.2 now names the object a *waiver explanation*: it
+  forces a weakening to be written down and to appear in a diff, and it
+  authenticates nothing.
+
+**Risk to the roadmap.** Low for the mathematics, real for the guard system. The
+registry remains tamper-*evident* to a reader who looks, and offers no
+resistance to an author who does not want to be caught. Since the author here is
+also the person the guards exist to help, the practical exposure is a lapse of
+attention rather than an adversary.
+
+**What would close it.** Adding a second write-authorised reviewer and
+path-scoped CODEOWNERS over the registry, waiver, checker and workflow paths.
+
+## R-009 — Ruleset bypass actors are unverifiable by CI
+
+**Status:** accepted · **Raised by:** Codex, 2026-08-24 · **Phase:** 2/3 boundary
+
+**Description.** The required-check verifier can confirm which contexts are
+required, their expected producer, the strict policy and the absence of
+duplicates. It cannot confirm that no actor may bypass them. GitHub discloses
+`bypass_actors` only to a requester with write access to the ruleset; no
+`GITHUB_TOKEN` scope reaches it, and an earlier attempt used
+`administration: read`, which is a GitHub App permission and not a valid
+Actions one — it would have made the workflow invalid outright.
+
+**Positions.**
+
+- *Codex:* a privileged credential cannot safely be placed in a job that runs
+  pull-request-controlled code, so this cannot be closed inside CI.
+- *Project:* accepted; the check moves to `--check-bypass`, run by the
+  maintainer with an admin token at rollout and after any ruleset change, and
+  every CI run prints that the property was not established.
+
+**Risk to the roadmap.** Low for the mathematics, real for the guard system. A
+bypass actor added later would not be detected until someone next runs the
+flag. The mitigation is that the gap is printed on every run rather than
+assumed away.
+
+**What would close it.** A GitHub Actions permission that discloses
+`bypass_actors`, or a trusted workflow separated from pull-request-controlled
+code.
+
+---
+
+## R-010 — The verifier and its inventory are editable by the pull request they gate
+
+**Status:** accepted · **Raised by:** Copilot, 2026-08-24 · **Phase:** 2/3 boundary
+
+**Description.** `required-checks` runs from the pull request's merge commit, so
+a pull request that removes the `mutations-full` entry from
+`.github/required-checks.yml`, or weakens `scripts/check_required_contexts.py`,
+makes the job pass. The tracked inventory is not an immutable reference; it is a
+file the candidate controls. This does not bite today, because Plan A makes
+only `tests` required — but it bites precisely when Plan B makes
+`required-checks` required, which is when the inventory starts carrying weight.
+
+**Positions.**
+
+- *Copilot:* run the verifier and read the inventory from the protected base ref
+  rather than the candidate, or protect those paths with independent review.
+- *Project:* accepted as real and not closed in Plan A. Reading the inventory
+  from the base would mean a pull request that legitimately updates it is not
+  tested until after merge, which is its own defect; and path-scoped review
+  needs a second write-authorised reviewer, which R-008 already records as
+  unavailable. The decision is deferred to Plan B, when the context first
+  becomes required.
+
+**Risk to the roadmap.** Low while only `tests` is required; material from the
+moment Plan B makes `required-checks` required, because from then on the check
+can be disarmed by the change it is checking.
+
+**What would close it.** Reading the inventory and verifier from the protected
+base ref for the comparison while still validating the candidate's copy parses,
+or path-scoped CODEOWNERS once a second reviewer exists (see R-008).

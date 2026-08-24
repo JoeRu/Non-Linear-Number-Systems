@@ -122,8 +122,18 @@ lake env lean NonLinearNumberSystems/Redundancy.lean
 
 4. **Add docstrings** to all new Python functions using the Google style.
 
-5. **Respect the correctness gate.** Never present `capfib.dp` or `capfib.gf` output as
-   a fact until it has passed the cross-checks described in Global Constraints above.
+5. **Respect the correctness gate, and treat absence as failure.** Never present
+   `capfib.dp` or `capfib.gf` output as a fact until it has passed the
+   cross-checks described in Global Constraints above.
+
+   **A gate that skips is a gate that did not run.** The same standard applies
+   to a check's *absence* as to its result: a skipped comparison, an
+   unreadable configuration, a test that did not collect and a guard whose
+   input file is missing are all failures, never passes. Verification claims
+   are checked from a clean clone rather than from a working tree — CI does
+   this on every push, and `data/phase1_data.csv` is the reason it must:
+   while it was gitignored, twelve T1/T3/T5 comparisons skipped on every
+   clean clone and the suite still reported green.
 
 6. **Codex reviews everything.** Standing decision (2026-08-20). Every design
    spec goes to Codex before it becomes an implementation plan; every code
