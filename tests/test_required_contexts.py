@@ -553,3 +553,43 @@ def test_the_bypass_notice_prints_even_when_the_rules_request_fails(
 
     assert exit_code == 1
     assert "NOT CHECKED: ruleset bypass actors" in output
+
+
+def test_a_requested_bypass_check_that_could_not_run_says_so(
+    monkeypatch, tmp_path, capsys
+):
+    """Asking for the bypass check and not getting it must not be silent.
+
+    `--check-bypass` is the maintainer's rollout path. If the branch-rules
+    request fails, `main` returns before any ruleset is fetched, so bypass
+    actors go unverified. An operator who requested the check, did not get it,
+    and was told nothing could reasonably assume an earlier run's verdict still
+    holds. Spec section 9.3 and docs/risks.md R-009 both require every run to
+    state what it did not establish.
+    """
+    inventory = tmp_path / "required-checks.yml"
+    inventory.write_text(
+        "branch: main\n"
+        "expected_integration_id: 15368\n"
+        "contexts:\n"
+        "  - name: tests\n"
+        "    ships_in: plan-a\n"
+    )
+
+    monkeypatch.setattr(
+        crc, "fetch_all", lambda url, token: (None, f"HTTP 403 for {url}")
+    )
+
+    exit_code = crc.main(
+        ["--repo", "owner/name", "--inventory", str(inventory), "--check-bypass"]
+    )
+    output = capsys.readouterr().out
+
+    assert exit_code == 1
+    assert "NOT CHECKED: ruleset bypass actors" in output, (
+        f"a requested-but-unrun bypass check must be reported; got:\n{output}"
+    )
+    assert "went unverified" in output, (
+        "the message must say the check did not run, not merely that it was "
+        f"skipped by default; got:\n{output}"
+    )

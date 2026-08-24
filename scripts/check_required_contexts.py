@@ -260,7 +260,15 @@ def main(argv=None) -> int:
     if error:
         print(f"PROBLEM: could not read branch rules -- {error}")
         print("Writing no verdict: an unread configuration is not a verified one.")
-        if not args.check_bypass:
+        if args.check_bypass:
+            print(
+                "NOT CHECKED: ruleset bypass actors. --check-bypass was "
+                "requested, but the branch rules could not be read, so no "
+                "ruleset was reached and bypass actors went unverified. This "
+                "run establishes nothing about them -- do not carry forward a "
+                "verdict from an earlier run."
+            )
+        else:
             print(BYPASS_NOTICE)
         return 1
 
