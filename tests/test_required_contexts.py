@@ -126,3 +126,46 @@ def test_the_tracked_inventory_parses_and_names_the_plan_b_context():
         "the Plan B context must stay in the inventory: removing it is how "
         "this file stops reporting that Plan B has not shipped"
     )
+
+
+WORKFLOWS = ROOT / ".github" / "workflows"
+
+
+@pytest.mark.parametrize("workflow", ["ci.yml", "nightly.yml"])
+def test_no_job_is_conditional_or_dependent(workflow):
+    """A skipped job reports success, so neither `if:` nor `needs:` is allowed.
+
+    Spec section 9.3. This is the rule most likely to be undone by someone
+    tidying the workflow later, and undoing it produces a required check that
+    cannot fail -- silently.
+    """
+    import yaml as _yaml
+
+    path = WORKFLOWS / workflow
+    if not path.exists():
+        pytest.skip(f"{workflow} not written yet")
+    jobs = _yaml.safe_load(path.read_text())["jobs"]
+    for name, job in jobs.items():
+        assert "if" not in job, (
+            f"job {name!r} in {workflow} carries a job-level `if:`; a skipped "
+            f"job reports success, so a required context could be satisfied "
+            f"by a job that never ran"
+        )
+        assert "needs" not in job, (
+            f"job {name!r} in {workflow} uses `needs:`; a dependent job skips "
+            f"when its dependency fails, which reports success the same way"
+        )
+
+
+def test_ci_job_names_match_the_inventory():
+    """Context names come from the job's `name:`, so a rename breaks the gate."""
+    import yaml as _yaml
+
+    jobs = _yaml.safe_load((WORKFLOWS / "ci.yml").read_text())["jobs"]
+    produced = {job["name"] for job in jobs.values()}
+    inventory = crc.load_inventory(ROOT / ".github" / "required-checks.yml")
+    plan_a = {c["name"] for c in inventory["contexts"] if c["ships_in"] == "plan-a"}
+    assert plan_a <= produced, (
+        f"inventory expects {sorted(plan_a)} but ci.yml produces "
+        f"{sorted(produced)}; a required context no job emits can never pass"
+    )
