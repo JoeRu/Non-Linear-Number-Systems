@@ -10,6 +10,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-23-defect-prevention-infrastructure-design.md` at commit `d114e1b` — §3A, §4 (rule 5 amendment), §9.3, §9.4. Read §9.4 before starting: it states what this plan deliberately leaves unsatisfied.
 
+> **Superseded code blocks.** Tasks 1–4 below quote the code as first written.
+> Several blocks were corrected during review — the bypass-actor default, the
+> job permissions, the hardcoded workflow list, and `evaluate()`'s early return.
+> The shipped files in `scripts/`, `tests/` and `.github/` are authoritative;
+> where they differ from a block below, the file is right and the block is
+> history.
+
 ## Global Constraints
 
 - Python `>=3.11` is the declared floor (`pyproject.toml`). CI pins **3.12** and exercises one version only; the 3.11 floor is therefore **unverified by CI**, and Task 2 records that as a named limitation rather than leaving it implied.
@@ -21,6 +28,10 @@
 - After this plan, **AC8 and AC9 remain unsatisfied** and AC12 is satisfied only once the workflows actually run green. Do not write anything claiming otherwise.
 - Lean: never remove a `sorry` without a real proof. This plan adds no Lean code.
 - Commit at the end of every task.
+- **No step below states a fixed full-suite pass count as a target.** The
+  suite has grown since this plan was drafted and keeps growing; treat every
+  "run the full suite" step as "report the count you measure," never as "match
+  the number printed here."
 
 ---
 
@@ -458,7 +469,8 @@ That is the correct answer today: no ruleset exists. A run that printed
 - [ ] **Step 7: Run the full suite**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: PASS, 274 passed — 263 existing plus the 11 written above.
+Expected: PASS, all green, 0 skipped. Do not assume a baseline count — the
+suite has grown since this plan was drafted; report the number you measure.
 
 - [ ] **Step 8: Commit**
 
@@ -672,10 +684,11 @@ Expected: rules 1 through 10, unchanged in number and order.
 - [ ] **Step 7: Run the full suite**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: PASS, 276 passed and 1 skipped. Three test items were added
-(`test_no_job_is_conditional_or_dependent` parametrises over two workflows,
-plus `test_ci_job_names_match_the_inventory`), and the `nightly.yml` one
-skips until Task 3.
+Expected: PASS, 1 skipped, otherwise green. Three test items were added
+relative to the preceding task's count (`test_no_job_is_conditional_or_dependent`
+parametrises over two workflows, plus `test_ci_job_names_match_the_inventory`),
+and the `nightly.yml` one skips until Task 3 — do not assume a total; report
+the count you measure against the preceding task's.
 
 - [ ] **Step 8: Commit**
 
@@ -819,19 +832,21 @@ The Python job is repeated rather than reused: it catches a dependency
 released since the last commit, which the push workflow cannot."
 ```
 
-- [ ] **Step 5: Verify by running it, not by reading it**
+- [ ] **Step 5: Verification cannot happen until after merge**
 
-This is the one task whose correctness cannot be established locally. After
-the branch is pushed (Task 5, step 1), trigger it:
+This is the one task whose correctness cannot be established locally, and it
+cannot be established from this branch either: GitHub only accepts
+`workflow_dispatch` for a workflow that exists on the repository's default
+branch, so `gh workflow run nightly.yml --ref ci-workflow` fails while
+`nightly.yml` lives only on `ci-workflow`. The actual trigger-and-watch step
+moves to Task 5's rollout sequence, after the merge to `main` that puts
+`nightly.yml` on the default branch — see Task 5's post-merge step.
 
-```bash
-gh workflow run nightly.yml --ref ci-workflow
-gh run watch
-```
-
-Expected: `nightly-python` green; `nightly-lean` green.
-
-If `lake exe cache get` fails because the `cache` executable is unavailable before dependencies are materialised, insert `lake update` before it and re-run. Record whichever sequence worked in the workflow comment — do not leave the file describing a sequence that was not the one used.
+If, once triggered, `lake exe cache get` fails because the `cache` executable
+is unavailable before dependencies are materialised, insert `lake update`
+before it and re-run. Record whichever sequence worked in the workflow
+comment — do not leave the file describing a sequence that was not the one
+used.
 
 ---
 
@@ -869,7 +884,8 @@ Expected: `claims.yaml OK`
 - [ ] **Step 3: Run the full suite**
 
 Run: `.venv/bin/python -m pytest -q`
-Expected: PASS, 277 passed, 0 skipped.
+Expected: PASS, 284 passed, 0 skipped — the count reported by the preceding
+task; do not assume a number, report the one you measure.
 
 - [ ] **Step 4: Commit**
 
@@ -925,41 +941,75 @@ gh api repos/JoeRu/Non-Linear-Number-Systems/pulls/{n}/comments
 
 A context cannot be marked required until it has been reported. This is why the ruleset is configured *after* merge, not before — the order in spec §9.3.
 
-- [ ] **Step 4: (maintainer) Create the ruleset**
+- [ ] **Step 4: (maintainer) Trigger and watch the nightly workflow**
 
-On `main`, require exactly `tests` and `required-checks`, with:
+This is the verification Task 3 step 5 deferred: `nightly.yml` now exists on
+the default branch, so `workflow_dispatch` can accept it.
+
+```bash
+gh workflow run nightly.yml --ref main
+gh run watch
+```
+
+Expected: `nightly-python` green; `nightly-lean` green. If `lake exe cache get`
+fails because the `cache` executable is unavailable before dependencies are
+materialised, insert `lake update` before it and re-run; record whichever
+sequence worked in the workflow comment.
+
+- [ ] **Step 5: (maintainer) Run the workflow and read the `required-checks` job's log**
+
+Confirm it fails with exactly two problems: the `mutations-full` context is
+not required for merge (ships in Plan B), and the printed
+`NOT CHECKED: ruleset bypass actors` line, since the workflow's `GITHUB_TOKEN`
+runs with `--check-bypass` off by default (§9.3, R-009). Confirm the `tests`
+job is green.
+
+- [ ] **Step 6: (maintainer) Create the ruleset — mark only `tests` required**
+
+On `main`, require exactly `tests`, with:
 - **Require branches to be up to date before merging** enabled — this is
   `strict_required_status_checks_policy`; without it GitHub permits merging
   checks that ran against a base which has since advanced.
 - **No bypass actors.**
-- Do **not** add `mutations-full` yet: it has never been reported, so GitHub
-  will not accept it, and that is exactly what the verifier should keep saying.
 
-- [ ] **Step 5: (maintainer) Confirm the `required-checks` JOB passes before making it required**
+Do **not** mark `required-checks` required, and do **not** add
+`mutations-full`: `mutations-full` has never been reported, so GitHub will not
+accept it, and `required-checks` is designed to fail until Plan B ships
+`mutations-full` — requiring it now would make every merge to `main`
+impossible. `required-checks` becomes required only when Plan B ships
+`mutations-full`. Until then it is an informational red. Requiring it now is
+the merge-blocking placeholder `docs/risks.md` R-007 declined.
 
-Re-run the workflow and check the `required-checks` job's own log on GitHub. It must exit 0. Reading it back locally is NOT sufficient evidence: your local `gh` token is a repository admin and can see `bypass_actors`, while the workflow's `GITHUB_TOKEN` may not — so the local check can pass while the job fails. If the job reports `bypass actors for ruleset N could not be read with this token`, its permissions are still insufficient; fix that before making the context required, or `main` becomes unmergeable.
-
-- [ ] **Step 6: (maintainer) Read the configuration back**
+- [ ] **Step 7: (maintainer) Read the configuration back, including bypass actors**
 
 ```bash
 GITHUB_TOKEN=$(gh auth token) \
-  .venv/bin/python scripts/check_required_contexts.py --repo JoeRu/Non-Linear-Number-Systems
+  .venv/bin/python scripts/check_required_contexts.py --repo JoeRu/Non-Linear-Number-Systems --check-bypass
 ```
 
-Expected: exit 1, with exactly one remaining problem —
-`context 'mutations-full' is not required for merge (ships in plan-b)`.
+Run this locally with the maintainer's own admin token — `--check-bypass`
+needs write access to the ruleset, which `GITHUB_TOKEN` in Actions does not
+have (§9.3, R-009). Expected: exit 1, with exactly the two remaining
+problems — `context 'required-checks' is not required for merge` and
+`context 'mutations-full' is not required for merge (ships in plan-b)`. Any
+*other* problem means the ruleset does not match the inventory.
 
-Any *other* problem means the ruleset does not match the inventory. In particular, if the output includes `bypass actors for ruleset N could not be read with this token`, then `GITHUB_TOKEN` in Actions cannot read bypass actors either, and §9.3's bypass check is unverifiable as designed. Record that in `docs/risks.md` as a named limitation of the verifier rather than removing the check. This confirms the ruleset matches the inventory; step 5 is what confirms the job can read it.
+- [ ] **Step 8: (maintainer) Confirm AC8 is still open, in writing**
 
-- [ ] **Step 7: (maintainer) Confirm AC8 is still open, in writing**
-
-AC8 is **not** satisfied by this rollout: `mutations-full` is not required, because it does not exist. Nothing in the repository should claim otherwise. Confirm by grepping for any accidental claim:
+AC8 is **not** satisfied by this rollout: neither `required-checks` nor
+`mutations-full` is required, because `mutations-full` does not exist yet.
+Nothing in the repository should claim otherwise. Confirm by grepping for any
+accidental claim (see the corrected command in §3c of the remediation
+dispatch / the grep below):
 
 ```bash
-grep -rn "AC8\|acceptance criterion 8" docs/ CLAUDE.md | grep -iv "open\|unsatisfied\|remains\|not satisfied\|cannot close"
+grep -rn "AC8\|acceptance criterion 8" docs/ CLAUDE.md \
+  --exclude=2026-08-24-ci-foundation.md \
+  | grep -iv "open\|unsatisfied\|remains\|not satisfied\|cannot close\|not met"
 ```
 
-Expected: no output.
+Expected: no output. If a line appears, it is a claim that AC8 is satisfied,
+and it is wrong.
 
 ---
 

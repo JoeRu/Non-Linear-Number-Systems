@@ -135,10 +135,11 @@ must_fail_session=SessionOutcome(
 )
 ```
 
-Without this the registry cannot express the two mutations whose real guard is
-the session hook — removing the tracked oracle CSV, and turning the
-missing-document assertion back into a skip — which are the two closest to the
-recurrences this spec was written for. §9.5 records why this was added.
+Without this the registry cannot express the mutation whose real guard is
+the session hook — turning the missing-document assertion back into a skip —
+which is the recurrence this spec was written for. §9.5 records why this was
+added. An earlier draft named the oracle CSV here too; §9.5 C records why that
+was wrong.
 
 ### 3.3 Execution
 
@@ -280,8 +281,10 @@ red.
 
 ## 3A. Continuous integration
 
-This repository has no CI today; this is its first workflow. The tracked tree is
-0.8 MB and the suite runs in about 145 s, so the Python side is cheap.
+This repository had no CI when this section was written. Plan A added
+`.github/workflows/ci.yml` and `nightly.yml` on 2026-08-24; the sizing below
+still holds. The tracked tree is 0.8 MB and the suite runs in about 145 s, so
+the Python side is cheap.
 
 **On every push:** fresh checkout, install, `pytest`, `scripts/check_claims.py`,
 the canary mutation tier.
@@ -499,10 +502,10 @@ first half", which was false and contradicted §9.1's own next paragraph.
 
 This section resolves three items the body left underdetermined, and §9.5 records
 defects the review of this amendment found in §§1–8. It amends **D9** (§9.5 A)
-and changes no other §2 decision. It changes no §8 acceptance criterion, but
-§9.4 states which criteria each plan leaves unsatisfied. It **amends AC3 and
-AC5** (§9.5 D); an earlier draft of this sentence claimed no §8 criterion
-changed, which was false once §3.2 gained a session-level kill.
+and changes no other §2 decision. §9.4 states which criteria each plan leaves
+unsatisfied. It **amends AC3 and AC5** (§9.5 D); an earlier draft of this
+sentence claimed no §8 criterion changed, which was false once §3.2 gained a
+session-level kill.
 
 ### 9.1 State at the time of this amendment
 
@@ -667,7 +670,9 @@ The verification is a workflow job that:
   the protected target branch. **Not** `GET /repos/{owner}/{repo}/rulesets`,
   which returns ruleset summaries carrying no required-check contexts; the
   branch-rules endpoint returns the active rules and excludes disabled and
-  evaluate-mode ones;
+  evaluate-mode ones. Implemented in `fetch_all`, which follows `rel="next"`
+  and refuses to return a partial list when a later page errors — a truncated
+  list reads as "nothing is required for merge" while something is;
 - fails when any inventory context is absent from the `required_status_checks`
   rule, checks the expected Actions `integration_id` so another producer cannot
   satisfy a context name, and rejects duplicate contexts;
@@ -679,9 +684,16 @@ The verification is a workflow job that:
   configured during the bootstrap below rather than existing beforehand.
   Excluding it would leave the verifier optional, which is the defect this
   section exists to fix;
-- reads the ruleset's **bypass actors** and fails when any is configured for the
-  registry's contexts. A required check that a bypass actor may skip is not
-  required for merge, which is what AC8 asks about.
+- does **not** verify ruleset bypass actors, and says so on every run. GitHub
+  discloses `bypass_actors` only to a requester with write access to the
+  ruleset, which no `GITHUB_TOKEN` scope provides, and a personal access token
+  is not an option in a job that executes pull-request-controlled code. The
+  check survives as `--check-bypass`, run by the maintainer with an admin token
+  at rollout and after any ruleset change. Every run without the flag prints
+  which property it did not establish, so a green exit never implies the
+  property holds. **Decided 2026-08-24**, after an earlier draft required this
+  of the workflow token and was found to be unsatisfiable; `docs/risks.md`
+  R-009 records the residue.
 
 **Rollout order matters, and the naive order does not work.** GitHub will not
 let a context be added as required until it has actually been reported — the

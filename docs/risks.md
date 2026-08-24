@@ -438,14 +438,15 @@ none has been seen to fail. The mathematics is unaffected — no claim, proof or
 artifact depends on the registry — but the defect classes it was written to
 close stay open, and the evidence of Phases 1 and 2 is that they recur.
 
-**Delivery record.** Plan A shipped the inventory
-(`.github/required-checks.yml`), its verifier
-(`scripts/check_required_contexts.py`) and the workflows on
-2026-08-24. From that date the `required-checks` job fails on every run,
-naming `mutations-full` as absent. That failure is the intended state and
-must not be resolved by editing the inventory. Acceptance criteria 8 and 9
-remain open; AC12 is met for the Python half only, the Lean half resting on
-the nightly run.
+**Delivery record.** Plan A's implementation is complete on branch `ci-workflow`
+and is **not yet merged or pushed**: `.github/required-checks.yml`,
+`scripts/check_required_contexts.py`, `.github/workflows/ci.yml` and
+`nightly.yml` exist there as of 2026-08-24. Once merged, the `required-checks`
+job is expected to fail on every run, naming `mutations-full` as absent; that
+failure is the intended state and must not be resolved by editing the
+inventory. Acceptance criteria 8 and 9 remain open. AC12 is **not** met yet in
+either half: it requires a green fresh-checkout run and a clean `lake build`,
+and neither has happened, because no workflow has run.
 
 **What would close it.** Plan B shipping. Failing that, a decision to accept the
 classes as open, recorded here rather than left implicit.
@@ -481,3 +482,32 @@ attention rather than an adversary.
 
 **What would close it.** Adding a second write-authorised reviewer and
 path-scoped CODEOWNERS over the registry, waiver, checker and workflow paths.
+
+## R-009 — Ruleset bypass actors are unverifiable by CI
+
+**Status:** accepted · **Raised by:** Codex, 2026-08-24 · **Phase:** 2/3 boundary
+
+**Description.** The required-check verifier can confirm which contexts are
+required, their expected producer, the strict policy and the absence of
+duplicates. It cannot confirm that no actor may bypass them. GitHub discloses
+`bypass_actors` only to a requester with write access to the ruleset; no
+`GITHUB_TOKEN` scope reaches it, and an earlier attempt used
+`administration: read`, which is a GitHub App permission and not a valid
+Actions one — it would have made the workflow invalid outright.
+
+**Positions.**
+
+- *Codex:* a privileged credential cannot safely be placed in a job that runs
+  pull-request-controlled code, so this cannot be closed inside CI.
+- *Project:* accepted; the check moves to `--check-bypass`, run by the
+  maintainer with an admin token at rollout and after any ruleset change, and
+  every CI run prints that the property was not established.
+
+**Risk to the roadmap.** Low for the mathematics, real for the guard system. A
+bypass actor added later would not be detected until someone next runs the
+flag. The mitigation is that the gap is printed on every run rather than
+assumed away.
+
+**What would close it.** A GitHub Actions permission that discloses
+`bypass_actors`, or a trusted workflow separated from pull-request-controlled
+code.
