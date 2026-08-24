@@ -28,10 +28,9 @@
 - After this plan, **AC8 and AC9 remain unsatisfied** and AC12 is satisfied only once the workflows actually run green. Do not write anything claiming otherwise.
 - Lean: never remove a `sorry` without a real proof. This plan adds no Lean code.
 - Commit at the end of every task.
-- **No step below states a fixed full-suite pass count as a target.** The
-  suite has grown since this plan was drafted and keeps growing; treat every
-  "run the full suite" step as "report the count you measure," never as "match
-  the number printed here."
+- **Where a step states an expected test count, treat it as the count at the
+  time of writing** — measure and report the count you actually observe, and
+  if it differs, say so rather than assuming a regression.
 
 ---
 
@@ -863,6 +862,11 @@ used.
 
 `docs/risks.md` already carries R-007 ("The required-check inventory reports Plan B's absence but cannot compel it"). Append to that entry, immediately before its `**What would close it.**` line:
 
+> **Superseded.** The paragraph below was written before the branch was
+> reviewed and asserts a delivery that had not happened. `docs/risks.md`
+> R-007 now carries the corrected text; that file is authoritative and this
+> block is history. Do not re-apply it.
+
 ```markdown
 **Delivery record.** Plan A shipped the inventory
 (`.github/required-checks.yml`), its verifier
@@ -956,13 +960,19 @@ fails because the `cache` executable is unavailable before dependencies are
 materialised, insert `lake update` before it and re-run; record whichever
 sequence worked in the workflow comment.
 
-- [ ] **Step 5: (maintainer) Run the workflow and read the `required-checks` job's log**
+- [ ] **Step 5: (maintainer) Read the `required-checks` job's log from the merge's run**
 
-Confirm it fails with exactly two problems: the `mutations-full` context is
-not required for merge (ships in Plan B), and the printed
-`NOT CHECKED: ruleset bypass actors` line, since the workflow's `GITHUB_TOKEN`
-runs with `--check-bypass` off by default (§9.3, R-009). Confirm the `tests`
-job is green.
+`ci.yml` has no `workflow_dispatch` trigger — it runs only on push and pull
+request. The merge in step 3 already triggered it; there is nothing to
+trigger here. Read the log of the run the merge produced.
+
+Confirm it fails, and that every problem it reports is expected: at this
+point no ruleset exists, so it reports four — `no required_status_checks rule
+applies to branch 'main'`, plus `tests`, `required-checks` and
+`mutations-full` each not required. It also prints a
+`NOT CHECKED: ruleset bypass actors` line, which is not a problem entry but a
+statement of what this run did not establish. Any problem beyond those four
+is a real misconfiguration. Confirm the `tests` job is green.
 
 - [ ] **Step 6: (maintainer) Create the ruleset — mark only `tests` required**
 
@@ -1003,13 +1013,13 @@ accidental claim (see the corrected command in §3c of the remediation
 dispatch / the grep below):
 
 ```bash
-grep -rn "AC8\|acceptance criterion 8" docs/ CLAUDE.md \
-  --exclude=2026-08-24-ci-foundation.md \
-  | grep -iv "open\|unsatisfied\|remains\|not satisfied\|cannot close\|not met"
+grep -rniE "AC8 (is |was )?(satisfied|met|closed|complete)|acceptance criterion 8 (is|was) (satisfied|met)" \
+  docs/ CLAUDE.md --exclude=2026-08-24-ci-foundation.md
 ```
 
-Expected: no output. If a line appears, it is a claim that AC8 is satisfied,
-and it is wrong.
+Expected: no output. A match is a claim that AC8 has been satisfied, which is
+wrong — it cannot be until Plan B ships `mutations-full` and that context is
+required.
 
 ---
 
@@ -1020,5 +1030,5 @@ Stated here so a reader of the plan alone cannot mistake its completion for the 
 - **AC1–AC7** — the mutation registry entire. Plan B.
 - **AC8** — the full tier's context does not exist, so it cannot be required. Plan B, after a preflight run emits it.
 - **AC9** — rule 5 lands here; rule 11 lands with Plan B. The criterion needs both.
-- **AC12** — the Python half is met by the push workflow. The Lean half rests on the nightly run and is met only once one has passed.
+- **AC12** — met in neither half yet. It requires a green fresh-checkout run and a clean `lake build`, and no workflow has run at all until this branch merges. The push workflow can satisfy the Python half and the nightly the Lean half, each only once one has actually passed.
 - **§3A's pull-request artifact publication** — there is no registry to produce a fingerprint. Plan B.
