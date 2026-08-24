@@ -209,6 +209,15 @@ def test_no_job_is_conditional_or_dependent(workflow):
             f"reports success when its steps fail, which is the same false "
             f"positive as a skipped job"
         )
+        for index, step in enumerate(job.get("steps") or []):
+            assert not step.get("continue-on-error"), (
+                f"step {index} ({step.get('name') or step.get('uses')!r}) of job "
+                f"{name!r} in {workflow} sets continue-on-error; the step then "
+                f"fails while the job concludes success, so a required context "
+                f"is satisfied without the check having passed. A step-level "
+                f"`if:` is allowed and this is not: a skipped step reports no "
+                f"job status, but a tolerated failure suppresses one"
+            )
 
 
 def test_ci_job_names_match_the_inventory():
@@ -222,6 +231,72 @@ def test_ci_job_names_match_the_inventory():
     assert plan_a <= produced, (
         f"inventory expects {sorted(plan_a)} but ci.yml produces "
         f"{sorted(produced)}; a required context no job emits can never pass"
+    )
+
+
+def _triggers(document):
+    """The `on:` mapping, whichever way PyYAML parsed the key.
+
+    PyYAML implements YAML 1.1, in which a bare `on:` is the boolean True.
+    """
+    return document.get("on", document.get(True)) or {}
+
+
+def test_ci_declares_the_events_it_promises():
+    """Deleting a trigger would retire the checks silently, with a green suite.
+
+    The push and pull_request triggers are what make every merge candidate run
+    the suite from a fresh checkout; `synchronize` is what makes a later push
+    to an open pull request re-run it.
+    """
+    import yaml as _yaml
+
+    triggers = _triggers(_yaml.safe_load((WORKFLOWS / "ci.yml").read_text()))
+    assert "push" in triggers, "ci.yml no longer runs on push"
+    assert "pull_request" in triggers, "ci.yml no longer runs on pull requests"
+    types = (triggers.get("pull_request") or {}).get("types") or []
+    for required in ("opened", "synchronize", "reopened"):
+        assert required in types, (
+            f"ci.yml's pull_request trigger no longer includes {required!r}; "
+            f"without it a pull request can be updated without re-running"
+        )
+
+
+def test_the_nightly_declares_its_schedule_and_still_builds_lean():
+    """The Lean build exists only here, so losing it loses the check entirely.
+
+    Spec D12 keeps `lake build` off the merge path deliberately, which means
+    the scheduled run is the only thing that ever compiles the Lean layer.
+    """
+    import yaml as _yaml
+
+    document = _yaml.safe_load((WORKFLOWS / "nightly.yml").read_text())
+    triggers = _triggers(document)
+    assert "schedule" in triggers, "nightly.yml no longer runs on a schedule"
+    lines = [
+        line.strip()
+        for job in document["jobs"].values()
+        for step in (job.get("steps") or [])
+        for line in str(step.get("run", "")).splitlines()
+    ]
+
+    def _runs(command):
+        """True when some step actually invokes `command`.
+
+        Line-level and anchored at the start, because an earlier version
+        substring-matched the joined commands and was satisfied by the string
+        "lake build" appearing inside the cache step's echo message -- an
+        assertion that could not fail.
+        """
+        return any(line.startswith(command) for line in lines)
+
+    assert _runs("lake build"), (
+        "nightly.yml no longer runs `lake build`; D12 keeps it off the merge "
+        "path, so this is the only place the Lean layer is ever compiled"
+    )
+    assert _runs("lake update"), (
+        "nightly.yml no longer runs `lake update`; lean/.lake is gitignored, so "
+        "without it Mathlib is never materialised on a fresh runner"
     )
 
 
@@ -360,4 +435,41 @@ def test_main_says_plainly_when_bypass_was_not_checked(monkeypatch, tmp_path, ca
     output = capsys.readouterr().out
 
     assert exit_code == 0
+    assert "NOT CHECKED: ruleset bypass actors" in output
+
+
+def test_the_bypass_notice_prints_even_when_the_rules_request_fails(
+    monkeypatch, tmp_path, capsys
+):
+    """A run that fails for one reason must still state which properties it
+    did not establish, or the omission is invisible exactly when things are
+    going wrong.
+
+    `main()` used to print its two error-path lines and return 1 before
+    reaching the bypass notice, so a failed branch-rules request silently
+    dropped the "NOT CHECKED: ruleset bypass actors" line that every other
+    exit path prints.
+    """
+    inventory = tmp_path / "required-checks.yml"
+    inventory.write_text(
+        "branch: main\n"
+        "expected_integration_id: 15368\n"
+        "contexts:\n"
+        "  - name: tests\n"
+        "    ships_in: plan-a\n"
+        "  - name: required-checks\n"
+        "    ships_in: plan-a\n"
+        "  - name: mutations-full\n"
+        "    ships_in: plan-b\n"
+    )
+
+    def fake_fetch_all(url, token):
+        return None, "HTTP 403 for https://api.example/rules/branches/main"
+
+    monkeypatch.setattr(crc, "fetch_all", fake_fetch_all)
+
+    exit_code = crc.main(["--repo", "owner/name", "--inventory", str(inventory)])
+    output = capsys.readouterr().out
+
+    assert exit_code == 1
     assert "NOT CHECKED: ruleset bypass actors" in output

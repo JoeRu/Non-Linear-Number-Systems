@@ -27,6 +27,11 @@ import yaml
 
 API = "https://api.github.com"
 RULE_TYPE = "required_status_checks"
+BYPASS_NOTICE = (
+    "NOT CHECKED: ruleset bypass actors. GitHub discloses them only to a "
+    "requester with write access to the ruleset, which GITHUB_TOKEN does not "
+    "have. Run with --check-bypass using a maintainer token."
+)
 
 
 def load_inventory(path: Path) -> dict:
@@ -255,6 +260,8 @@ def main(argv=None) -> int:
     if error:
         print(f"PROBLEM: could not read branch rules -- {error}")
         print("Writing no verdict: an unread configuration is not a verified one.")
+        if not args.check_bypass:
+            print(BYPASS_NOTICE)
         return 1
 
     bypass: dict[int, list | None] = {}
@@ -282,9 +289,7 @@ def main(argv=None) -> int:
         verdict = 1
 
     if not args.check_bypass:
-        print("NOT CHECKED: ruleset bypass actors. GitHub discloses them only to a "
-              "requester with write access to the ruleset, which GITHUB_TOKEN "
-              "does not have. Run with --check-bypass using a maintainer token.")
+        print(BYPASS_NOTICE)
 
     return verdict
 

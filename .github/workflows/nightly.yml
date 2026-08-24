@@ -55,9 +55,14 @@ jobs:
           sh elan-init.sh -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Report the pinned toolchain
+      - name: Install the pinned toolchain
         working-directory: lean
+        # elan was installed with --default-toolchain none, so nothing is
+        # provisioned yet. elan can auto-install from lean-toolchain on first
+        # use, but doing it explicitly keeps the failure -- if any -- on a step
+        # that names the toolchain rather than on an unrelated lake command.
         run: |
+          elan toolchain install "$(cat lean-toolchain)"
           echo "toolchain: $(cat lean-toolchain)"
           lake --version
 

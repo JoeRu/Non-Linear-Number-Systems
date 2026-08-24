@@ -459,10 +459,15 @@ Expected: PASS, 11 passed
 
 Run: `GITHUB_TOKEN=$(gh auth token) .venv/bin/python scripts/check_required_contexts.py --repo JoeRu/Non-Linear-Number-Systems`
 
-Expected: exit 1, printing exactly one problem —
-`no required_status_checks rule applies to branch 'main': nothing is required for merge`.
+Expected: exit 1. **Updated after review** — the verifier was changed to name
+every unprotected context, not merely report that none is required, so this
+prints four problems: `no required_status_checks rule applies to branch
+'main': nothing is required for merge`, followed by `tests`,
+`required-checks` and `mutations-full` each not required for merge. It also
+prints the `NOT CHECKED: ruleset bypass actors` line, which is not a problem
+entry.
 
-That is the correct answer today: no ruleset exists. A run that printed
+That failure is the correct answer while no ruleset exists. A run printing
 "verified" here would mean the checker cannot detect an unprotected branch.
 
 - [ ] **Step 7: Run the full suite**
@@ -1030,5 +1035,5 @@ Stated here so a reader of the plan alone cannot mistake its completion for the 
 - **AC1–AC7** — the mutation registry entire. Plan B.
 - **AC8** — the full tier's context does not exist, so it cannot be required. Plan B, after a preflight run emits it.
 - **AC9** — rule 5 lands here; rule 11 lands with Plan B. The criterion needs both.
-- **AC12** — met in neither half yet. It requires a green fresh-checkout run and a clean `lake build`, and no workflow has run at all until this branch merges. The push workflow can satisfy the Python half and the nightly the Lean half, each only once one has actually passed.
+- **AC12** — the Python half is **met**: the first CI run on PR #9 ran the suite and `scripts/check_claims.py` from a fresh checkout and the `tests` job passed. The Lean half is not, and cannot be until `nightly.yml` is on the default branch, since `workflow_dispatch` requires it there.
 - **§3A's pull-request artifact publication** — there is no registry to produce a fingerprint. Plan B.
