@@ -59,6 +59,8 @@ def evaluate(
     inventory: dict,
     branch_rules: list[dict],
     ruleset_bypass: dict[int, list | None],
+    *,
+    check_bypass: bool = True,
 ) -> list[str]:
     """Compare the tracked inventory against the branch's active rules.
 
@@ -71,7 +73,14 @@ def evaluate(
             `/rulesets`.
         ruleset_bypass: maps a ruleset id to its bypass actors. A value of
             `None` means the token could not read that ruleset; it is
-            reported as a problem, because "unread" is not "none".
+            reported as a problem, because "unread" is not "none". Ignored
+            when `check_bypass` is False.
+        check_bypass: whether to verify ruleset bypass actors at all. GitHub
+            discloses them only to a requester with write access to the
+            ruleset, which GITHUB_TOKEN does not have, so the default CI run
+            passes `False` here rather than reporting every ruleset as
+            "could not be read" -- that would conflate a check that was not
+            run with a check that failed.
 
     Returns:
         Human-readable problem strings. An empty list means the configuration
@@ -99,8 +108,9 @@ def evaluate(
     if len(rules) > 1:
         problems.append(
             f"{len(rules)} {RULE_TYPE} rules apply to branch "
-            f"{inventory['branch']!r}; expected exactly one, because two rules "
-            f"can disagree and the weaker one wins"
+            f"{inventory['branch']!r}; expected exactly one -- expecting exactly "
+            f"one rule keeps the inventory comparison unambiguous and makes a "
+            f"duplicated or accidentally-layered ruleset visible"
         )
 
     seen: dict[str, list] = {}
@@ -143,31 +153,32 @@ def evaluate(
                 "checks ran against a base that has since advanced"
             )
 
-    for rule in rules:
-        rid = rule.get("ruleset_id")
-        actors = ruleset_bypass.get(rid)
-        if actors is None:
-            problems.append(
-                f"bypass actors for ruleset {rid} could not be read with this "
-                f"token: unverified, which is not the same as none"
-            )
-        elif actors:
-            problems.append(
-                f"ruleset {rid} has {len(actors)} bypass actor(s); a check an "
-                f"actor may bypass is not required for merge"
-            )
+    if check_bypass:
+        for rule in rules:
+            rid = rule.get("ruleset_id")
+            actors = ruleset_bypass.get(rid)
+            if actors is None:
+                problems.append(
+                    f"bypass actors for ruleset {rid} could not be read with this "
+                    f"token: unverified, which is not the same as none"
+                )
+            elif actors:
+                problems.append(
+                    f"ruleset {rid} has {len(actors)} bypass actor(s); a check an "
+                    f"actor may bypass is not required for merge"
+                )
 
     return problems
 
 
 def fetch(url: str, token: str | None) -> tuple[object | None, str | None]:
-    """GET a JSON endpoint.
+    """GET a JSON endpoint. See `fetch_all` for list endpoints, which paginate."""
+    payload, error, _ = _get(url, token)
+    return payload, error
 
-    Returns:
-        A `(payload, error)` pair. Exactly one is `None`. Errors are returned
-        rather than raised so a permissions failure becomes a reported
-        problem instead of a traceback that hides which check did not run.
-    """
+
+def _get(url, token):
+    """GET a JSON endpoint, returning `(payload, error, link_header)`."""
     request = urllib.request.Request(url)
     request.add_header("Accept", "application/vnd.github+json")
     request.add_header("X-GitHub-Api-Version", "2022-11-28")
@@ -175,11 +186,44 @@ def fetch(url: str, token: str | None) -> tuple[object | None, str | None]:
         request.add_header("Authorization", f"Bearer {token}")
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            return json.load(response), None
+            return json.load(response), None, response.headers.get("Link", "")
     except urllib.error.HTTPError as exc:
-        return None, f"HTTP {exc.code} for {url}"
+        return None, f"HTTP {exc.code} for {url}", ""
     except (urllib.error.URLError, TimeoutError) as exc:
-        return None, f"{type(exc).__name__} for {url}: {exc}"
+        return None, f"{type(exc).__name__} for {url}: {exc}", ""
+
+
+def _next_link(link_header: str) -> str | None:
+    """The `rel="next"` URL from a Link header, or None."""
+    for part in (link_header or "").split(","):
+        section = part.split(";")
+        if len(section) < 2:
+            continue
+        if 'rel="next"' in section[1]:
+            return section[0].strip().strip("<>")
+    return None
+
+
+def fetch_all(url: str, token: str | None) -> tuple[list | None, str | None]:
+    """GET every page of a list endpoint, following `rel="next"`.
+
+    GitHub defaults to 30 items per page. A single unpaginated GET truncates
+    silently, and for the branch-rules endpoint a truncated list reads as
+    "nothing is required for merge" when something is -- the verifier
+    reporting the opposite of the truth. Spec section 9.3 requires the
+    paginated form.
+    """
+    items: list = []
+    next_url = f"{url}?per_page=100"
+    while next_url:
+        payload, error, link = _get(next_url, token)
+        if error:
+            return None, error
+        if not isinstance(payload, list):
+            return None, f"expected a list from {next_url}, got {type(payload).__name__}"
+        items.extend(payload)
+        next_url = _next_link(link)
+    return items, None
 
 
 def main(argv=None) -> int:
@@ -191,13 +235,21 @@ def main(argv=None) -> int:
         default=Path(__file__).resolve().parents[1] / ".github"
         / "required-checks.yml",
     )
+    parser.add_argument(
+        "--check-bypass",
+        action="store_true",
+        help=(
+            "fetch and verify ruleset bypass actors; requires a token with "
+            "write access to the ruleset, which GITHUB_TOKEN does not have"
+        ),
+    )
     args = parser.parse_args(argv)
 
     inventory = load_inventory(args.inventory)
     token = os.environ.get("GITHUB_TOKEN")
 
     branch = inventory["branch"]
-    rules, error = fetch(
+    rules, error = fetch_all(
         f"{API}/repos/{args.repo}/rules/branches/{branch}", token
     )
     if error:
@@ -206,27 +258,35 @@ def main(argv=None) -> int:
         return 1
 
     bypass: dict[int, list | None] = {}
-    for rule in rules:
-        if rule.get("type") != RULE_TYPE:
-            continue
-        rid = rule.get("ruleset_id")
-        if rid in bypass:
-            continue
-        payload, error = fetch(
-            f"{API}/repos/{args.repo}/rulesets/{rid}", token
-        )
-        bypass[rid] = None if error else payload.get("bypass_actors")
+    if args.check_bypass:
+        for rule in rules:
+            if rule.get("type") != RULE_TYPE:
+                continue
+            rid = rule.get("ruleset_id")
+            if rid in bypass:
+                continue
+            payload, error = fetch(
+                f"{API}/repos/{args.repo}/rulesets/{rid}", token
+            )
+            bypass[rid] = None if error else payload.get("bypass_actors")
 
-    problems = evaluate(inventory, rules, bypass)
+    problems = evaluate(inventory, rules, bypass, check_bypass=args.check_bypass)
     if not problems:
         names = ", ".join(c["name"] for c in inventory["contexts"])
         print(f"required checks verified on {branch}: {names}")
-        return 0
+        verdict = 0
+    else:
+        print(f"{len(problems)} problem(s) with the required-check configuration:")
+        for problem in problems:
+            print(f"  - {problem}")
+        verdict = 1
 
-    print(f"{len(problems)} problem(s) with the required-check configuration:")
-    for problem in problems:
-        print(f"  - {problem}")
-    return 1
+    if not args.check_bypass:
+        print("NOT CHECKED: ruleset bypass actors. GitHub discloses them only to a "
+              "requester with write access to the ruleset, which GITHUB_TOKEN "
+              "does not have. Run with --check-bypass using a maintainer token.")
+
+    return verdict
 
 
 if __name__ == "__main__":

@@ -253,18 +253,22 @@ def test_main_treats_an_unprivileged_ruleset_read_as_unverified(
         "    ships_in: plan-b\n"
     )
 
-    def fake_fetch(url, token):
-        if "/rules/branches/" in url:
-            return [_rule(ALL_THREE)], None
-        if "/rulesets/" in url:
-            # A 200 from a caller not privileged to see bypass actors: the key
-            # is absent, not empty.
-            return {"name": "prod", "enforcement": "active"}, None
-        raise AssertionError(f"unexpected url {url}")
+    def fake_fetch_all(url, token):
+        assert "/rules/branches/" in url, f"unexpected url {url}"
+        return [_rule(ALL_THREE)], None
 
+    def fake_fetch(url, token):
+        assert "/rulesets/" in url, f"unexpected url {url}"
+        # A 200 from a caller not privileged to see bypass actors: the key
+        # is absent, not empty.
+        return {"name": "prod", "enforcement": "active"}, None
+
+    monkeypatch.setattr(crc, "fetch_all", fake_fetch_all)
     monkeypatch.setattr(crc, "fetch", fake_fetch)
 
-    exit_code = crc.main(["--repo", "owner/name", "--inventory", str(inventory)])
+    exit_code = crc.main(
+        ["--repo", "owner/name", "--inventory", str(inventory), "--check-bypass"]
+    )
     output = capsys.readouterr().out
 
     assert exit_code == 1, (
@@ -273,3 +277,87 @@ def test_main_treats_an_unprivileged_ruleset_read_as_unverified(
     assert "could not be read" in output, (
         f"expected the unread-bypass problem, got:\n{output}"
     )
+
+
+def test_fetch_all_follows_pagination(monkeypatch):
+    """An unpaginated GET truncates at 30 and would read as "nothing is
+    required" while something is.
+    """
+    page1 = [_rule(ALL_THREE, ruleset_id=1)]
+    page2 = [_rule(ALL_THREE, ruleset_id=2)]
+    requested_urls = []
+
+    def fake_get(url, token):
+        requested_urls.append(url)
+        if "page=2" not in url:
+            return page1, None, '<https://api.example/next?page=2>; rel="next"'
+        return page2, None, ""
+
+    monkeypatch.setattr(crc, "_get", fake_get)
+
+    items, error = crc.fetch_all("https://api.example/rules", None)
+
+    assert error is None
+    assert items == page1 + page2
+    assert len(requested_urls) == 2
+
+
+def test_fetch_all_reports_an_error_rather_than_a_short_list(monkeypatch):
+    """A partial list is worse than no list, because it looks like an answer."""
+    page1 = [_rule(ALL_THREE, ruleset_id=1)]
+
+    def fake_get(url, token):
+        if "page=2" not in url:
+            return page1, None, '<https://api.example/next?page=2>; rel="next"'
+        return None, "HTTP 500 for https://api.example/next?page=2", ""
+
+    monkeypatch.setattr(crc, "_get", fake_get)
+
+    items, error = crc.fetch_all("https://api.example/rules", None)
+
+    assert items is None
+    assert error is not None
+
+
+def test_bypass_is_not_reported_as_unread_when_it_was_not_requested():
+    """Skipping a check and failing a check are different outcomes and must
+    not be conflated.
+    """
+    problems = crc.evaluate(INVENTORY, [_rule(ALL_THREE)], {}, check_bypass=False)
+    assert not any("could not be read" in p for p in problems)
+
+    problems = crc.evaluate(INVENTORY, [_rule(ALL_THREE)], {}, check_bypass=True)
+    assert any("could not be read" in p for p in problems)
+
+
+def test_main_says_plainly_when_bypass_was_not_checked(monkeypatch, tmp_path, capsys):
+    """The run must state which properties it did not establish, rather than
+    letting a green exit imply it checked everything.
+    """
+    inventory = tmp_path / "required-checks.yml"
+    inventory.write_text(
+        "branch: main\n"
+        "expected_integration_id: 15368\n"
+        "contexts:\n"
+        "  - name: tests\n"
+        "    ships_in: plan-a\n"
+        "  - name: required-checks\n"
+        "    ships_in: plan-a\n"
+        "  - name: mutations-full\n"
+        "    ships_in: plan-b\n"
+    )
+
+    def fake_fetch_all(url, token):
+        return [_rule(ALL_THREE)], None
+
+    def fake_fetch(url, token):
+        raise AssertionError(f"fetch should not be called without --check-bypass: {url}")
+
+    monkeypatch.setattr(crc, "fetch_all", fake_fetch_all)
+    monkeypatch.setattr(crc, "fetch", fake_fetch)
+
+    exit_code = crc.main(["--repo", "owner/name", "--inventory", str(inventory)])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "NOT CHECKED: ruleset bypass actors" in output

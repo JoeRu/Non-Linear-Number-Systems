@@ -4,14 +4,16 @@
 # gitignored could not have survived one, with no mutation and no one having
 # to think of it.
 #
-# Two rules govern the job list, and both come from spec section 9.3:
+# Three rules govern the job list, and all come from spec section 9.3:
 #
 #   1. No job carries a job-level `if:`. A skipped job reports *success*, so a
 #      required context can be satisfied by a job that never ran.
 #   2. No job `needs:` another. A dependent job skips when its dependency
 #      fails, which is the same false positive by another route.
+#   3. No job sets `continue-on-error`. Such a job reports success when
+#      its steps fail -- the same false positive by a third route.
 #
-# Adding either would make a required check that cannot fail.
+# Adding any of them would make a required check that cannot fail.
 name: CI
 
 on:
@@ -71,17 +73,14 @@ jobs:
   # names the `mutations-full` context and nothing produces it yet. That
   # standing red is the design (spec section 9.4, docs/risks.md R-007). Do not
   # "fix" it by editing the inventory.
+  # This job does not verify ruleset bypass actors: GitHub discloses them
+  # only to a requester with write access to the ruleset, which no
+  # GITHUB_TOKEN scope provides. That check is run by the maintainer at
+  # rollout -- see docs/risks.md.
   required-checks:
     name: required-checks
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Reading a ruleset's bypass_actors needs administration:read -- a 200
-    # without that key is indistinguishable from a ruleset with no bypass
-    # actors, so without this the job can only ever report "could not be
-    # read".
-    permissions:
-      contents: read
-      administration: read
     steps:
       - uses: actions/checkout@v4
 
@@ -97,3 +96,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python scripts/check_required_contexts.py --repo "${{ github.repository }}"
+
