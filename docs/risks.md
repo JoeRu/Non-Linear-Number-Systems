@@ -438,6 +438,15 @@ none has been seen to fail. The mathematics is unaffected — no claim, proof or
 artifact depends on the registry — but the defect classes it was written to
 close stay open, and the evidence of Phases 1 and 2 is that they recur.
 
+**Delivery record.** Plan A shipped the inventory
+(`.github/required-checks.yml`), its verifier
+(`scripts/check_required_contexts.py`) and the workflows on
+2026-08-24. From that date the `required-checks` job fails on every run,
+naming `mutations-full` as absent. That failure is the intended state and
+must not be resolved by editing the inventory. Acceptance criteria 8 and 9
+remain open; AC12 is met for the Python half only, the Lean half resting on
+the nightly run.
+
 **What would close it.** Plan B shipping. Failing that, a decision to accept the
 classes as open, recorded here rather than left implicit.
 
