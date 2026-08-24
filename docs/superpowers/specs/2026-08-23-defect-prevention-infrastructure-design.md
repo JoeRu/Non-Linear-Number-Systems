@@ -513,8 +513,9 @@ ahead of this spec because it was live on `main`: artifact existence-and-hash
 checking in `check_claims.py` (`4375689`).
 
 Outstanding: AC1–AC9 and AC12. Nothing of the registry exists yet — no
-`tests/properties.py`, no mutation package, no `load_bearing` marker, no
-`.github/workflows`.
+`tests/properties.py`, no mutation package, no `load_bearing` marker, and,
+when this was written, no `.github/workflows` — Plan A created that directory
+on 2026-08-24, and the registry parts of the list remain true.
 
 **The §3.5 seed set was re-checked against the tree, because the R-002 work
 renamed test modules after this spec was written.** Every row still names a

@@ -53,9 +53,15 @@ def test_fully_configured_repository_has_no_problems():
 
 
 def test_no_rule_at_all_is_reported():
+    """And it must name the unprotected contexts, not merely the absence.
+
+    docs/risks.md R-007 accepts a standing red that NAMES the missing tier
+    instead of a merge-blocking placeholder. A run that says only "nothing is
+    required" does not deliver that.
+    """
     problems = crc.evaluate(INVENTORY, [], {})
-    assert len(problems) == 1
-    assert "nothing is required for merge" in problems[0]
+    assert any("nothing is required for merge" in p for p in problems)
+    assert any("mutations-full" in p and "plan-b" in p for p in problems)
 
 
 def test_a_missing_context_is_named_with_the_plan_that_ships_it():
@@ -128,10 +134,49 @@ def test_the_tracked_inventory_parses_and_names_the_plan_b_context():
     )
 
 
+def test_an_empty_inventory_is_rejected(tmp_path):
+    """`contexts: []` verifies nothing but would otherwise report success."""
+    inventory = tmp_path / "required-checks.yml"
+    inventory.write_text(
+        "branch: main\n"
+        "expected_integration_id: 15368\n"
+        "contexts: []\n"
+    )
+    with pytest.raises(ValueError):
+        crc.load_inventory(inventory)
+
+
 WORKFLOWS = ROOT / ".github" / "workflows"
 
 
-@pytest.mark.parametrize("workflow", ["ci.yml", "nightly.yml"])
+def _workflow_files():
+    """Every workflow in the tree, so a new one cannot escape this guard.
+
+    The list was hardcoded as ["ci.yml", "nightly.yml"]. A workflow added
+    later was therefore never checked, and the suite stayed green -- the guard
+    quantified over the wrong set. Plan B adds a workflow with a mutation job,
+    which is precisely the case this test exists to catch.
+    """
+    return sorted(
+        p.name
+        for p in WORKFLOWS.iterdir()
+        if p.suffix in (".yml", ".yaml") and p.is_file()
+    )
+
+
+def test_the_workflow_scan_finds_the_known_workflows():
+    """An empty or shrunken scan would make the guard below vacuous.
+
+    Parametrising over a directory scan means the guard silently covers
+    nothing if the directory is renamed or emptied, so the scan itself is
+    asserted rather than trusted.
+    """
+    assert set(_workflow_files()) >= {"ci.yml", "nightly.yml"}, (
+        f"expected at least ci.yml and nightly.yml, scanned {_workflow_files()}"
+    )
+
+
+@pytest.mark.parametrize("workflow", _workflow_files())
 def test_no_job_is_conditional_or_dependent(workflow):
     """A skipped job reports success, so neither `if:` nor `needs:` is allowed.
 
@@ -158,6 +203,11 @@ def test_no_job_is_conditional_or_dependent(workflow):
         assert "needs" not in job, (
             f"job {name!r} in {workflow} uses `needs:`; a dependent job skips "
             f"when its dependency fails, which reports success the same way"
+        )
+        assert not job.get("continue-on-error"), (
+            f"job {name!r} in {workflow} sets continue-on-error; the job then "
+            f"reports success when its steps fail, which is the same false "
+            f"positive as a skipped job"
         )
 
 

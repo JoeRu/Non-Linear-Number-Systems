@@ -75,6 +75,13 @@ jobs:
     name: required-checks
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Reading a ruleset's bypass_actors needs administration:read -- a 200
+    # without that key is indistinguishable from a ruleset with no bypass
+    # actors, so without this the job can only ever report "could not be
+    # read".
+    permissions:
+      contents: read
+      administration: read
     steps:
       - uses: actions/checkout@v4
 

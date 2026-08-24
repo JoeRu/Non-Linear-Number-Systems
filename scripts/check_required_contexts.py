@@ -47,6 +47,11 @@ def load_inventory(path: Path) -> dict:
     for key in ("branch", "expected_integration_id", "contexts"):
         if key not in data:
             raise KeyError(f"{path} has no {key!r} key")
+    if not data["contexts"]:
+        raise ValueError(
+            f"{path} declares no contexts: an empty inventory verifies nothing "
+            f"and would report success"
+        )
     return data
 
 
@@ -76,10 +81,21 @@ def evaluate(
     rules = [r for r in branch_rules if r.get("type") == RULE_TYPE]
 
     if not rules:
-        return [
+        problems.append(
             f"no {RULE_TYPE} rule applies to branch {inventory['branch']!r}: "
             f"nothing is required for merge"
-        ]
+        )
+        # Naming each context matters even here. An earlier version returned
+        # at this point, so the run reported that nothing was required without
+        # ever saying WHICH contexts were unprotected -- and docs/risks.md
+        # R-007 accepts a standing red *that names the missing tier* in place
+        # of a blocking placeholder. That trade was not being delivered.
+        for entry in inventory["contexts"]:
+            problems.append(
+                f"context {entry['name']!r} is not required for merge "
+                f"(ships in {entry['ships_in']})"
+            )
+        return problems
     if len(rules) > 1:
         problems.append(
             f"{len(rules)} {RULE_TYPE} rules apply to branch "

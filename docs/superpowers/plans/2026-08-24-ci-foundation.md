@@ -935,7 +935,11 @@ On `main`, require exactly `tests` and `required-checks`, with:
 - Do **not** add `mutations-full` yet: it has never been reported, so GitHub
   will not accept it, and that is exactly what the verifier should keep saying.
 
-- [ ] **Step 5: (maintainer) Read the configuration back**
+- [ ] **Step 5: (maintainer) Confirm the `required-checks` JOB passes before making it required**
+
+Re-run the workflow and check the `required-checks` job's own log on GitHub. It must exit 0. Reading it back locally is NOT sufficient evidence: your local `gh` token is a repository admin and can see `bypass_actors`, while the workflow's `GITHUB_TOKEN` may not — so the local check can pass while the job fails. If the job reports `bypass actors for ruleset N could not be read with this token`, its permissions are still insufficient; fix that before making the context required, or `main` becomes unmergeable.
+
+- [ ] **Step 6: (maintainer) Read the configuration back**
 
 ```bash
 GITHUB_TOKEN=$(gh auth token) \
@@ -945,9 +949,9 @@ GITHUB_TOKEN=$(gh auth token) \
 Expected: exit 1, with exactly one remaining problem —
 `context 'mutations-full' is not required for merge (ships in plan-b)`.
 
-Any *other* problem means the ruleset does not match the inventory. In particular, if the output includes `bypass actors for ruleset N could not be read with this token`, then `GITHUB_TOKEN` in Actions cannot read bypass actors either, and §9.3's bypass check is unverifiable as designed. Record that in `docs/risks.md` as a named limitation of the verifier rather than removing the check.
+Any *other* problem means the ruleset does not match the inventory. In particular, if the output includes `bypass actors for ruleset N could not be read with this token`, then `GITHUB_TOKEN` in Actions cannot read bypass actors either, and §9.3's bypass check is unverifiable as designed. Record that in `docs/risks.md` as a named limitation of the verifier rather than removing the check. This confirms the ruleset matches the inventory; step 5 is what confirms the job can read it.
 
-- [ ] **Step 6: (maintainer) Confirm AC8 is still open, in writing**
+- [ ] **Step 7: (maintainer) Confirm AC8 is still open, in writing**
 
 AC8 is **not** satisfied by this rollout: `mutations-full` is not required, because it does not exist. Nothing in the repository should claim otherwise. Confirm by grepping for any accidental claim:
 
