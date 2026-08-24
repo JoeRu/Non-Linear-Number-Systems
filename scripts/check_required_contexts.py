@@ -199,7 +199,7 @@ def main(argv=None) -> int:
         payload, error = fetch(
             f"{API}/repos/{args.repo}/rulesets/{rid}", token
         )
-        bypass[rid] = None if error else payload.get("bypass_actors", [])
+        bypass[rid] = None if error else payload.get("bypass_actors")
 
     problems = evaluate(inventory, rules, bypass)
     if not problems:

@@ -169,3 +169,14 @@ def test_ci_job_names_match_the_inventory():
         f"inventory expects {sorted(plan_a)} but ci.yml produces "
         f"{sorted(produced)}; a required context no job emits can never pass"
     )
+
+
+def test_a_successful_but_unprivileged_read_is_not_a_pass():
+    """A 200 response with `bypass_actors` absent means the token was not shown
+    them, which is not the same as there being none — and treating it as none
+    is the "unread equals none" defect this script exists to prevent.
+    """
+    payload = {"name": "prod", "enforcement": "active"}   # 200, key absent
+    actors = payload.get("bypass_actors")                 # mirrors main() line 202
+    problems = crc.evaluate(INVENTORY, [_rule(ALL_THREE)], {1: actors})
+    assert any("could not be read" in p for p in problems)
