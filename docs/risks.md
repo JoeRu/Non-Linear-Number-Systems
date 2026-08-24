@@ -438,15 +438,18 @@ none has been seen to fail. The mathematics is unaffected — no claim, proof or
 artifact depends on the registry — but the defect classes it was written to
 close stay open, and the evidence of Phases 1 and 2 is that they recur.
 
-**Delivery record.** Plan A's implementation is complete on branch `ci-workflow`
-and is **not yet merged or pushed**: `.github/required-checks.yml`,
-`scripts/check_required_contexts.py`, `.github/workflows/ci.yml` and
-`nightly.yml` exist there as of 2026-08-24. Once merged, the `required-checks`
-job is expected to fail on every run, naming `mutations-full` as absent; that
-failure is the intended state and must not be resolved by editing the
-inventory. Acceptance criteria 8 and 9 remain open. AC12 is **not** met yet in
-either half: it requires a green fresh-checkout run and a clean `lake build`,
-and neither has happened, because no workflow has run.
+**Delivery record.** Plan A's implementation is complete on branch `ci-workflow`,
+pushed and proposed as PR #9 on 2026-08-24, and **not yet merged**:
+`.github/required-checks.yml`, `scripts/check_required_contexts.py`,
+`.github/workflows/ci.yml` and `nightly.yml` exist there. The first CI run
+confirmed both halves of the design: `tests` passed from a fresh checkout, and
+`required-checks` failed with exactly the four expected problems — no ruleset
+applies, and `tests`, `required-checks` and `mutations-full` are each not
+required — plus the `NOT CHECKED: ruleset bypass actors` line. That failure is
+the intended state and must not be resolved by editing the inventory.
+Acceptance criteria 8 and 9 remain open. **AC12's Python half is met** by that
+run; the Lean half is not, because no scheduled run has occurred and
+`nightly.yml` cannot be triggered until it is on the default branch.
 
 **What would close it.** Plan B shipping. Failing that, a decision to accept the
 classes as open, recorded here rather than left implicit.
@@ -511,3 +514,36 @@ assumed away.
 **What would close it.** A GitHub Actions permission that discloses
 `bypass_actors`, or a trusted workflow separated from pull-request-controlled
 code.
+
+---
+
+## R-010 — The verifier and its inventory are editable by the pull request they gate
+
+**Status:** accepted · **Raised by:** Copilot, 2026-08-24 · **Phase:** 2/3 boundary
+
+**Description.** `required-checks` runs from the pull request's merge commit, so
+a pull request that removes the `mutations-full` entry from
+`.github/required-checks.yml`, or weakens `scripts/check_required_contexts.py`,
+makes the job pass. The tracked inventory is not an immutable reference; it is a
+file the candidate controls. This does not bite today, because Plan A makes
+only `tests` required — but it bites precisely when Plan B makes
+`required-checks` required, which is when the inventory starts carrying weight.
+
+**Positions.**
+
+- *Copilot:* run the verifier and read the inventory from the protected base ref
+  rather than the candidate, or protect those paths with independent review.
+- *Project:* accepted as real and not closed in Plan A. Reading the inventory
+  from the base would mean a pull request that legitimately updates it is not
+  tested until after merge, which is its own defect; and path-scoped review
+  needs a second write-authorised reviewer, which R-008 already records as
+  unavailable. The decision is deferred to Plan B, when the context first
+  becomes required.
+
+**Risk to the roadmap.** Low while only `tests` is required; material from the
+moment Plan B makes `required-checks` required, because from then on the check
+can be disarmed by the change it is checking.
+
+**What would close it.** Reading the inventory and verifier from the protected
+base ref for the comparison while still validating the candidate's copy parses,
+or path-scoped CODEOWNERS once a second reviewer exists (see R-008).

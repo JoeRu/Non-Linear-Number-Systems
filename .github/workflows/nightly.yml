@@ -61,12 +61,24 @@ jobs:
           echo "toolchain: $(cat lean-toolchain)"
           lake --version
 
+      - name: Materialise dependencies
+        working-directory: lean
+        # lean/.lake/ is gitignored, so a fresh runner has no Mathlib and no
+        # `cache` executable -- that binary lives inside the Mathlib package.
+        # docs/lean_setup.md documents this as the step that fetches it.
+        # Without it `lake exe cache get` cannot run at all, and the `|| echo`
+        # below would mask that while `lake build` proceeded without its
+        # dependency.
+        run: lake update
+
       - name: Fetch prebuilt Mathlib artifacts
         working-directory: lean
-        # Mathlib is pinned to the official v4.14.0 tag, so its own build cache
-        # has artifacts for exactly this revision -- a cold build of ~5 GB is
-        # avoidable. `cache get` is best-effort: if it misses, `lake build`
-        # below still produces a correct answer, only slowly.
+        # Mathlib is pinned to the official v4.14.0 tag, so its build cache has
+        # artifacts for exactly this revision, and a cold ~5 GB build is
+        # avoidable. Tolerating a non-zero exit here is safe ONLY because
+        # `lake update` above has already materialised the dependency: what
+        # remains is a genuine cache miss, which costs time and not
+        # correctness, and `lake build` below has no error tolerance of its own.
         run: lake exe cache get || echo "cache miss; lake build will compile"
 
       - name: Build
