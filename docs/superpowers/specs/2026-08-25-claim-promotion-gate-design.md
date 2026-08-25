@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-25
 **Status:** design spec, awaiting review
-**Scope:** one item added to the `claim-ledger` skill's promotion checklist, and `scripts/mutate.py`
+**Scope:** the `claim-ledger` skill's promotion checklist, `scripts/mutate.py`, and a statement-binding check over `theory/claims.yaml`
 **Evidence base:** three measurement passes at HEAD `df22d2c` — Python mutants run against the whole suite in scratch copies produced by `git archive HEAD | tar -x`, one Lean mutant in a `cp -a` copy of `lean/`, the claim → evidence → guard map over the promoted ledger, and the existing machinery measured against a promotion. The repository was not modified in any of them (`git status --porcelain` empty before and after)
 **Supersedes:** `docs/superpowers/specs/2026-08-24-mutation-registry-design.md` on branch `plan-b-registry` — 1681 lines, never merged (§8)
 
@@ -107,6 +107,11 @@ excludes. Timing is against it as well: it runs in the `tests` job on every push
 and pull request, so a promotion rule placed there stops being a rule applied at
 a promotion and becomes a permanent per-commit merge condition.
 
+That argument is about *this* rule, which is an observation of a test outcome.
+The statement-binding rule of §2.5 is statically decidable from files already in
+the tree, which is exactly why the validator can host that one and cannot host
+this one.
+
 No new `CLAUDE.md` rule. The 2026-08-23 spec's §4 proposed one — rule 11, "a
 guard you have not seen fail is not a guard", scoped to any test whose failure
 would otherwise be invisible — and §9.4 ships it with Plan B, so it never
@@ -152,7 +157,7 @@ the same time. The fallback, if no guard is written, is demotion to a status tha
 does not assert numerical verification. Leaving it promoted with nothing behind
 it is the one option this design rules out.
 
-### 2.4 The second half of the rule: bind the statement to the evidence
+### 2.5 The second half of the rule: bind the statement to the evidence
 
 The rule above protects the *evidence*. It does nothing for the *statement*, and
 the statement is what the project publishes. Measured on a scratch tree at HEAD:
@@ -173,8 +178,9 @@ the claim.
 > value its cited artifact provides appears in its statement untagged.**
 
 **The check runs from the artifact to the statement, not the reverse.** A rule
-demanding that every numeric literal carry a tag would be wrong: of 98 literals
-across the fifteen promoted claims, most are structural — the `4` in
+demanding that every numeric literal carry a tag would be wrong. Measured,
+fifteen of the sixteen promoted claims carry at least one numeric literal in
+their statement, and most of those literals are structural — the `4` in
 `1/(4 log φ)`, the `2` in `F_k²`, the `8` in `1/(8 log φ)`. Those are definitions,
 not measurements, and no regex separates them from measured values. So the
 checker starts from the evidence: for a claim citing an artifact with a figures
@@ -195,7 +201,7 @@ and a far smaller job than doing it for every document.
 Two consequences the design accepts rather than hides:
 
 - **`gate-local-slope` cannot be bound today**, because `data/phase0_5_gate.csv`
-  has no figures file. That is the same gap §2.2 already names for its guard, and
+  has no figures file. That is the same gap §2.4 already names for its guard, and
   the same fix closes both: generating `data/phase0_5_figures.json` gives the
   claim both a guard and a binding. Until then it carries an exemption naming the
   missing file — not a silent pass.
@@ -438,6 +444,10 @@ Mutated: the same line with `sorryAx` added. Note that `#print axioms` **also
 exits 0 in both cases** — the verdict is in the output text, so the step must
 grep for `sorryAx` rather than check an exit code.
 
+A Lean-backed claim also has no figures file behind it, so §2.5's statement
+binding has nothing to bind there and the axioms check carries the whole of its
+evidence gate.
+
 So the gate step for a Lean-backed promotion is: in a `cp -a` copy of `lean/`
 (`git archive` cannot carry it — `lean/.lake` is 5.1 GB and gitignored), replace
 the cited declaration's proof body with `sorry`, build, and run `#print axioms
@@ -488,13 +498,13 @@ behaviour staying as it is.
   prose against the tracked figures artifact, and nothing ties that artifact back
   to the summary the numbers came from.
 - **A claim's statement is bound only where its artifact has a figures file.**
-  §2.4 closes the general hole — an untagged value the cited artifact provides
+  §2.5 closes the general hole — an untagged value the cited artifact provides
   now fails promotion — but the binding can only run where the values are
   published as figures. `data/phase0_5_gate.csv` has none, so `gate-local-slope`
   carries an exemption until `data/phase0_5_figures.json` exists. And the check
   is one-directional by design: it catches a *measured* value stated wrongly, not
   a number invented from nothing that the artifact never mentions. Distinguishing
-  an invented literal from a structural constant is what §2.4 explains no regex
+  an invented literal from a structural constant is what §2.5 explains no regex
   can do.
 - **T2 remains unguarded and uncoded.** §3.
 
