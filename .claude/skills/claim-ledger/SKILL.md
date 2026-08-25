@@ -84,8 +84,10 @@ against the old plan went stale in the same commit.
 
 ## Promoting a claim
 
-Five checks, each earned by a specific promotion going wrong. Run all five
-whenever a claim's status field changes.
+Six checks. The first five were each earned by a specific promotion going
+wrong, and all five run whenever a claim's status field changes. The sixth was
+earned by measurement rather than by an incident, and binds only on a change
+*into* `verified-numeric` or `theorem`.
 
 1. **Grep the claim id and read every citing paragraph by hand.** Promotion to
    `theorem` silently removes the hedging guard from those paragraphs — the
@@ -115,6 +117,40 @@ whenever a claim's status field changes.
    project three of them fired during Phase 2 and none were updated until a
    reviewer noticed independently — the trigger existing did not mean anyone
    looked at it.
+6. **Before promoting to `verified-numeric` or `theorem`, watch the guard
+   behind the evidence fail.** A guard nobody has seen fail is a claim about a
+   test — the same species of claim as "the bound was verified", and no more
+   checked. *Watched* means one mutation, chosen because it guards **this**
+   claim, applied to a scratch tree from `git archive HEAD | tar -x`, with
+   exactly the expected node ids going red. Two details are load-bearing: the
+   verdict is the failing node id set and never the exit code, which collection
+   errors and timeouts also produce; and the scratch run needs a
+   `sitecustomize.py` on `PYTHONPATH` that strips the editable-install finder,
+   or `capfib` resolves to the working tree and the mutation is reported as
+   survived. Procedure in
+   `docs/superpowers/specs/2026-08-25-claim-promotion-gate-design.md` §5.1, the
+   per-claim mutations in §4.
+
+   This one comes from measurement, not from an incident. Certified T1 replaced
+   by the constant `80.0` leaves **286 passing**; every T3 `log_count` zeroed
+   leaves **287 passing**; T5 weakened to `T3 + 0.01` leaves **288 passing** —
+   and in each case the claims resting on that step read as well-evidenced
+   throughout. No amount of reading catches this class, which is what separates
+   it from items 1-5.
+
+   **Evidence nothing guards is not promotable.** There is no third state:
+   nothing to mutate is nothing to watch. Write the guard, or pick a status
+   that does not assert numerical verification. §3 of that spec is the
+   retrospective run over the sixteen claims promoted before it and records per
+   claim what was watched and what could not be — `gate-local-slope` has no
+   guard of any kind, and `dp-gf-agree-to-nmax` is unresolved.
+
+   **The second half of the rule protects the statement, not the evidence:** no
+   value the cited artifact provides may appear in the claim's `statement`
+   untagged (§2.5). Rewriting `rc-not-monotone`'s census figures while
+   `data/phase1_summary.json` keeps the real ones passes the whole suite and
+   the validator today, so until that check ships, compare the statement's
+   numbers against the artifact by hand.
 
 ## Writing about generated data
 
