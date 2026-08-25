@@ -124,10 +124,11 @@ earned by measurement rather than by an incident, and binds only on a change
    claim, applied to a scratch tree from `git archive HEAD | tar -x`, with
    exactly the expected node ids going red. Two details are load-bearing: the
    verdict is the failing node id set and never the exit code, which collection
-   errors and timeouts also produce; and the scratch run needs a
-   `sitecustomize.py` on `PYTHONPATH` that strips the editable-install finder,
-   or `capfib` resolves to the working tree and the mutation is reported as
-   survived. Procedure in
+   errors and timeouts also produce; and the run must start with its
+   working directory **inside** the scratch tree, because `sys.path[0]` is the
+   cwd and it outranks `PYTHONPATH`. Launched from the repository root, the M1
+   mutant reports *5 passed* — survived — with `PYTHONPATH` pointing at the tree
+   the whole time. Procedure in
    `docs/superpowers/specs/2026-08-25-claim-promotion-gate-design.md` §5.1, the
    per-claim mutations in §4.
 
