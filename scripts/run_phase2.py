@@ -25,12 +25,8 @@ manifest entries.
 
 import argparse
 import csv
-import io
-import json
 import math
-import os
 import sys
-import tempfile
 from pathlib import Path
 
 import matplotlib
@@ -50,9 +46,9 @@ not the one it wrote its artifacts into. Found by the first test that ever ran
 this script to success (tests/test_run_phase2.py), which runs a copy inside a
 scratch tree and saw its manifest entries land in the real repository instead."""
 
+from capfib.artifacts import csv_text, figures_text, publish, render_figure
 from capfib.interval import RELATIVE_TOL, agrees_with_float
 from capfib.lower import block_band_min, t3_lower_bound, t5_lower_bound
-from capfib.manifest import record
 from capfib.product import log_F_c
 from capfib.saddle import argmin_log_s, log_R_bound_certified
 
@@ -78,66 +74,6 @@ S_16 = 1576239 and the whole sweep then costs about four seconds."""
 
 PHI = (1 + 5 ** 0.5) / 2
 LOG_PHI = math.log(PHI)
-
-
-def atomic_write_text(path: Path, text: str) -> None:
-    """Write text to `path` via a temporary file and an atomic rename.
-
-    Args:
-        path: destination file path. Its parent directory must already exist.
-        text: the full contents to write.
-    """
-    handle = tempfile.NamedTemporaryFile(
-        "w", dir=path.parent, delete=False, encoding="utf-8"
-    )
-    try:
-        handle.write(text)
-        handle.close()
-        os.replace(handle.name, path)
-    except BaseException:
-        os.unlink(handle.name)
-        raise
-
-
-def render_figure(fig) -> bytes:
-    """Render a figure to PNG bytes in memory, writing nothing to disk.
-
-    Rendering is the step most likely to fail for reasons unrelated to the
-    mathematics -- a missing backend, a font cache, a matplotlib upgrade -- so
-    it happens before any artifact is published rather than after, and its
-    result is carried as bytes.
-
-    Args:
-        fig: the matplotlib figure to render.
-
-    Returns:
-        The PNG encoding of the figure.
-    """
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format="png", dpi=150, bbox_inches="tight")
-    return buffer.getvalue()
-
-
-def atomic_write_bytes(path: Path, payload: bytes) -> None:
-    """Write bytes to `path` via a temporary file and an atomic rename.
-
-    The temp file keeps `path`'s suffix at the end (rather than appending
-    ".tmp" after it) so the published name and the staged name differ only in
-    the random middle, which keeps the rename within one directory.
-
-    Args:
-        path: destination file path. Its parent directory must already exist.
-        payload: the full contents to write.
-    """
-    fd, tmp_name = tempfile.mkstemp(dir=str(path.parent), suffix=path.suffix)
-    os.close(fd)
-    tmp = Path(tmp_name)
-    try:
-        tmp.write_bytes(payload)
-        os.replace(tmp, path)
-    except BaseException:
-        tmp.unlink(missing_ok=True)
-        raise
 
 
 def residual_sweep() -> list[dict]:
@@ -291,10 +227,9 @@ def main() -> int:
         print(f"{exc}. Writing nothing.")
         return 1
 
-    header = list(rows[0].keys())
-    lines = [",".join(header)]
-    lines += [",".join(repr(r[k]) for k in header) for r in rows]
-    bounds_csv = "\n".join(lines) + "\n"
+    # LF-terminated, unlike Phase 1's CRLF: the bytes are what the manifest
+    # hashes, so each runner keeps the terminator it has always written.
+    bounds_csv = csv_text(rows, lineterminator="\n")
 
     residuals = [r["residual"] for r in residual_rows]
     residual_centre = sum(residuals) / len(residuals)
@@ -306,12 +241,7 @@ def main() -> int:
     residual_asymptotic_centre = sum(asymptotic_residuals) / len(asymptotic_residuals)
     residual_asymptotic_spread = max(asymptotic_residuals) - min(asymptotic_residuals)
     residual_asymptotic_t_min = min(asymptotic_ts)
-    residual_lines = ["t,log_F_c,leading,residual"]
-    residual_lines += [
-        f"{r['t']!r},{r['log_F_c']!r},{r['leading']!r},{r['residual']!r}"
-        for r in residual_rows
-    ]
-    residual_csv = "\n".join(residual_lines) + "\n"
+    residual_csv = csv_text(residual_rows, lineterminator="\n")
 
     biggest = rows[-1]
     figures = {
@@ -447,6 +377,7 @@ def main() -> int:
             "description": "log R_c(N) / (log N)^2 at the largest N verified",
         },
     }
+    figures_json = figures_text(figures)
 
     # The figure is rendered to bytes HERE, before anything is published. It
     # used to be drawn last, after three artifacts and three manifest entries
@@ -467,7 +398,7 @@ def main() -> int:
             ax.set_title("Phase 2 sandwich: exact values between the proved bounds")
             ax.legend()
             ax.grid(alpha=0.3)
-            figure_png = render_figure(fig)
+            figure_png = render_figure(fig, dpi=150, bbox_inches="tight")
         finally:
             plt.close(fig)
     except Exception as exc:
@@ -476,44 +407,15 @@ def main() -> int:
 
     # Everything above is in memory and every gate has passed. Only now is
     # anything published, and the manifest entries follow their own artifacts.
-    figures_dir = ROOT / "figures"
-    figures_dir.mkdir(parents=True, exist_ok=True)
-
-    csv_path = ROOT / "data" / "phase2_bounds.csv"
-    atomic_write_text(csv_path, bounds_csv)
-    record(
-        csv_path,
-        "scripts/run_phase2.py",
-        {"n_max": args.n_max, "relative_tol": RELATIVE_TOL},
-        manifest_path=MANIFEST,
-    )
-
-    residual_path = ROOT / "data" / "phase2_residual.csv"
-    atomic_write_text(residual_path, residual_csv)
-    record(
-        residual_path,
-        "scripts/run_phase2.py",
-        {"t_values": RESIDUAL_T},
-        manifest_path=MANIFEST,
-    )
-
-    figures_path = ROOT / "data" / "phase2_figures.json"
-    atomic_write_text(figures_path, json.dumps(figures, indent=2, sort_keys=True) + "\n")
-    record(
-        figures_path,
-        "scripts/run_phase2.py",
-        {"n_max": args.n_max},
-        manifest_path=MANIFEST,
-    )
-
-    figure_path = figures_dir / "phase2_sandwich.png"
-    atomic_write_bytes(figure_path, figure_png)
-    record(
-        figure_path,
-        "scripts/run_phase2.py",
-        {"n_max": args.n_max},
-        manifest_path=MANIFEST,
-    )
+    script = "scripts/run_phase2.py"
+    publish(ROOT / "data" / "phase2_bounds.csv", bounds_csv, script,
+            {"n_max": args.n_max, "relative_tol": RELATIVE_TOL}, manifest_path=MANIFEST)
+    publish(ROOT / "data" / "phase2_residual.csv", residual_csv, script,
+            {"t_values": RESIDUAL_T}, manifest_path=MANIFEST)
+    publish(ROOT / "data" / "phase2_figures.json", figures_json, script,
+            {"n_max": args.n_max}, manifest_path=MANIFEST)
+    publish(ROOT / "figures" / "phase2_sandwich.png", figure_png, script,
+            {"n_max": args.n_max}, manifest_path=MANIFEST)
 
     print(f"OK: gate passed and both bounds held at all {len(rows)} sampled N")
     print(f"  largest N verified: {biggest['N']}")

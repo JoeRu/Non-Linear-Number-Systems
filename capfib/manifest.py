@@ -13,12 +13,23 @@ from pathlib import Path
 DEFAULT_MANIFEST = "data/manifest.json"
 
 
-def _git_rev() -> str:
+def git_rev(repo: str | Path | None = None) -> str:
+    """Return the commit hash HEAD points at, or "unknown" outside git.
+
+    Args:
+        repo: the repository to ask. A runner passes its own repository root
+            so the answer does not depend on where it was invoked from;
+            `None` asks the current working directory.
+
+    Returns:
+        The full commit hash, or "unknown" if git is absent or `repo` is not
+        inside a repository.
+    """
+    cmd = ["git", "rev-parse", "HEAD"]
+    if repo is not None:
+        cmd[1:1] = ["-C", str(repo)]
     try:
-        out = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True, text=True, check=True,
-        )
+        out = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return out.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "unknown"
@@ -76,7 +87,7 @@ def record(
         "file": target.name,
         "script": script,
         "params": params,
-        "git_rev": _git_rev(),
+        "git_rev": git_rev(),
         "sha256": _sha256(target),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
