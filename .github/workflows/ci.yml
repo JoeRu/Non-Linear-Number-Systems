@@ -43,9 +43,8 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          # pyproject declares requires-python >= 3.11, and CI exercises 3.12
-          # only. The 3.11 floor is therefore NOT verified here; a 3.12-only
-          # construct would reach main unremarked. Stated rather than implied.
+          # pyproject declares requires-python >= 3.11; the floor is
+          # exercised by the separate `tests-py311` job below.
           python-version: "3.12"
 
       - name: Install the package and its test dependencies
@@ -60,6 +59,33 @@ jobs:
         # Runs even when pytest fails, because the two answer different
         # questions and a reader wants both. Step-level `if` is fine: it does
         # not make the *job* skip, so it cannot report a false success.
+        if: ${{ !cancelled() }}
+        run: python scripts/check_claims.py
+
+  # The requires-python floor. A separate job rather than a matrix on `tests`:
+  # a matrix renames the context to `tests (3.12)` and breaks the inventory
+  # match. Not in the required-check inventory yet; adding it there needs the
+  # ruleset changed at the same time, or the verifier goes red on it.
+  tests-py311:
+    name: tests-py311
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the package and its test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
+      - name: Run the test suite
+        run: python -m pytest -q
+
+      - name: Validate the claim ledger
         if: ${{ !cancelled() }}
         run: python scripts/check_claims.py
 
