@@ -24,13 +24,18 @@ results and a Python numerics package to generate and cross-check the underlying
 | Path | Contents |
 |---|---|
 | `capfib/` | Numerics package: enumeration, DP, generating function, saddle point |
+| `scripts/` | Phase runners (`run_phase*.py`), the claim validator, CI helpers |
 | `tests/` | Correctness gate — brute-force oracle and cross-checks |
-| `theory/` | Definitions, background analysis, proof sketches, the claim ledger |
+| `theory/` | Definitions, background analysis, proof sketches, the claim ledger (`claims.yaml`) |
 | `docs/roadmap.md` | The phase plan |
-| `docs/phases/` | Phase deliverables |
+| `docs/phases/<phase>/` | Phase deliverables: `summary.md` (start here) and `report.md` (full write-up) |
+| `docs/risks.md` | Decisions taken under unresolved review disagreement |
+| `docs/design/specs/` | Design specs (dated); active plans go in `docs/design/plans/` |
+| `docs/archive/plans/` | Executed implementation plans — history, not live documentation |
 | `paper/` | LaTeX writeup and bibliography |
 | `lean/` | Formal proofs of the elementary results |
-| `data/`, `figures/` | Generated output; regenerate, never hand-edit |
+| `data/`, `figures/` | Generated output; regenerate, never hand-edit (a hook enforces this) |
+| `.claude/skills/` | Project skills: `claim-ledger`, `rc-numerics`, `pr-review-cycle`, `explain` |
 
 ---
 
@@ -51,6 +56,8 @@ results and a Python numerics package to generate and cross-check the underlying
 - Never remove a Lean `sorry` without a real proof. A `sorry` is a statement; a wrong proof is worse than an open one.
 - Every generated dataset writes an entry to `data/manifest.json`.
 - Commit at the end of every task.
+- **All documents are written in English.** (The `explain` skill answers readers in German on request; that is conversation, not documentation.)
+- Design specs and plans live in `docs/design/`, not in a tool-named directory: a skill that defaults to `docs/superpowers/` is overridden here. Move a plan to `docs/archive/plans/` once it has been executed.
 
 ---
 
@@ -95,6 +102,13 @@ lake update        # download Mathlib (first time, ~10 min)
 lake build         # compile all files
 ```
 
+### Interactive feedback: the `lean-lsp` MCP server
+`.mcp.json` registers `lean-lsp-mcp` (pinned) for this project. Prefer its
+`lean_goal`, `lean_diagnostic_messages` and `lean_leansearch` / `lean_loogle`
+tools over a full `lake build` while developing a proof, and `lean_verify`
+(or `#print axioms`) to confirm a theorem uses no `sorry`. A final
+`lake build` is still required before committing.
+
 ### Check a Single File
 ```bash
 cd lean
@@ -135,57 +149,21 @@ lake env lean NonLinearNumberSystems/Redundancy.lean
    while it was gitignored, twelve T1/T3/T5 comparisons skipped on every
    clean clone and the suite still reported green.
 
-6. **Codex reviews everything.** Standing decision (2026-08-20). Every design
-   spec goes to Codex before it becomes an implementation plan; every code
-   change gets a Codex review; and a **full Codex review runs before pushing
-   for a pull request**, not after. Invoke through the `codex:rescue` skill.
+6. **Every change is reviewed from outside, and every finding is verified.**
+   Codex reviews every design spec before it becomes a plan and every code
+   change, with a full review *before* pushing for a pull request; Copilot's
+   PR review lands minutes after `gh pr create` and is read on every PR,
+   including after merge. Neither reviewer's findings are accepted or
+   dismissed wholesale, and disputes that no further round will settle go in
+   [`docs/risks.md`](docs/risks.md). The procedure — pre-push gate, Codex
+   brief rules, waiting for Copilot, both API endpoints, how each finding is
+   closed out — is the **`pr-review-cycle`** skill. Use it.
 
-   Treat its findings as external review: verify each against
-   the codebase before acting, push back with technical reasoning where it is
-   wrong, and record the outcome in the artifact itself — the Phase 1 spec
-   carries an "Appendix — review history" naming what was rejected, what was
-   verified, and what was declined and why.
+   This exists because it worked: Codex rejected the Phase 1 spec's central
+   verification argument after an internal review loop had passed it, and on
+   PR #4 Copilot found defects that three internal rounds and two Codex passes
+   had missed.
 
-   This exists because it worked the first time it was used: Codex rejected the
-   Phase 1 spec's central verification argument, correctly, after that spec had
-   already passed an internal review loop. An outside reader with no stake in
-   the reasoning catches what self-review structurally cannot.
-
-7. **Always check Copilot's PR review — about five minutes after opening the
-   PR.** Standing decision (2026-08-21). The review is not there when
-   `gh pr create` returns; it lands minutes later. Wait for it, read it,
-   verify each finding, and adapt the PR before treating it as done. Check
-   it on every pull request, **including after merge** — a merged PR is not
-   closed until its review has been read and each finding verified.
-
-   Its record here is mixed in both directions and that is the point. On PR #3
-   it confidently claimed a Lean proof left its goal unsolved; `#print axioms`
-   and deleting the tactic it called insufficient both disproved it. On PR #4 it
-   found real defects that three internal review rounds and two Codex passes had
-   all missed. So: verify each finding, never accept or dismiss the set
-   wholesale.
-
-   `gh api repos/{owner}/{repo}/pulls/{n}/reviews` for the summary and
-   `gh api repos/{owner}/{repo}/pulls/{n}/comments` for the inline findings — read both, since the
-   summary hides suppressed comments that contain real content.
-
-8. **Codex runs at `gpt-5.6-sol`, reasoning effort `ultra`**
-   (`~/.codex/config.toml`). Both values come from
-   `~/.codex/models_cache.json`, which enumerates every model slug with its
-   supported reasoning levels — **check there rather than answering from
-   memory**, since both change. `gpt-5.6-sol` ("latest frontier agentic coding
-   model") supports `low, medium, high, xhigh, max, ultra` and defaults to
-   `low`; `gpt-5.4` ("strong model for everyday coding") tops out at `xhigh`.
-   The effort setting is what actually changes behaviour, since the model's own
-   default is the lowest level.
-
-9. **Unresolved review disputes go in [`docs/risks.md`](docs/risks.md).** When a
-   reviewer holds a position, the project holds another, and no further round
-   will settle it, record it: an ID, the description, both positions stated
-   fairly, and what it could cost the roadmap's objective if the project's
-   position is wrong. That file is for decisions taken under disagreement — not
-   for defects. A defect everyone agrees on gets fixed or tracked as an issue.
-
-10. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
+7. **Cite sources.** When adapting a theorem or result from the literature (e.g. Mahler,
    de Bruijn, Coons–Kristensen–Laursen, Fraenkel) or from Mathlib, include the source
    reference in a comment.
