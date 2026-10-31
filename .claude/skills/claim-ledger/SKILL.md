@@ -120,17 +120,30 @@ earned by measurement rather than by an incident, and binds only on a change
 6. **Before promoting to `verified-numeric` or `theorem`, watch the guard
    behind the evidence fail.** A guard nobody has seen fail is a claim about a
    test — the same species of claim as "the bound was verified", and no more
-   checked. *Watched* means one mutation, chosen because it guards **this**
-   claim, applied to a scratch tree from `git archive HEAD | tar -x`, with
-   exactly the expected node ids going red. Two details are load-bearing: the
-   verdict is the failing node id set and never the exit code, which collection
-   errors and timeouts also produce; and the run must start with its
+   checked. *Watched* means one mutation, chosen because it perturbs **this**
+   claim's own evidence (a node that merely shares a test with another claim's
+   mutation does not count), applied to a scratch tree from
+   `git archive HEAD | tar -x`. Commit the candidate first and check
+   `git status --porcelain` is empty: the archive is of `HEAD`, so uncommitted
+   evidence or guards would be tested in their previous version. Run the
+   unmutated tree as a baseline and require every target to **pass**; then the
+   mutant, with exactly the expected node ids going red, each with its recorded
+   failure message. Three details are load-bearing: the verdict is node ids
+   plus reason, never the exit code, which collection errors and timeouts also
+   produce; a target that was already red makes a non-kill look like a kill,
+   which is what the baseline rules out; and the run must start with its
    working directory **inside** the scratch tree, because `sys.path[0]` is the
    cwd and it outranks `PYTHONPATH`. Launched from the repository root, the M1
    mutant reports *5 passed* — survived — with `PYTHONPATH` pointing at the tree
    the whole time. Procedure in
    `docs/design/specs/2026-08-25-claim-promotion-gate-design.md` §5.1, the
    per-claim mutations in §4.
+
+   **Lean-backed evidence has no pytest node.** For it the step is §6 of that
+   spec: in a `cp -a` copy of `lean/`, replace the cited declaration's proof
+   with `sorry`, build, and require `sorryAx` to appear in `#print axioms
+   <decl>` — and to be absent unmutated. `#print axioms` exits 0 either way;
+   the verdict is the output text.
 
    This one comes from measurement, not from an incident. Certified T1 replaced
    by the constant `80.0` leaves **286 passing**; every T3 `log_count` zeroed
@@ -146,12 +159,13 @@ earned by measurement rather than by an incident, and binds only on a change
    claim what was watched and what could not be — `gate-local-slope` has no
    guard of any kind, and `dp-gf-agree-to-nmax` is unresolved.
 
-   **The second half of the rule protects the statement, not the evidence:** no
-   value the cited artifact provides may appear in the claim's `statement`
-   untagged (§2.5). Rewriting `rc-not-monotone`'s census figures while
-   `data/phase1_summary.json` keeps the real ones passes the whole suite and
-   the validator today, so until that check ships, compare the statement's
-   numbers against the artifact by hand.
+   **The statement is not protected by any of this.** Rewriting
+   `rc-not-monotone`'s census figures while `data/phase1_summary.json` keeps
+   the real ones passes the whole suite and the validator. The spec proposes a
+   statement-binding check (§2.5), but §2.5.1 measured it as written missing
+   exactly that drift, and whether to specify it properly or drop it is an
+   open decision. Until it is decided, **compare every number in the
+   statement against the artifact by hand** — that is the operative rule.
 
 ## Writing about generated data
 

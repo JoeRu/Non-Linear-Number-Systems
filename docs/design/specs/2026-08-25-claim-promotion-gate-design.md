@@ -4,7 +4,7 @@
 **Status:** design spec, awaiting review
 **Scope:** the `claim-ledger` skill's promotion checklist, `scripts/mutate.py`, and a statement-binding check over `theory/claims.yaml`
 **Evidence base:** three measurement passes at HEAD `df22d2c` — Python mutants run against the whole suite in scratch copies produced by `git archive HEAD | tar -x`, one Lean mutant in a `cp -a` copy of `lean/`, the claim → evidence → guard map over the promoted ledger, and the existing machinery measured against a promotion. The repository was not modified in any of them (`git status --porcelain` empty before and after)
-**Supersedes:** `docs/design/specs/2026-08-24-mutation-registry-design.md` — 1681 lines, never merged (§8). Its branch `plan-b-registry` has since been deleted, so the file is reachable only as `0a95cef` in the local reflog and **no reader of this repository can check the citations in §8**
+**Supersedes:** `docs/superpowers/specs/2026-08-24-mutation-registry-design.md` — 1681 lines, never merged (§8). Its branch `plan-b-registry` has since been deleted, so the file is reachable only as `0a95cef` in the local reflog and **no reader of this repository can check the citations in §8**
 
 ---
 
@@ -304,26 +304,32 @@ All nine cite a generated artifact.
 | `rc-not-monotone` | `data/phase1_summary.json` (`census`) | **—** for the field | `increasing` 504441→904441, `decreasing` 495548→95548: *291 passed* | M9 (prose literals) |
 | `place-jump-decay` | `data/phase1_summary.json` (`place_jumps`) | `tests/test_phase1_tables.py::test_place_jump_table_matches_artifact` | ratio at place 832040 `1.00065…` → `0.90065…`: *1 failed, 290 passed* | M10 |
 | `block-extremal-n` | `data/phase1_summary.json` (`block_extrema`) | `tests/test_phase1_tables.py::test_block_extrema_table_matches_artifact` | first block `argmax` 1 → 999: *1 failed, 290 passed* | M10 |
-| `flat-steps-end-early` | `data/phase1_summary.json` (`flat_step_positions`) | **—** for the field | a twelfth position `123456` appended: *291 passed* | M9 (prose literals) |
-| `completeness-empirical` | `data/phase1_summary.json` (`min_count`) | **—** for the field | `min_count` 1 → 0: *291 passed* | M9 (prose literals) |
+| `flat-steps-end-early` | `data/phase1_summary.json` (`flat_step_positions`) | **—** for the field | a twelfth position `123456` appended: *291 passed* | **none measured** — needs a mutation of its own figure key |
+| `completeness-empirical` | `data/phase1_summary.json` (`min_count`) | **—** for the field | `min_count` 1 → 0: *291 passed* | **none measured** — needs a mutation of its own figure key |
 | `chernoff-effective-verified` | `data/phase2_bounds.csv` | **—** for the CSV. The *inequality* is recomputed at 3 of the 37 sampled N by `tests/test_phase2_bounds.py::test_certified_bound_holds_against_exact_values[100\|10000\|1000000]` and `::test_certified_bound_is_not_vacuous` | `chernoff_certified` at N=2 → `0.5`, i.e. **below** `log R_c = 0.693` — the claim's own statement falsified inside its own artifact: *291 passed* | M1, M4, M5, M7 |
-| `product-residual-sampled` | `data/phase2_residual.csv` | **—** for the CSV | residual at t=20 `3.2273` → `9.9273`: *291 passed* | M4, M7 |
+| `product-residual-sampled` | `data/phase2_residual.csv` | **—** for the CSV | residual at t=20 `3.2273` → `9.9273`: *291 passed* | M4 |
 
 **Two kinds of link, and they are not equal.** A guard over the artifact field
 the `evidence` names is one thing; a guard over the prose literals that report
-the claim is another. For `rc-not-monotone`, `flat-steps-end-early` and
-`completeness-empirical` only the second exists: M9 kills
+the claim is another. For `rc-not-monotone` only the second exists: M9 kills
 `test_every_tag_resolves_and_matches[phase1]`, the single node that compares
 every tagged Phase 1 literal against `data/phase1_figures.json`, while editing
-those fields in `data/phase1_summary.json` leaves the suite green. That node is a
+the census in `data/phase1_summary.json` leaves the suite green.
+`flat-steps-end-early` and `completeness-empirical` share that node, but a
+shared node is not a watched guard: M9 changes neither claim's key, so the
+node goes red whether or not their literals are checked at all. Each needs a
+mutation of its own figure key, observed to fail with that key in the
+message, before it counts as reached. That node is a
 consistency check between prose and a tracked artifact, not a recomputation —
 measured: M2 zeroes T3 and every figure test stays green, because
 `data/phase2_figures.json` still holds `17.774…`. The gate accepts it as the
-guard for those three and this paragraph is why a reader should not read more
+guard for `rc-not-monotone` and this paragraph is why a reader should not read more
 into it.
 
 **Coverage, stated as the measurement and not as a target.** With the set in §4,
-the rule is satisfiable for ten of the sixteen promoted claims. Three more
+the rule is satisfiable for eight of the sixteen promoted claims (ten before
+the PR #10 review removed the shared-node attributions; `flat-steps-end-early`
+and `completeness-empirical` now wait on mutations of their own keys). Three more
 (`sum-of-squares`, `gf-global-checksum`, `sc-monotone`) name their guard directly
 in `evidence` and have a measured mutation held in reserve (§4.3). One
 (`completeness-no-gaps`) is Lean and goes through §6. One
@@ -350,8 +356,8 @@ the file's HEAD blob.
 | M3 | `capfib/lower.py`, `t5_lower_bound` returns `t3_lower_bound(n).log_count + 0.01` for `n >= 1000` | `::test_t5_carries_its_block_factor_at_large_n[10000\|100000\|1000000]` — *3 failed, 288 passed*. **Three nodes, not four**: the test is parametrised at 10^4 and above (`tests/test_phase2_bounds.py:282`), so no `[1000]` node is collected — do not look for one | `assert 17.78424156135753 == 39.80228549800129 ± 4.0e-11` | `leading-constant` (T5 is the named step of C5), `saddle-tightness` |
 | M4 | `capfib/interval.py`, the break block of `log_F_c_interval` reordered so the term for the break index K is lost while every earlier term is still summed | `tests/test_interval.py::test_enclosure_contains_an_independently_summed_reference` — *1 failed, 290 passed* | `assert mpf('55.161412470285244954111573655…') >= mpf('55.161412470285244954111573658…')` | `chernoff-effective-verified`, `product-residual-sampled` — both evidence fields name the 1e-12 agreement gate as what makes the number trustworthy, and the corruption is fifteen orders below it |
 | M5 | remove `data/phase1_data.csv` (tracked at HEAD) | 13 nodes in `tests/test_phase2_bounds.py` — *13 failed, 278 passed*. **Thirteen, not twelve**: `test_the_tracked_oracle_matches_its_manifest_provenance` is the thirteenth. All call-phase failures; nothing skipped | `data/phase1_data.csv absent -- it is tracked, so this means it was deleted, not that it was never generated.` | `chernoff-effective-verified` (its statement names the file), `sandwich-bounds` and `leading-constant` (the confrontation of each bound against the exact ladder) |
-| M7 | `data/phase2_figures.json`, `chernoff-certified-nmax` `81.9137461608127` → `81.9237461608127`. The key's `precision` is 4, so the moved digit must be at or above the fourth decimal or it renders identically and kills nothing | `tests/test_figure_tags.py::test_every_tag_resolves_and_matches[phase2]` — *1 failed, 290 passed* | `docs/phases/phase2/summary.md: {fig:chernoff-certified-nmax} quoted as '81.9137' but the figures file says '81.9237'` | `chernoff-effective-verified` (the perturbed key is quoted in the very paragraph carrying `{claim:chernoff-effective-verified}`), `product-residual-sampled` (same node, its paragraph quotes six residual keys) |
-| M9 | `data/phase1_figures.json`, `decreasing-fraction` `49.5548` → `49.6548`. `precision` is 1, so `49.6 → 49.7` is the smallest workable move | `tests/test_figure_tags.py::test_every_tag_resolves_and_matches[phase1]` — *1 failed, 290 passed* | `docs/phases/phase1/summary.md: {fig:decreasing-fraction} quoted as '49.6' but the figures file says '49.7'` | `rc-not-monotone`, `flat-steps-end-early`, `completeness-empirical` — without it the set touches no Phase 1 claim at all, and six of the nine `verified-numeric` claims are Phase 1's |
+| M7 | `data/phase2_figures.json`, `chernoff-certified-nmax` `81.9137461608127` → `81.9237461608127`. The key's `precision` is 4, so the moved digit must be at or above the fourth decimal or it renders identically and kills nothing | `tests/test_figure_tags.py::test_every_tag_resolves_and_matches[phase2]` — *1 failed, 290 passed* | `docs/phases/phase2/summary.md: {fig:chernoff-certified-nmax} quoted as '81.9137' but the figures file says '81.9237'` | `chernoff-effective-verified` (the perturbed key is quoted in the very paragraph carrying `{claim:chernoff-effective-verified}`). **Not** `product-residual-sampled`: its six residual keys share the node, but M7 perturbs none of them, so the node fails whether or not they are checked (PR #10 review). Its own-key mutation is not yet measured |
+| M9 | `data/phase1_figures.json`, `decreasing-fraction` `49.5548` → `49.6548`. `precision` is 1, so `49.6 → 49.7` is the smallest workable move | `tests/test_figure_tags.py::test_every_tag_resolves_and_matches[phase1]` — *1 failed, 290 passed* | `docs/phases/phase1/summary.md: {fig:decreasing-fraction} quoted as '49.6' but the figures file says '49.7'` | `rc-not-monotone` (`decreasing-fraction` is its census figure). **Not** `flat-steps-end-early` or `completeness-empirical`: M9 perturbs neither's key, so the shared node fails whether or not theirs are checked (PR #10 review). Their own-key mutations are not yet measured |
 | M10 | remove `data/phase1_summary.json` (tracked at HEAD) | `tests/test_phase1_tables.py::test_place_jump_table_matches_artifact`, `::test_block_extrema_table_matches_artifact` — *2 failed, 289 passed* | `data/phase1_summary.json absent -- it is tracked, so this means it was deleted.` | `place-jump-decay`, `block-extremal-n` — the only mutation that reaches either |
 
 The four code anchors verbatim, since a mutation that does not apply cleanly is
@@ -404,7 +410,12 @@ machine load — plus tree setup.
 
 The requirements below are not stylistic; each was forced by a measurement.
 
-1. **Scratch tree.** `git archive HEAD | tar -x` into a temporary directory. The
+1. **Scratch tree, from a committed candidate.** First require
+   `git status --porcelain` to be empty: `git archive HEAD` exports the last
+   commit, so a promotion whose evidence or guard is still staged or unstaged
+   would otherwise be tested in its *previous* version and could be certified
+   by a guard the candidate does not contain (PR #10 review). Then
+   `git archive HEAD | tar -x` into a temporary directory. The
    repository is never edited — every measurement behind this spec ran that way
    and `git status --porcelain` was empty before and after each.
 2. **Start the process inside the scratch tree.** `sys.path[0]` is the working
@@ -432,12 +443,16 @@ The requirements below are not stylistic; each was forced by a measurement.
    `--rootdir` and `-c <tree>/pyproject.toml` pointed at the mutant. Every kill
    recorded in §4 is a whole-suite result, and the "N failed, M passed" line is
    what those numbers mean.
-5. **The verdict is the node id set.** Exactly the recorded targets failed and
-   nothing else did. An exit code is not the verdict (G5), and the pass count
-   carries the rest: a broken tree shows extra failures rather than a clean kill.
-   A baseline run of the unmutated tree — measured at `291 passed` — is required
-   only when a mutation is **added** to the file, which is when the target set is
-   established.
+5. **Baseline first, every time.** Run the unmutated scratch tree and require
+   every target node to **pass**. Without it, a target that was already red
+   before the mutation yields the same failing node set and the same pass count
+   as a genuine kill (PR #10 review). This doubles the cost of a promotion to two
+   suite runs; promotions are rare enough to pay it.
+6. **The verdict is the node id set *and* the reason.** Exactly the recorded
+   targets failed, nothing else did, and each target failed in the call phase
+   with the recorded *Observed message* (§4.1) — for a figure mutation, the
+   message must name the perturbed key. A mutation that makes the target raise
+   an unrelated exception is not a kill. An exit code is not the verdict (G5).
 
 ### 5.2 Not in CI
 
@@ -520,7 +535,7 @@ Two facts the maintainer should carry into that step:
 
 - **Nothing in the repository runs `#print axioms`.** Measured: every hit of
   `grep -rln "print axioms"` is prose describing the check — `docs/lean_setup.md`,
-  `CLAUDE.md`, and the Phase 2 spec and plan under `docs/superpowers/` (and now
+  `CLAUDE.md`, and the Phase 2 spec and plan under `docs/design/` and `docs/archive/` (and now
   this document). No workflow, no script, no test invokes it, and
   `tests/test_epistemic_staleness.py`'s `SCAN_GLOBS` never reach `lean/`.
 - **`lake build` is off the merge path by construction.** It runs in
@@ -560,9 +575,12 @@ behaviour staying as it is.
   prose against the tracked figures artifact, and nothing ties that artifact back
   to the summary the numbers came from.
 - **A claim's statement is bound only where its artifact has a figures file.**
-  §2.5 closes the general hole — an untagged value the cited artifact provides
-  now fails promotion — but the binding can only run where the values are
-  published as figures. `data/phase0_5_gate.csv` has none, so `gate-local-slope`
+  §2.5 *proposes* to close the general hole — an untagged value the cited
+  artifact provides would fail promotion — but §2.5.1 measured that check as
+  written missing an already-drifted statement, and the decision on it is open.
+  Until it is made, the operative step is comparing the statement against the
+  artifact by hand. Even once specified, the binding can only run where the
+  values are published as figures. `data/phase0_5_gate.csv` has none, so `gate-local-slope`
   carries an exemption until `data/phase0_5_figures.json` exists. And the check
   is one-directional by design: it catches a *measured* value stated wrongly, not
   a number invented from nothing that the artifact never mentions. Distinguishing
@@ -601,7 +619,7 @@ Unresolved, and left unresolved rather than decided by assertion:
 
 ## 8. Supersession
 
-This replaces `docs/design/specs/2026-08-24-mutation-registry-design.md`,
+This replaces `docs/superpowers/specs/2026-08-24-mutation-registry-design.md`,
 written on branch `plan-b-registry` and never merged. It reached 1681 lines: a
 registration schema, a coverage-is-equality rule, a marker checked in both
 directions at function granularity, a workflow contract with parse and
@@ -627,3 +645,29 @@ review history and corrected by the next one; it is dropped with the branch, and
 nothing on `main` refers to it. What carries forward is the sentence from §4's
 proposed rule 11 — a guard you have not seen fail is not a guard — now quantified
 over the claims this project publishes rather than over every test it runs.
+
+---
+
+## Appendix — review history
+
+**PR #10, Copilot, 2026-10-31.** Six findings on this spec and the checklist
+item that implements it; each verified against the text, all six accepted.
+
+- *Shared node ≠ coverage (§4.1 M7/M9, §3).* Accepted. M7 and M9 perturb one key
+  each; the claims that merely share the figure node were credited without
+  their own keys ever being perturbed. Attributions narrowed; coverage restated
+  as eight of sixteen; the own-key mutations for `product-residual-sampled`,
+  `flat-steps-end-early` and `completeness-empirical` are recorded as not yet
+  measured rather than measured here.
+- *No baseline, no failure signature (§5.1).* Accepted. A pre-existing failure
+  of the target is indistinguishable from a kill under the old step 5. Baseline
+  now required on every run; the recorded message is part of the verdict.
+- *`git archive HEAD` omits the candidate (§5.1, checklist).* Accepted. A clean
+  working tree is now a precondition.
+- *Lean-only claims have no pytest node (checklist).* Accepted; the checklist
+  now routes Lean-backed evidence through §6.
+- *§2.5 installed as a rule while undecided (checklist, §7).* Accepted. Both
+  places now state it as proposed and unresolved, with manual comparison as the
+  operative step. The decision itself remains the maintainer's.
+
+Not reviewed by Codex (maintainer's decision for this PR).
