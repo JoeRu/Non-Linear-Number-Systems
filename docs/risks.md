@@ -15,6 +15,16 @@ knowingly taken the risk) · `mitigated` (reduced, not eliminated) · `closed`
 
 ---
 
+## How to add an entry
+
+An entry belongs here when a review dispute has run its course and no further
+round will settle it. Record the ID, the description, both positions stated
+fairly, the cost to the roadmap objective if the project's position is wrong,
+and what should trigger a revisit. Do not use this file to park defects — a
+defect that everyone agrees is a defect gets fixed or tracked as an issue.
+
+---
+
 ## R-001 — Measured figures retained in the design spec
 
 **Status:** accepted · **Raised by:** Codex, 2026-08-20 · **Phase:** 1
@@ -51,7 +61,7 @@ trace to the same artifact.
 and what is not" below, which states the residual rather than leaving it inside
 the word "mitigated" · **Raised by:** Copilot, 2026-08-21 · **Phase:** 1
 
-**Description.** `docs/phase1.md` and `docs/phases/phase1_report.md` embed the
+**Description.** `docs/phases/phase1/summary.md` and `docs/phases/phase1/report.md` embed the
 census, the place-jump table and the block-extrema table as literal Markdown.
 `data/` was gitignored in its entirety when this was raised, so regenerating
 the artifacts did not update these pages and they could silently drift from
@@ -87,29 +97,29 @@ sources unreadable in isolation).
 
 **Mitigation in place — Phase 2 documents only.** Phase 2 built the first of
 those two candidates. `tests/test_figure_tags.py` resolves every
-`<literal> {fig:key}` tag in `docs/phase2.md` and
-`docs/phases/phase2_bounds.md` against `data/phase2_figures.json`, renders the
+`<literal> {fig:key}` tag in `docs/phases/phase2/summary.md` and
+`docs/phases/phase2/report.md` against `data/phase2_figures.json`, renders the
 stored value at its recorded precision, and requires an exact string match; a
 bare `{fig:key}` with no literal in front of it fails too, so the tag cannot
 be used to dodge the comparison. `data/phase2_figures.json` is tracked while
 the rest of `data/` is gitignored, precisely so the artifact a fresh clone
 checks against is the one the prose was written from. For those two documents
 the hand-copied number and the artifact can no longer drift apart silently.
-`docs/phase2.md` refers to this entry as handled; that reference is accurate
+`docs/phases/phase2/summary.md` refers to this entry as handled; that reference is accurate
 for Phase 2 and for Phase 2 only.
 
 **Mitigation in place — Phase 1 documents.** The census and the headline
 figures pulled out of the two tables (specific place-jump ratios, the block
 count, the flat-step extremes, and others) are tagged the same way as Phase
 2: `data/phase1_figures.json` is tracked, and `tests/test_figure_tags.py`
-resolves every `<literal> {fig:key}` tag in `docs/phase1.md` and
-`docs/phases/phase1_report.md` against it. That mechanism does not, by
+resolves every `<literal> {fig:key}` tag in `docs/phases/phase1/summary.md` and
+`docs/phases/phase1/report.md` against it. That mechanism does not, by
 itself, reach the place-jump and block-extrema tables themselves — tagging
 every cell of a 28-row and a 29-row table would mean on the order of a
 hundred more keys, for tables that exist so a reader does not have to go
 spelunking in `data/phase1_summary.json`. Those two tables are instead
 covered by `tests/test_phase1_tables.py`, which locates each table in
-`docs/phases/phase1_report.md` by an `<!-- table:... -->` anchor, parses
+`docs/phases/phase1/report.md` by an `<!-- table:... -->` anchor, parses
 every row, and compares every cell against `data/phase1_summary.json`'s
 `place_jumps` and `block_extrema` arrays directly — no tag required, and
 nothing in either table can drift from the artifact unnoticed. Between the
@@ -117,7 +127,7 @@ two mechanisms, all three things this entry names (the census, the
 place-jump table, the block-extrema table) are now checked; the remaining
 untagged residue (the `flat_step_positions` list, mathematical constants,
 structural numbers, literature values, **wall-clock timings and the
-peak-memory figure**) is stated explicitly in `docs/phase1.md`'s own residue
+peak-memory figure**) is stated explicitly in `docs/phases/phase1/summary.md`'s own residue
 note rather than left for a reader to discover.
 
 `docs/roadmap.md` is registered as a third Phase 1 document. It quoted the
@@ -138,14 +148,14 @@ fällt") instead of tagging it, so that it no longer carries a number to
 drift.
 
 **What is bound, and what is not.** Bound: every `<literal> {fig:key}` tag in
-`docs/phase1.md`, `docs/phases/phase1_report.md`, `docs/roadmap.md`,
-`docs/phase2.md` and `docs/phases/phase2_bounds.md`; every cell of the two
+`docs/phases/phase1/summary.md`, `docs/phases/phase1/report.md`, `docs/roadmap.md`,
+`docs/phases/phase2/summary.md` and `docs/phases/phase2/report.md`; every cell of the two
 Phase 1 tables; and every key in either figures file, which must be quoted in
 some registered document or listed in `KEYS_KNOWINGLY_UNQUOTED` with a reason.
 Registration itself is enforced: `test_every_tagged_document_is_registered`
 walks `docs/`, `theory/`, `paper/`, `README.md` and `CLAUDE.md` (`.md` and
-`.tex`), except for `docs/superpowers/`, a deliberate carve-out for dated
-historical specs and plans (`UNREGISTERED_DOC_PREFIXES` in
+`.tex`), except for `docs/design/` and `docs/archive/`, a deliberate carve-out for
+dated historical specs and plans (`UNREGISTERED_DOC_PREFIXES` in
 `tests/test_figure_tags.py`), and fails on any other document that carries a
 literal-backed tag without a `PHASES` row.
 
@@ -161,8 +171,8 @@ catches it. Two further gaps are narrower: `paper/` is walked but contains no
 tagged prose yet (`paper/main.tex` is a stub), so that coverage is untested
 against real content; and a document quoting *another* phase's figure cannot
 be tagged at all, because `PHASES` binds one document to one figures file
-(`docs/phases/phase1_report.md` quoting Phase 2's `upper-constant`,
-`docs/phase2.md` quoting Phase 1's `decreasing-fraction`). This file is in the
+(`docs/phases/phase1/report.md` quoting Phase 2's `upper-constant`,
+`docs/phases/phase2/summary.md` quoting Phase 1's `decreasing-fraction`). This file is in the
 same position: it quotes `49.6%` in R-005 and cannot be registered, because
 its prose spells out the bare `{fig:key}` syntax while describing the
 mechanism, which the bare-tag check rejects by design.
@@ -252,7 +262,7 @@ claims now name a Lean declaration in their evidence:
 was traced through `_theorem_evidence_problem` instead, and the grep route is
 not what validates any of the three: each evidence string *also* contains a
 real repository path (`theory/01-background.md`,
-`docs/phases/phase2_bounds.md`), the path-token branch runs first and returns
+`docs/phases/phase2/report.md`), the path-token branch runs first and returns
 on it, and the Lean-declaration branch is never reached. Confirmed by
 deleting `docs/phases` from `THEOREM_PATH_TOKEN_RE`: `saddle-tightness`,
 whose evidence names only a `docs/phases/` path, then fails, but
@@ -392,16 +402,6 @@ at which a mixed generation stops being merely confusing.
 
 ---
 
-## How to add an entry
-
-An entry belongs here when a review dispute has run its course and no further
-round will settle it. Record the ID, the description, both positions stated
-fairly, the cost to the roadmap objective if the project's position is wrong,
-and what should trigger a revisit. Do not use this file to park defects — a
-defect that everyone agrees is a defect gets fixed or tracked as an issue.
-
----
-
 ## R-007 — The required-check inventory reports Plan B's absence but cannot compel it
 
 **Status:** accepted · **Raised by:** Codex, 2026-08-24 · **Phase:** 2/3 boundary
@@ -454,6 +454,8 @@ run; the Lean half is not, because no scheduled run has occurred and
 **What would close it.** Plan B shipping. Failing that, a decision to accept the
 classes as open, recorded here rather than left implicit.
 
+---
+
 ## R-008 — Waivers are self-authorised
 
 **Status:** accepted · **Raised by:** Codex, 2026-08-24 · **Phase:** 2/3 boundary
@@ -485,6 +487,8 @@ attention rather than an adversary.
 
 **What would close it.** Adding a second write-authorised reviewer and
 path-scoped CODEOWNERS over the registry, waiver, checker and workflow paths.
+
+---
 
 ## R-009 — Ruleset bypass actors are unverifiable by CI
 
