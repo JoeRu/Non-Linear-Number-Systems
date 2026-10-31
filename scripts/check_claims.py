@@ -26,8 +26,6 @@ SEARCH_FILES = (
     "docs/roadmap.md",
     "README.md",
     "CLAUDE.md",
-    "docs/phase1.md",
-    "docs/phase2.md",
 )
 FILE_TOKEN = re.compile(r"[\w./-]+\.[A-Za-z0-9]+")
 DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
@@ -39,7 +37,7 @@ DATA_EXTENSIONS = {".csv", ".json", ".npy", ".npz", ".png", ".pdf", ".svg"}
 #
 # `docs/phases` is included alongside `theory`, `paper`, and `lean` (Ruling
 # B, task 7) because a Phase 2 `theorem` claim's proof lives in
-# `docs/phases/phase2_bounds.md`, not in `theory/`, `paper/`, or `lean/`.
+# `docs/phases/phase2/report.md`, not in `theory/`, `paper/`, or `lean/`.
 # Without this, such a claim would validate only because its evidence string
 # *also* happens to name a Lean file proving a smaller, different statement
 # -- validation by coincidence, exactly the failure mode docs/risks.md R-004

@@ -17,7 +17,7 @@ not: `R_c(10^6)` is **99 bits** — roughly `10^30` — and extrapolation puts
 `R_c(10^7)` near 143 bits. Exact integer arithmetic is comfortably fast
 (seconds, not minutes) and well within memory; the recorded, reproducible
 runtime, peak RSS and `log R_c(10^6)` live in `data/phase1_summary.json`,
-reached through `docs/phases/phase1_report.md` — this design document does
+reached through `docs/phases/phase1/report.md` — this design document does
 not restate them, since a design-time probe on an earlier commit is not the
 recorded run and should not be printed alongside it. The bottleneck is Python
 allocation overhead, not number size, and the deferred log-domain path is not
@@ -27,7 +27,7 @@ needed for this phase.
 the leading coefficient at `N = 10^3200`. At `N = 10^6` the ratio
 `log R_c(N) / (log N)^2` is well under the limiting value near
 `1/(4 log phi)` — nowhere close to asymptotic; the exact ratio is recorded in
-`data/phase1_data.csv`, reached through `docs/phases/phase1_report.md`.
+`data/phase1_data.csv`, reached through `docs/phases/phase1/report.md`.
 Fitting the four-term expansion to data at this scale would measure the
 pre-asymptotic regime, not the asymptotics.
 
@@ -43,7 +43,7 @@ the summatory function. These need exactness far more than they need reach.
 existing `capfib.gf.coefficients` is used as-is: comfortably fast (seconds,
 not minutes) and well within memory, exact. The recorded runtime and peak
 RSS live in `data/phase1_summary.json`, reached through
-`docs/phases/phase1_report.md`.
+`docs/phases/phase1/report.md`.
 
 **D2 — Roadmap deliverables plus the summatory function.** A measurement taken
 during design settles a question the roadmap explicitly left open. Roadmap
@@ -55,7 +55,7 @@ Phase 0 says:
 
 `R_c(N)` fluctuates heavily -- the exact census this design decision rests on
 is what Phase 1 itself measures and records (`data/phase1_summary.json`,
-`census`; see `docs/phases/phase1_report.md`, Result 1); no committed
+`census`; see `docs/phases/phase1/report.md`, Result 1); no committed
 invocation reproduces a number at this design stage, so none is quoted here.
 Phase 5 therefore needs `S_c(N)`, and since `S_c` is a cumulative sum of the
 array Phase 1 already builds, computing it here costs almost nothing.
@@ -101,7 +101,7 @@ It is not a sampled check, and it is affordable at production scale: at the
 script's default `n_max = 1,000,000`, `dp` and `gf` agree on **every**
 coefficient. `dp` costs several minutes, `gf` costs seconds -- the exact
 recorded figures live in `data/phase1_summary.json`, reached through
-`docs/phases/phase1_report.md`, not here. Earlier drafts of this section
+`docs/phases/phase1/report.md`, not here. Earlier drafts of this section
 carried a table with specific timings from smaller-`N`, ad-hoc design-time
 probes; it has been dropped rather than flagged, since this project's rule is
 that a number in a document traces to a recorded artifact, and design-time
@@ -209,7 +209,7 @@ operations:
 | `data/phase1_summary.json` | Monotonicity census, block extrema, fluctuation quantiles, place jumps. No checksum result — the script does not call `checksum_ok`; §3.1's pointwise cross-check is what licenses the numbers. |
 | `figures/phase1_growth.png` | `log R_c(N)` and `log S_c(N)` against `(log N)^2` |
 | `figures/phase1_fluctuation.png` | Local ratio of `R_c` against the relative increment of `S_c` — the visual form of the Route B argument |
-| `docs/phases/phase1_report.md` | The phase deliverable. **Written by hand, not by the script** — it is prose about the findings, and the script has no business generating it. Not recorded in the manifest. |
+| `docs/phases/phase1/report.md` | The phase deliverable. **Written by hand, not by the script** — it is prose about the findings, and the script has no business generating it. Not recorded in the manifest. |
 
 Figures must give each line a distinct colour and a legend entry that can be
 matched to it. (The Phase 0.5 figure drew three reference lines in the same
@@ -309,7 +309,7 @@ a checksum whose blind spot is undocumented is worse than none.
    ad-hoc in this document.
 5. `theory/claims.yaml` carries the six §6 claims and
    `scripts/check_claims.py` reports `claims.yaml OK`.
-6. `docs/phases/phase1_report.md` states the fluctuation finding, its
+6. `docs/phases/phase1/report.md` states the fluctuation finding, its
    consequence for Phase 5 Route B, and its limits.
 7. `CLAUDE.md` and `.claude/skills/rc-numerics/SKILL.md` carry the §3.4 gate
    clause: reporting beyond the pointwise-verified range requires a full-range

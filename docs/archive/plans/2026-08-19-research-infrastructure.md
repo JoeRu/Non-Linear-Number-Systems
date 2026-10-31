@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.11+, numpy, matplotlib, pyyaml, pytest. Lean 4 (v4.14.0) with Mathlib for the elementary results only.
 
-**Spec:** `docs/superpowers/specs/2026-08-19-research-infrastructure-design.md`
+**Spec:** `docs/design/specs/2026-08-19-research-infrastructure-design.md`
 
 **Verification status:** Every Python module and test in this plan was extracted and executed
 before the plan was committed. All 43 tests pass, the Phase 0.5 gate runs end to end, and the
@@ -1540,7 +1540,7 @@ git commit -m "feat: add Phase 0 definitions and the claim ledger with validator
 The deliverable that decides whether the roadmap's conjectured constant survives contact with numbers, before any month-scale investment.
 
 **Files:**
-- Create: `scripts/run_phase0_gate.py`, `docs/phases/phase0_5_gate.md`
+- Create: `scripts/run_phase0_gate.py`, `docs/phases/phase0_5/report.md`
 - Modify: `theory/claims.yaml`
 
 **Interfaces:**
@@ -1715,7 +1715,7 @@ Then append:
   statement: "The Legendre-transform local slope approaches 1/(4 log phi), excluding 1/(2 log phi) and 1/(8 log phi)."
   status: verified-numeric
   evidence: "data/phase0_5_gate.csv via scripts/run_phase0_gate.py"
-  source: "docs/phases/phase0_5_gate.md"
+  source: "docs/phases/phase0_5/report.md"
 ```
 
 - [ ] **Step 5: Verify the ledger still validates**
@@ -1728,7 +1728,7 @@ Expected: `claims.yaml OK`. The `verified-numeric` entry passes only because `da
 - [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/run_phase0_gate.py docs/phases/phase0_5_gate.md theory/claims.yaml data/manifest.json
+git add scripts/run_phase0_gate.py docs/phases/phase0_5/report.md theory/claims.yaml data/manifest.json
 git commit -m "feat: add Phase 0.5 constant gate
 
 Measures the leading constant of log R_c(N) by numerical Legendre transform.
@@ -2037,7 +2037,7 @@ Kandidaten: $1/(2\log\varphi)=1.039$, $1/(4\log\varphi)=0.520$, $1/(8\log\varphi
 ### Deliverables
 
 `scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png`,
-`docs/phases/phase0_5_gate.md`.
+`docs/phases/phase0_5/report.md`.
 
 ### Konsequenz
 
@@ -2058,7 +2058,7 @@ At the end of Phase 3's "Konjektur-Statement", append:
 > Da es sich um eine *obere* Schranke handelt, schließt dies $1/(2\log\varphi)$ unmittelbar aus;
 > der Ausschluss von $1/(8\log\varphi)$ setzt zusätzlich voraus, dass die Sattelpunkt-Korrektur
 > von niedrigerer Ordnung ist — erwartet, aber in Phase 0.5 nicht bewiesen.
-> Siehe `docs/phases/phase0_5_gate.md`. Das bleibt eine Konjektur — Phase 5 muss sie beweisen.
+> Siehe `docs/phases/phase0_5/report.md`. Das bleibt eine Konjektur — Phase 5 muss sie beweisen.
 
 - [ ] **Step 6: Verify the roadmap no longer contradicts the definitions**
 

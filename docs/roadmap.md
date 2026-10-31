@@ -63,13 +63,13 @@ dafür schon existiert.
       (**Nachtrag Phase 2:** Der Vorbehalt ist entfallen — C5 schließt $1/(8\log\varphi)$
       unbedingt aus, auf einem Weg, der diese Messung gar nicht benutzt; die Messung selbst
       ist davon unberührt — `30da98a`)
-- [x] Deliverable `docs/phases/phase0_5_gate.md` — `1d218a6`, `1b4dca0`, `3c97822`
+- [x] Deliverable `docs/phases/phase0_5/report.md` — `1d218a6`, `1b4dca0`, `3c97822`
 - [x] Roadmap an die revidierte Phasenfolge angepasst — `860dd5b`
 
 ### Phase 1 — Exakte Berechnung ✅
 
-**Ergebnis:** [`docs/phase1.md`](phase1.md) — Zusammenfassung; Details in
-[`docs/phases/phase1_report.md`](phases/phase1_report.md).
+**Ergebnis:** [`docs/phases/phase1/summary.md`](phases/phase1/summary.md) — Zusammenfassung; Details in
+[`docs/phases/phase1/report.md`](phases/phase1/report.md).
 
 Erledigt:
 
@@ -78,11 +78,11 @@ Erledigt:
 - [x] Brute-Force-Orakel (bewusst langsam, dient als Spezifikation) — `0140c82`
 - [x] **Korrektheits-Gate:** DP gegen Orakel für alle $N \le 200$, beide schnellen Pfade gegeneinander für alle $N \le 500$ — `054f968`
 - [x] Tabelle aus `theory/01-background.md` §4 exakt reproduziert für $n = 1..10$ — `674058b`
-- [x] Vollständigkeit numerisch bestätigt (Details: `docs/phase1.md` Abschnitt „Completeness") — `674058b`
+- [x] Vollständigkeit numerisch bestätigt (Details: `docs/phases/phase1/summary.md` Abschnitt „Completeness") — `674058b`
 - [x] Lauf bis $N = 10^6$ (exakt, nicht Log-Domain — der zurückgestellte Pfad wird nicht gebraucht) — `9ce15e9`
 - [x] `phase1_data.csv` — `9ce15e9`
 - [x] `phase1_plot.png` → geliefert als `phase1_growth.png` und `phase1_fluctuation.png` — `9ce15e9`
-- [x] `phase1_report.md` — `8601426`
+- [x] `docs/phases/phase1/report.md` — `8601426`
 - [x] Deskriptive Statistik: Monotonie, lokale Fluktuation — `9ce15e9`
 - [x] Extremale $N$ (offenes Problem 2) — `9ce15e9`
 - [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (49.6
@@ -101,7 +101,7 @@ Erledigt:
 - [x] `countReps_le_uncapped` **in Lean bewiesen**, ohne `sorry` — `53f8030`, `3a1b8c1`.
       Bewiesen ist die **längenindizierte** Ungleichung `countReps n N ≤ countRepsUncapped n N`
       bei festem $n$, **nicht** das All-Stellen-$R_c(N) \le R_u(N)$ (Trap 1 in `CLAUDE.md`,
-      Unterscheidung in `phase2_bounds.md` §7). Der Satz ist außerdem **nicht tragend**:
+      Unterscheidung in `docs/phases/phase2/report.md` §7). Der Satz ist außerdem **nicht tragend**:
       T1/T2 beweisen die obere Schranke direkt und ohne CKL-Zitat, die Ungleichung stützt
       nur die qualitative CKL-Bemerkung.
 - [x] Vollständigkeit **in Lean bewiesen**, ohne `sorry` (`exists_numeral_of_le`, gieriger Abstieg) — `53f8030`, `613da4f`
@@ -110,18 +110,18 @@ Erledigt:
       (asymptotisch), Koeffizient $1/(4\log\varphi)$ — `9d282c1`
 - [x] Untere Schranke: konstruktiver Beweis T3 (Zwei-Block-Konstruktion L1), Koeffizient
       $1/(8\log\varphi)$ für $N \ge 10000$, mit $(C, N_0) = (2, 10000)$ — `9d282c1`
-- [x] `phase2_bounds.md` mit T1, T2, T3, C4 und expliziten Fehlertermen — `9d282c1`, `4f93517`, `48cb082`
+- [x] `docs/phases/phase2/report.md` mit T1, T2, T3, C4 und expliziten Fehlertermen — `9d282c1`, `4f93517`, `48cb082`
 - [x] Zertifizierte numerische Konfrontation (Intervallarithmetik, Gate 1e-12) an den
       37 Stichprobenwerten aus `data/phase1_data.csv` — `2a5ee43`, `9ac2198`, `199d7dd`
 - [x] Zusammenführung: C4 liefert — **falls** $C_c$ überhaupt existiert — $C' \in [4,8]$;
       C4 selbst behauptet die Existenz nicht — `9d282c1`
-- [x] Zusammenfassung `docs/phase2.md`, Ledger-Einträge `sandwich-bounds`,
+- [x] Zusammenfassung `docs/phases/phase2/summary.md`, Ledger-Einträge `sandwich-bounds`,
       `chernoff-effective-verified`, `product-residual-sampled` — `c4743bc`
 - [x] **Sandwich geschlossen** (Route L2b): Flachheitslemma F — der Block $[1,a]$ ist auf
       seinem mittleren Band flach, $B(a,m) \ge \exp(\lambda a^2/2 - O(a))$ gleichmäßig in
       $m$ — und daraus T5: $\log R_c(N) \ge t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$
       für $N \ge 10000$, $t = \log N$. Route L2a schließt **nicht**; wo sie stehenbleibt,
-      ist in `phase2_bounds.md` §8.6 festgehalten — `43397a2`
+      ist in `docs/phases/phase2/report.md` §8.6 festgehalten — `43397a2`
 - [x] **Existenz von $C_c$ bewiesen** — Forschungsfrage (A) damit **beantwortet**: C5 zeigt,
       dass $\lim_N \log R_c(N)/(\log N)^2$ existiert und $= 1/(4\log\varphi)$ ist. Damit
       gilt $C' = 4$ **unbedingt**, nicht mehr unter Existenzvorbehalt. C4 bleibt als
@@ -147,7 +147,7 @@ Erledigt:
       verschiedene Fragen.)
 
 Hinweis: Die Konstante ist durch Phase 0.5 bereits *gemessen* und seit Phase 2 auch
-*bewiesen* (C5, `phase2_bounds.md` §8). Phase 3 muss sie nun *erklären*, nicht
+*bewiesen* (C5, `docs/phases/phase2/report.md` §8). Phase 3 muss sie nun *erklären*, nicht
 vorhersagen und nicht etablieren.
 
 ### Phase 4 — Numerische Konfrontation ⬜ offen
@@ -282,7 +282,7 @@ Kandidaten: $1/(2\log\varphi)=1.039$, $1/(4\log\varphi)=0.520$, $1/(8\log\varphi
 ### Deliverables
 
 `scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png`,
-`docs/phases/phase0_5_gate.md`.
+`docs/phases/phase0_5/report.md`.
 
 ### Konsequenz
 
@@ -292,7 +292,7 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
 
 ## Phase 1 — Exakte Berechnung und Sanity Checks
 
-> **✅ Abgeschlossen.** Ergebnis: [`docs/phase1.md`](phase1.md). Exakte Werte für
+> **✅ Abgeschlossen.** Ergebnis: [`docs/phases/phase1/summary.md`](phases/phase1/summary.md). Exakte Werte für
 > alle `N ≤ 10^6`, abgesichert durch einen punktweisen Abgleich zwischen zwei
 > unabhängigen Algorithmen über den gesamten Bereich. Zentraler Befund:
 > `R_c(N)` fluktuiert stark (knapp die Hälfte der Schritte fällt), was `S_c(N)` als
@@ -355,7 +355,7 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    - Unten: Residuen nach Abzug des $(\log N)^2$-Terms (oszillatorische Struktur visualisieren)  
    - Kennzeichnung verdächtiger Stellen (lokale Minima etc.)
 
-4. **Report:** `phase1_report.md` (2–3 Seiten)  
+4. **Report:** `docs/phases/phase1/report.md` (2–3 Seiten)  
    - Zusammenfassung der Dataquality  
    - Beobachtete Muster mit Hypothesen  
    - Offene numerische Rätsel  
@@ -391,7 +391,7 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    Dies ist sofort zitierbar und benötigt keinen Beweis.
 
    **Korrektur (Phase 2):** Diese Route wurde nicht genommen. T1 und T2 in
-   [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) beweisen den schärferen
+   [`docs/phases/phase2/report.md`](phases/phase2/report.md) beweisen den schärferen
    Koeffizienten $1/(4\log\varphi)$ direkt aus der erzeugenden Funktion, ohne CKL und ohne
    $R_c \le R_u$. Die Identifikation unseres $R_u$ mit dem $p_F$ von Coons–Kristensen–Laursen
    ist in `theory/00-definitions.md` weiterhin als *pending verification* geführt.
@@ -411,7 +411,7 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    $R_u(N-M)$ Möglichkeiten" — läuft in die falsche Richtung und steht so nicht zur Verfügung.
    Das Kappen entfernt Darstellungen, liefert also $R_c \le R_u$; $R_u$ kann $R_c$ daher nicht
    von unten beschränken. Die Konstruktion, die trägt, ist die Zwei-Block-Konstruktion L1 in
-   [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) §4: ein Fixup-Block $[1,a]$ mit
+   [`docs/phases/phase2/report.md`](phases/phase2/report.md) §4: ein Fixup-Block $[1,a]$ mit
    $F_a F_{a+1} \ge N$ plus eine rechteckige freie Familie auf den übrigen Stellen.
    
    Feinere Analyse: Nutze spezielle Struktur von $\mathcal{N}$ (geometrisches Wachstum der Fibonacci), um zu zeigen:
@@ -422,11 +422,11 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    **Korrektur (Phase 2):** Erreicht wurde $1/(8\log\varphi)$, nicht $1/(4\log\varphi)$ — L1
    verbraucht die kappenbindenden Stellen im Fixup-Block. Der Faktor 2 ist für L1 in der
    angegebenen Form strukturell; ihn zurückzugewinnen erfordert eine andere Blockaufteilung
-   (L2a / L2b, `phase2_bounds.md` §4.4), nicht schärfere Abschätzungen.
+   (L2a / L2b, `docs/phases/phase2/report.md` §4.4), nicht schärfere Abschätzungen.
 
    **Nachtrag (Phase 2, Stretch):** $1/(4\log\varphi)$ *ist* von unten erreichbar. Route L2b
    liefert es — nicht durch eine andere Reservierung, sondern indem der Block gezählt statt
-   reserviert wird (Lemma F, T5 in `phase2_bounds.md` §8). Die hier skizzierte Aussage
+   reserviert wird (Lemma F, T5 in `docs/phases/phase2/report.md` §8). Die hier skizzierte Aussage
    $\log R_c(N) \ge \frac{(\log N)^2}{4\log\varphi}(1-o(1))$ ist damit bewiesen; der Weg
    dorthin führte aber nicht über „Standard-Bijektionen“, sondern über eine gleichmäßige
    untere Schranke für die Blockzählfunktion.
@@ -442,7 +442,7 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
    beschränkt nur Limes inferior und Limes superior und sagt über die Existenz nichts aus.
 
    **Nachtrag (Phase 2, Stretch):** Der Existenzvorbehalt ist entfallen. C5
-   (`phase2_bounds.md` §8) beweist, dass der Grenzwert existiert; damit gilt
+   (`docs/phases/phase2/report.md` §8) beweist, dass der Grenzwert existiert; damit gilt
    $C' = 4$ **unbedingt**. Die Unterscheidung bleibt trotzdem wichtig und wird nicht
    eingeebnet: C4 beschränkt Limes inferior und Limes superior, C5 behauptet die Existenz
    des Grenzwerts — zwei verschiedene Aussagen, und genau die zweite musste T5 zusätzlich
@@ -469,7 +469,7 @@ Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusage
 1. **Satz: Sandwich-Bounds**  
    Präzise Formulierung, Beweis von Ober- und Untergrenzen, mit Fehlerterme.
 
-2. **Technical Note:** `phase2_bounds.md` (4–5 Seiten)  
+2. **Technical Note:** `docs/phases/phase2/report.md` (4–5 Seiten)  
    - Theorem + Beweis Obere Schranke (trivial, aber explizit).  
    - Theorem + Beweis Untere Schranke (Kern der Phase).  
    - Visualisierung: Numerische Daten aus Phase 1 gegen beide Grenzen plotten.  
@@ -587,10 +587,10 @@ $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k}
    > Da es sich um eine *obere* Schranke handelt, schließt dies $1/(2\log\varphi)$ unmittelbar aus;
    > der Ausschluss von $1/(8\log\varphi)$ setzt zusätzlich voraus, dass die Sattelpunkt-Korrektur
    > von niedrigerer Ordnung ist — erwartet, aber in Phase 0.5 nicht bewiesen.
-   > Siehe `docs/phases/phase0_5_gate.md`.
+   > Siehe `docs/phases/phase0_5/report.md`.
    >
    > **Nachtrag (Phase 2):** Die eingerahmte Aussage ist **kein** Konjektur-Statement mehr —
-   > sie ist als C5 bewiesen (`phase2_bounds.md` §8, Ledger `leading-constant`, Status
+   > sie ist als C5 bewiesen (`docs/phases/phase2/report.md` §8, Ledger `leading-constant`, Status
    > `theorem`), und zwar elementar und ohne Sattelpunkt. Für Phase 3 ändert das die
    > Aufgabe, nicht ihren Wert: die Konstante ist nun zu *erklären*, nicht mehr zu
    > *etablieren*. Die numerische Stütze oben bleibt, was sie war — eine Messung, kein
@@ -802,7 +802,7 @@ $$\log R_c(N) = \frac{(\log N)^2}{4\log\varphi} + O\left(\frac{\log N \log\log N
 zwischen zwei Alternativen für dasselbe Ziel — sie beantworten verschiedene
 Fragen. Route A bleibt die primäre Route für das rigorose
 Asymptotik-Theorem über $\log R_c(N)$. Der Fluktuations-Befund aus Phase 1
-(`docs/phases/phase1_report.md`) zeigt aber, dass $R_c(N)$ selbst über
+(`docs/phases/phase1/report.md`) zeigt aber, dass $R_c(N)$ selbst über
 $N \le 10^6$ so unregelmäßig ist (49.6 {fig:decreasing-fraction}% fallende
 Schritte) {claim:rc-not-monotone},
 dass ein direkter

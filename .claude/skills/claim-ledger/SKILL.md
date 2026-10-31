@@ -72,7 +72,7 @@ citation; detect negation around the marker.
 The distinction this enforces is the epistemic content of the project, and the
 roadmap's original division of labour — Phase 3 produces the heuristic, Phase 5
 produces the theorem — no longer describes where things stand. C5 of
-`docs/phases/phase2_bounds.md` §8 proved the leading constant in **Phase 2**,
+`docs/phases/phase2/report.md` §8 proved the leading constant in **Phase 2**,
 elementarily and without a saddle point, so `leading-constant` is a `theorem`
 already. What Phase 3 still owes is an *explanation* of that constant from the
 saddle point, and what Phase 5 still owes is the secondary term
@@ -129,7 +129,7 @@ earned by measurement rather than by an incident, and binds only on a change
    cwd and it outranks `PYTHONPATH`. Launched from the repository root, the M1
    mutant reports *5 passed* — survived — with `PYTHONPATH` pointing at the tree
    the whole time. Procedure in
-   `docs/superpowers/specs/2026-08-25-claim-promotion-gate-design.md` §5.1, the
+   `docs/design/specs/2026-08-25-claim-promotion-gate-design.md` §5.1, the
    per-claim mutations in §4.
 
    This one comes from measurement, not from an incident. Certified T1 replaced

@@ -4,7 +4,7 @@
 **Status:** design spec, awaiting review
 **Scope:** the `claim-ledger` skill's promotion checklist, `scripts/mutate.py`, and a statement-binding check over `theory/claims.yaml`
 **Evidence base:** three measurement passes at HEAD `df22d2c` — Python mutants run against the whole suite in scratch copies produced by `git archive HEAD | tar -x`, one Lean mutant in a `cp -a` copy of `lean/`, the claim → evidence → guard map over the promoted ledger, and the existing machinery measured against a promotion. The repository was not modified in any of them (`git status --porcelain` empty before and after)
-**Supersedes:** `docs/superpowers/specs/2026-08-24-mutation-registry-design.md` — 1681 lines, never merged (§8). Its branch `plan-b-registry` has since been deleted, so the file is reachable only as `0a95cef` in the local reflog and **no reader of this repository can check the citations in §8**
+**Supersedes:** `docs/design/specs/2026-08-24-mutation-registry-design.md` — 1681 lines, never merged (§8). Its branch `plan-b-registry` has since been deleted, so the file is reachable only as `0a95cef` in the local reflog and **no reader of this repository can check the citations in §8**
 
 ---
 
@@ -145,7 +145,7 @@ third state to invent: nothing to mutate means nothing to observe.
 `data/phase0_5_gate.csv` — the only two `phase0_5` hits under `tests/` are
 strings inside synthetic fixtures in `tests/test_check_claims.py`. There is no
 `tests/test_run_phase0_gate.py`;
-`docs/phases/phase0_5_gate.md` is not in `PHASES` and carries zero `{fig:}` tags;
+`docs/phases/phase0_5/report.md` is not in `PHASES` and carries zero `{fig:}` tags;
 there is no `data/phase0_5_figures.json`. Editing the document's headline
 `0.518710` to `0.618710` gives **291 passed**, `check_claims` exit **0**.
 
@@ -278,9 +278,9 @@ omission. `check_claims`' SHA-256 check catches every silent artifact edit below
 |---|---|---|---|
 | `sum-of-squares` | `theory/03-invariants.md`; `tests/test_fib.py::test_sum_of_squares_identity` | that node, plus 31 collateral nodes | `capfib/fib.py` seed `F = [1, 1]` → `[1, 2]`: *32 failed, 259 passed* (**held in reserve**, §4.3) |
 | `completeness-no-gaps` | overlapping-interval induction in `theory/01-background.md` §3; `exists_numeral_of_le` in `lean/NonLinearNumberSystems/Completeness.lean` | **—** — no pytest test touches `lean/` | Lean only; see §6 |
-| `leading-constant` (C5) | `docs/phases/phase2_bounds.md` §8 (Lemma F, T5, C5); the Lean declaration | T5: `test_t5_carries_its_block_factor_at_large_n[10000\|100000\|1000000]`, `test_t5_never_exceeds_the_exact_value[1000\|10000\|100000\|1000000]`. **T2: —** | M3, M5 |
-| `saddle-tightness` | T1, T2 and T5 in `docs/phases/phase2_bounds.md` | T1: `test_certified_bound_equals_an_independently_computed_transform[100\|1000\|10000\|100000\|1000000]`. T5 as above. **T2: —** | M1, M3 |
-| `sandwich-bounds` (C4) | `docs/phases/phase2_bounds.md` (T1, T2, T3, C4); the Lean declaration | T3: `test_t3_log_count_is_the_product_over_the_counting_block[1000\|10000\|100000\|1000000]`, `test_t3_never_exceeds_the_exact_value[…]`. T1 as above. **T2: —** | M2, M5 |
+| `leading-constant` (C5) | `docs/phases/phase2/report.md` §8 (Lemma F, T5, C5); the Lean declaration | T5: `test_t5_carries_its_block_factor_at_large_n[10000\|100000\|1000000]`, `test_t5_never_exceeds_the_exact_value[1000\|10000\|100000\|1000000]`. **T2: —** | M3, M5 |
+| `saddle-tightness` | T1, T2 and T5 in `docs/phases/phase2/report.md` | T1: `test_certified_bound_equals_an_independently_computed_transform[100\|1000\|10000\|100000\|1000000]`. T5 as above. **T2: —** | M1, M3 |
+| `sandwich-bounds` (C4) | `docs/phases/phase2/report.md` (T1, T2, T3, C4); the Lean declaration | T3: `test_t3_log_count_is_the_product_over_the_counting_block[1000\|10000\|100000\|1000000]`, `test_t3_never_exceeds_the_exact_value[…]`. T1 as above. **T2: —** | M2, M5 |
 | `gf-global-checksum` | `theory/03-invariants.md`; `tests/test_checksum.py` | `test_checksum_detects_a_changed_total` | `capfib/gf.py` `return total == product` → `return True`: *1 failed, 290 passed*. `test_checksum_holds_for_small_n` stays green — a vacuous checksum satisfies it (**held in reserve**) |
 | `sc-monotone` | `theory/03-invariants.md`; `tests/test_stats.py::test_summatory_is_exact_ints_and_monotone` | that node and `::test_summatory_last_is_total` | `capfib/stats.py`, every 100th increment in `summatory` negated: *2 failed, 289 passed* (**held in reserve**) |
 
@@ -350,8 +350,8 @@ the file's HEAD blob.
 | M3 | `capfib/lower.py`, `t5_lower_bound` returns `t3_lower_bound(n).log_count + 0.01` for `n >= 1000` | `::test_t5_carries_its_block_factor_at_large_n[10000\|100000\|1000000]` — *3 failed, 288 passed*. **Three nodes, not four**: the test is parametrised at 10^4 and above (`tests/test_phase2_bounds.py:282`), so no `[1000]` node is collected — do not look for one | `assert 17.78424156135753 == 39.80228549800129 ± 4.0e-11` | `leading-constant` (T5 is the named step of C5), `saddle-tightness` |
 | M4 | `capfib/interval.py`, the break block of `log_F_c_interval` reordered so the term for the break index K is lost while every earlier term is still summed | `tests/test_interval.py::test_enclosure_contains_an_independently_summed_reference` — *1 failed, 290 passed* | `assert mpf('55.161412470285244954111573655…') >= mpf('55.161412470285244954111573658…')` | `chernoff-effective-verified`, `product-residual-sampled` — both evidence fields name the 1e-12 agreement gate as what makes the number trustworthy, and the corruption is fifteen orders below it |
 | M5 | remove `data/phase1_data.csv` (tracked at HEAD) | 13 nodes in `tests/test_phase2_bounds.py` — *13 failed, 278 passed*. **Thirteen, not twelve**: `test_the_tracked_oracle_matches_its_manifest_provenance` is the thirteenth. All call-phase failures; nothing skipped | `data/phase1_data.csv absent -- it is tracked, so this means it was deleted, not that it was never generated.` | `chernoff-effective-verified` (its statement names the file), `sandwich-bounds` and `leading-constant` (the confrontation of each bound against the exact ladder) |
-| M7 | `data/phase2_figures.json`, `chernoff-certified-nmax` `81.9137461608127` → `81.9237461608127`. The key's `precision` is 4, so the moved digit must be at or above the fourth decimal or it renders identically and kills nothing | `tests/test_figure_tags.py::test_every_tag_resolves_and_matches[phase2]` — *1 failed, 290 passed* | `docs/phase2.md: {fig:chernoff-certified-nmax} quoted as '81.9137' but the figures file says '81.9237'` | `chernoff-effective-verified` (the perturbed key is quoted in the very paragraph carrying `{claim:chernoff-effective-verified}`), `product-residual-sampled` (same node, its paragraph quotes six residual keys) |
-| M9 | `data/phase1_figures.json`, `decreasing-fraction` `49.5548` → `49.6548`. `precision` is 1, so `49.6 → 49.7` is the smallest workable move | `tests/test_figure_tags.py::test_every_tag_resolves_and_matches[phase1]` — *1 failed, 290 passed* | `docs/phase1.md: {fig:decreasing-fraction} quoted as '49.6' but the figures file says '49.7'` | `rc-not-monotone`, `flat-steps-end-early`, `completeness-empirical` — without it the set touches no Phase 1 claim at all, and six of the nine `verified-numeric` claims are Phase 1's |
+| M7 | `data/phase2_figures.json`, `chernoff-certified-nmax` `81.9137461608127` → `81.9237461608127`. The key's `precision` is 4, so the moved digit must be at or above the fourth decimal or it renders identically and kills nothing | `tests/test_figure_tags.py::test_every_tag_resolves_and_matches[phase2]` — *1 failed, 290 passed* | `docs/phases/phase2/summary.md: {fig:chernoff-certified-nmax} quoted as '81.9137' but the figures file says '81.9237'` | `chernoff-effective-verified` (the perturbed key is quoted in the very paragraph carrying `{claim:chernoff-effective-verified}`), `product-residual-sampled` (same node, its paragraph quotes six residual keys) |
+| M9 | `data/phase1_figures.json`, `decreasing-fraction` `49.5548` → `49.6548`. `precision` is 1, so `49.6 → 49.7` is the smallest workable move | `tests/test_figure_tags.py::test_every_tag_resolves_and_matches[phase1]` — *1 failed, 290 passed* | `docs/phases/phase1/summary.md: {fig:decreasing-fraction} quoted as '49.6' but the figures file says '49.7'` | `rc-not-monotone`, `flat-steps-end-early`, `completeness-empirical` — without it the set touches no Phase 1 claim at all, and six of the nine `verified-numeric` claims are Phase 1's |
 | M10 | remove `data/phase1_summary.json` (tracked at HEAD) | `tests/test_phase1_tables.py::test_place_jump_table_matches_artifact`, `::test_block_extrema_table_matches_artifact` — *2 failed, 289 passed* | `data/phase1_summary.json absent -- it is tracked, so this means it was deleted.` | `place-jump-decay`, `block-extremal-n` — the only mutation that reaches either |
 
 The four code anchors verbatim, since a mutation that does not apply cleanly is
@@ -378,7 +378,7 @@ not a mutation:
 |---|---|
 | Remove `data/phase2_figures.json` | *6 failed, 285 passed*, and it reaches exactly the two claims M7 reaches, which is subsumption, not coverage: the extra five kills are the negative-control tests of the same guard. A deleted tracked file is also the failure mode git already makes loud |
 | Missing-document `assert` → `pytest.skip` in `tests/test_figure_tags.py` | **As a single edit it survives**: *291 passed*, exit 0. A rule that requires the guard to be observed failing cannot use a mutation that does not fail. Paired with a document removal it kills `test_every_real_document_carries_tags[phase2]` — but that is the *deletion* being caught, not the skip, and it covers no claim M7 misses. The skip-reads-as-green failure mode is real and historically observed on this project; `tests/conftest.py` and `tests/test_oracle_gate_guard.py` exist for it, and it belongs to the session harness, not to a per-claim promotion gate |
-| Strip every `{fig:}` tag from a registered document | Protects documents, not any promoted claim, so it is out of this gate's scope. It is also the one candidate with no small anchor: the zero-tag check fires only when a registered document has *zero* tags, and the cheapest covering span measured is 84 lines of `docs/phases/phase1_report.md`. Whether to pay an 84-line anchor or a multi-operation schema is left open here because the mutation is out of scope, not because the question is settled |
+| Strip every `{fig:}` tag from a registered document | Protects documents, not any promoted claim, so it is out of this gate's scope. It is also the one candidate with no small anchor: the zero-tag check fires only when a registered document has *zero* tags, and the cheapest covering span measured is 84 lines of `docs/phases/phase1/report.md`. Whether to pay an 84-line anchor or a multi-operation schema is left open here because the mutation is out of scope, not because the question is settled |
 
 ### 4.3 Held in reserve
 
@@ -601,7 +601,7 @@ Unresolved, and left unresolved rather than decided by assertion:
 
 ## 8. Supersession
 
-This replaces `docs/superpowers/specs/2026-08-24-mutation-registry-design.md`,
+This replaces `docs/design/specs/2026-08-24-mutation-registry-design.md`,
 written on branch `plan-b-registry` and never merged. It reached 1681 lines: a
 registration schema, a coverage-is-equality rule, a marker checked in both
 directions at function granularity, a workflow contract with parse and

@@ -357,12 +357,12 @@ def test_alles_is_recognized_as_universal(tmp_path):
 
 
 def test_docs_phase1_is_scanned_via_search_files(tmp_path):
-    # docs/phase1.md is reachable only via SEARCH_FILES, not SEARCH_DIRS
+    # docs/phases/phase1/summary.md is reachable only via SEARCH_FILES, not SEARCH_DIRS
     # (theory/, docs/phases/, paper/). A fixture placed only under theory/
-    # would pass even if "docs/phase1.md" were silently dropped from
+    # would pass even if "docs/phases/phase1/summary.md" were silently dropped from
     # SEARCH_FILES; this fixture lives at that exact root-level path, so
     # removing the entry would make this test fail.
-    _write(tmp_path, VALID, {"docs/phase1.md": "See {claim:missing}."})
+    _write(tmp_path, VALID, {"docs/phases/phase1/summary.md": "See {claim:missing}."})
     problems = validate(tmp_path)
     assert any("missing" in p for p in problems)
 
@@ -426,7 +426,7 @@ def test_jeden_is_recognized_as_universal(tmp_path):
 
 def test_each_is_recognized_as_universal(tmp_path):
     # "each" is a synonym for "every" that slipped through unnoticed --
-    # docs/phases/phase1_report.md said "R_c jumps at each Fibonacci place",
+    # docs/phases/phase1/report.md said "R_c jumps at each Fibonacci place",
     # an overclaim the guard could not see because "each" was not in
     # UNIVERSAL_QUANTIFIER_WORDS.
     docs = {
@@ -467,7 +467,7 @@ def test_verified_numeric_requires_all_artifacts_recorded(tmp_path):
 def test_theorem_citing_docs_phases_path_is_accepted(tmp_path):
     # `docs/phases/` is an allowed proof root alongside theory/, paper/ and
     # lean/, because a Phase 2 `theorem` claim's proof lives in
-    # docs/phases/phase2_bounds.md and nowhere else.
+    # docs/phases/phase2/report.md and nowhere else.
     #
     # This fixture's evidence names *only* a docs/phases path. The real
     # claims do not: `leading-constant` and `sandwich-bounds` each also name
@@ -486,10 +486,10 @@ def test_theorem_citing_docs_phases_path_is_accepted(tmp_path):
     # the moment the docs/phases root is removed.
     claims = (
         '- id: iota\n  statement: "I."\n  status: theorem\n'
-        '  evidence: "Proved in docs/phases/phase2_bounds.md section 8 (T5)."\n'
+        '  evidence: "Proved in docs/phases/phase2/report.md section 8 (T5)."\n'
         '  source: "s"\n'
     )
-    docs = {"docs/phases/phase2_bounds.md": "## T5\n\nA short real proof.\n"}
+    docs = {"docs/phases/phase2/report.md": "## T5\n\nA short real proof.\n"}
     _write(tmp_path, claims, docs)
     assert validate(tmp_path) == []
 
@@ -509,7 +509,7 @@ def test_theorem_citing_nonexistent_docs_phases_path_is_rejected(tmp_path):
 
 def test_no_search_file_is_also_covered_by_a_search_dir():
     # A path listed in both would be scanned twice and every problem in it
-    # reported twice -- which is what happened to docs/phases/phase2_bounds.md.
+    # reported twice -- which is what happened to docs/phases/phase2/report.md.
     from check_claims import SEARCH_DIRS, SEARCH_FILES
 
     for relative in SEARCH_FILES:

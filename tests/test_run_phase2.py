@@ -248,7 +248,7 @@ def test_a_late_figure_failure_still_writes_nothing(tmp_path, monkeypatch, capsy
     bounds CSV, the residual CSV, the figures JSON and their three manifest
     entries were already on disk -- so a failure there, which on a clean
     checkout was the *expected* outcome because `figures/` did not exist, left
-    a recorded, half-published generation that `docs/phase2.md` calls the
+    a recorded, half-published generation that `docs/phases/phase2/summary.md` calls the
     reproduction recipe.
 
     `Figure.savefig` is made to raise, standing in for any rendering failure

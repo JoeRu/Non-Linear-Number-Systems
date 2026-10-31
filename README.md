@@ -14,8 +14,8 @@ Phase 2 settles the leading constant: the limit of `log R_c(N)/(log N)^2` exists
 limit and nothing more — it pins no individual value of `R_c(N)`, and the secondary term
 is still open. The proof is a sandwich: a Chernoff upper bound against an explicit
 lower-bound construction, written out in
-[`docs/phases/phase2_bounds.md`](docs/phases/phase2_bounds.md) and summarised in
-[`docs/phase2.md`](docs/phase2.md), which is the place to start.
+[`docs/phases/phase2/report.md`](docs/phases/phase2/report.md) and summarised in
+[`docs/phases/phase2/summary.md`](docs/phases/phase2/summary.md), which is the place to start.
 
 The asymptotics are paper proofs. What is machine-checked is the elementary combinatorial
 layer they rest on — the place recurrence, `sum_{k<=n} F_k^2 = F_n F_{n+1}`, completeness,
@@ -27,10 +27,13 @@ records which is which, and `scripts/check_claims.py` enforces it.
 | Path | Contents |
 |---|---|
 | `capfib/` | Numerics package: enumeration, DP, generating function, saddle point |
+| `scripts/` | Phase runners, the claim validator, CI helpers |
 | `tests/` | Correctness gate — brute-force oracle and cross-checks |
 | `theory/` | Definitions, background analysis, proof sketches, the claim ledger |
 | `docs/roadmap.md` | The phase plan |
-| `docs/phases/` | Phase deliverables |
+| `docs/phases/<phase>/` | Phase deliverables: `summary.md` and `report.md` |
+| `docs/risks.md` | Decisions taken under unresolved review disagreement |
+| `docs/design/`, `docs/archive/` | Design specs; executed implementation plans |
 | `paper/` | LaTeX writeup and bibliography |
 | `lean/` | Formal proofs of the elementary results |
 | `data/`, `figures/` | Generated output; regenerate, never hand-edit |

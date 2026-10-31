@@ -12,8 +12,8 @@ counting the reserved block instead of reserving it. §§1–7 are left as they 
 T5 is built on T3's machinery, and the factor of two is easier to follow with both halves
 in view.
 
-This note contains the statements and proofs. `docs/phase2.md` is the summary;
-`docs/superpowers/specs/2026-08-21-phase2-elementary-bounds-design.md` is the design
+This note contains the statements and proofs. `docs/phases/phase2/summary.md` is the summary;
+`docs/design/specs/2026-08-21-phase2-elementary-bounds-design.md` is the design
 spec these proofs are written from.
 
 ---

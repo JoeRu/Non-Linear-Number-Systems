@@ -170,7 +170,7 @@ def flatness_slack_slope() -> float:
 
     The slack is `lambda a^2/2 - log(exact band minimum of B(a, .))`, the amount
     by which the true band minimum falls below the quadratic term. Lemma F proves
-    a slope of at most 3.5057 (docs/phases/phase2_bounds.md 8.2); this measures
+    a slope of at most 3.5057 (docs/phases/phase2/report.md 8.2); this measures
     what the slope actually is over FLATNESS_SLACK_A, so the note's sharpness
     remark quotes a generated number rather than an eyeballed one.
 

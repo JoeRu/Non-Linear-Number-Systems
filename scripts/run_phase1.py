@@ -325,7 +325,7 @@ def main() -> int:
     #
     # The other half of that decision, learned the hard way: because they are
     # untagged, prose must not quote them as *specific values* either. Three
-    # regenerations on one branch left `docs/phases/phase1_report.md` saying
+    # regenerations on one branch left `docs/phases/phase1/report.md` saying
     # "8.7 s / 286.9 s / 273 MB" of a run that had recorded 8.9 / 286.1 / 274
     # -- risk R-002's exact failure mode, inside the branch that closed it.
     # The report now states them rounded ("roughly nine seconds", "under
@@ -336,7 +336,7 @@ def main() -> int:
     # full as tables/lists read straight from data/phase1_summary.json;
     # `tests/test_phase1_tables.py` checks every cell of both tables against
     # this file directly (anchored on the `<!-- table:... -->` markers in
-    # `docs/phases/phase1_report.md`), so they do not need a `{fig:key}` per
+    # `docs/phases/phase1/report.md`), so they do not need a `{fig:key}` per
     # cell -- that would be on the order of a hundred more keys. Only the
     # specific values pulled out of them into prose as headline figures (a
     # handful of individual place-jump ratios, the block count, the flat-step

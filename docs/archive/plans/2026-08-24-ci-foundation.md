@@ -8,7 +8,7 @@
 
 **Tech Stack:** GitHub Actions, Python 3.12, pytest, PyYAML, elan/lake for Lean 4 + Mathlib v4.14.0.
 
-**Spec:** `docs/superpowers/specs/2026-08-23-defect-prevention-infrastructure-design.md` at commit `d114e1b` — §3A, §4 (rule 5 amendment), §9.3, §9.4. Read §9.4 before starting: it states what this plan deliberately leaves unsatisfied.
+**Spec:** `docs/design/specs/2026-08-23-defect-prevention-infrastructure-design.md` at commit `d114e1b` — §3A, §4 (rule 5 amendment), §9.3, §9.4. Read §9.4 before starting: it states what this plan deliberately leaves unsatisfied.
 
 > **Superseded code blocks.** Tasks 1–4 below quote the code as first written.
 > Several blocks were corrected during review — the bypass-actor default, the
@@ -923,7 +923,7 @@ git commit -m "docs: record Plan A's delivery and what it leaves open in R-007"
 ```bash
 git push -u origin ci-workflow
 gh pr create --base main --title "Plan A: CI foundation" \
-  --body "Implements Plan A of docs/superpowers/specs/2026-08-23-defect-prevention-infrastructure-design.md.
+  --body "Implements Plan A of docs/design/specs/2026-08-23-defect-prevention-infrastructure-design.md.
 
 Ships: the workflows, the tracked required-check inventory and its verifier, and the CLAUDE.md rule 5 amendment.
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.11+, numpy, matplotlib, pytest. Exact Python integers throughout; no floating point in any counting path.
 
-**Spec:** `docs/superpowers/specs/2026-08-20-phase1-exact-computation-design.md`
+**Spec:** `docs/design/specs/2026-08-20-phase1-exact-computation-design.md`
 
 **Verification status:** Every Python module and test in Tasks 1-4 was extracted
 from this plan and executed before it was committed — 21 tests, all passing, in
@@ -36,7 +36,7 @@ its ties) was computed and checked, not estimated.
 | `scripts/run_phase1.py` | Orchestration: cross-check precondition, analyses, atomic artifact writes, manifest. |
 | `tests/test_stats.py` | Unit tests for every analysis function. |
 | `tests/test_checksum.py` | The checksum's blind spot and the cross-check that covers it. |
-| `docs/phases/phase1_report.md` | Prose deliverable. Hand-written. |
+| `docs/phases/phase1/report.md` | Prose deliverable. Hand-written. |
 
 **Reference values used throughout this plan** (all verified before writing it, on commit `5659e4a`):
 
@@ -975,7 +975,7 @@ dp and gf agree pointwise on all 10^6 coefficients."
 
 **Files:**
 - Modify: `theory/claims.yaml`
-- Create: `docs/phases/phase1_report.md`
+- Create: `docs/phases/phase1/report.md`
 
 - [ ] **Step 1: Add the claims**
 
@@ -1030,14 +1030,14 @@ Append to `theory/claims.yaml`, substituting the real numbers from `data/phase1_
 ```
 Expected: `claims.yaml OK`. If a `verified-numeric` claim fails, its evidence does not name a file in the manifest — fix the evidence, not the validator.
 
-- [ ] **Step 3: Write `docs/phases/phase1_report.md`**
+- [ ] **Step 3: Write `docs/phases/phase1/report.md`**
 
 Prose, written by hand. It must contain, with real numbers substituted from the summary JSON:
 
 > **Stale pre-execution draft.** The template below is the plan's original
 > proposal, including phrasing that treated the census as if it had chosen a
 > proof strategy outright. Review after execution found that overstates a
-> finite observation; the committed `docs/phases/phase1_report.md` instead
+> finite observation; the committed `docs/phases/phase1/report.md` instead
 > says the finding *constrains* the route without selecting it over the
 > alternative (see spec §6 and `docs/roadmap.md` Phase 5). The committed
 > report is authoritative — do not copy this wording from here.
@@ -1091,7 +1091,7 @@ theorem about all `N`, and none is recorded as one.
 
 ```bash
 .venv/bin/python scripts/check_claims.py && .venv/bin/pytest -q
-git add theory/claims.yaml docs/phases/phase1_report.md
+git add theory/claims.yaml docs/phases/phase1/report.md
 git commit -m "docs: Phase 1 claims and report
 
 The fluctuation result selects Phase 5 Route B. Recorded as a numerical
@@ -1166,7 +1166,7 @@ append their commits. The items to check off, with the commit that covers each:
 - Lauf bis `N = 10^6` (exakt, nicht Log-Domain — der zurückgestellte Pfad wird nicht gebraucht)
 - `phase1_data.csv`
 - `phase1_plot.png` → delivered as `phase1_growth.png` and `phase1_fluctuation.png`
-- `phase1_report.md`
+- `docs/phases/phase1/report.md`
 - Deskriptive Statistik: Monotonie, lokale Fluktuation
 - Extremale `N` (offenes Problem 2)
 
