@@ -1,990 +1,990 @@
-# Roadmap: Asymptotik von R_c(N)  
-## Kapazitätsbeschränkte Fibonacci-Partitionen
+# Roadmap: Asymptotics of R_c(N)  
+## Capacity-constrained Fibonacci partitions
 
-**Status:** Forschungsinitiative  
-**Aktuelle Version:** 2026-08-15  
-**Zielgruppe:** Originale mathematische Publikation
+**Status:** Research initiative  
+**Current version:** 2026-08-15  
+**Target audience:** Original mathematical publication
 
 ---
 
-## Kontextverankerung
+## Context
 
-Dieses Projekt untersucht die Asymptotik von $R_c(N)$ — der Anzahl der Darstellungen einer Zahl $N$ als
+This project studies the asymptotics of $R_c(N)$ — the number of representations of a number $N$ as
 $$\sum_{k \ge 1} d_k F_k = N$$
-mit Ziffernschranken $0 \le d_k \le F_k$ für alle Positionen $k$.
+with digit bounds $0 \le d_k \le F_k$ for all positions $k$.
 
-Das Problem sitzt exakt zwischen zwei klassischen, gelösten Fällen:
+The problem sits exactly between two classical, solved cases:
 
-1. **Binäre Partitionen** (Mahler 1940, de Bruijn 1948):  
-   Partitionen in Zweierpotenzen mit unbeschränkter Multiplizität. Asymptotik bekannt, inklusive oszillierende Korrektionen periodisch in $\log_2 N$.
+1. **Binary partitions** (Mahler 1940, de Bruijn 1948):  
+   Partitions into powers of two with unbounded multiplicity. Asymptotics known, including oscillating corrections periodic in $\log_2 N$.
 
-2. **Fibonacci-Partitionen ohne Cap** (Coons–Kristensen–Laursen 2023, arXiv:2312.07404):  
-   Partitionen in Fibonacci-Zahlen, nicht-distinkt, mit unbeschränkter Multiplizität. Zum ersten Mal wurde hier die volle Asymptotik
+2. **Fibonacci partitions without a cap** (Coons–Kristensen–Laursen 2023, arXiv:2312.07404):  
+   Partitions into Fibonacci numbers, non-distinct, with unbounded multiplicity. Here, for the first time, the full asymptotics
    $$\log p_F(n) \sim \frac{(\log n)^2}{2\log\varphi}$$
-   mit Oszillationen und Fehleranalyse rigoros etabliert. Die Methode verbindet Harday–Ramanujan-Ideen, Mahler–de Bruijn-Techniken und analytische Fortsetzung der Fibonacci-Dirichletreihe $\zeta_F(z)=\sum_{k\ge1}F_k^{-z}$ (nach Navas).
+   was rigorously established, with oscillations and error analysis. The method combines Hardy–Ramanujan ideas, Mahler–de Bruijn techniques and analytic continuation of the Fibonacci Dirichlet series $\zeta_F(z)=\sum_{k\ge1}F_k^{-z}$ (after Navas).
 
-**Die neue Herausforderung:** Die positionsabhängige Schranke $d_k \le F_k$ bricht beide Vereinfachungen. Sie ist weder so uniform wie bei Zweierpotenzen noch so simpel wie bei unbeschränkter Multiplizität. Dies macht das Problem zu einem idealen Testfall für verallgemeinerte asymptotische Methoden in der additiven Kombinatorik.
+**The new challenge:** The position-dependent bound $d_k \le F_k$ breaks both simplifications. It is neither as uniform as with powers of two nor as simple as with unbounded multiplicity. This makes the problem an ideal test case for generalised asymptotic methods in additive combinatorics.
 
 ---
 
-## Fortschritt
+## Progress
 
-**Offene Risiken aus ungelösten Review-Disputen:** [`docs/risks.md`](risks.md).
+**Open risks from unresolved review disputes:** [`docs/risks.md`](risks.md).
 
-Stand: 2026-08-21. Jede erledigte Teilaufgabe mit dem Commit, der sie abdeckt.
-Offene Punkte sind bewusst *nicht* abgehakt — auch dann nicht, wenn Infrastruktur
-dafür schon existiert.
+As of: 2026-08-21. Every completed subtask with the commit that covers it.
+Open items are deliberately *not* checked off — not even when infrastructure
+for them already exists.
 
-### Infrastruktur (querschnittlich, keine Roadmap-Phase)
+### Infrastructure (cross-cutting, not a roadmap phase)
 
-- [x] Benchmark-Gerüst entfernt, Repo auf das Forschungsprogramm umgebaut — `6095170`
-- [x] `capfib`-Paket: Platzwerte, Brute-Force-Orakel, zwei unabhängige schnelle Pfade — `425b503`, `0140c82`, `674058b`, `054f968`
-- [x] Log-Raum-Auswertung der erzeugenden Funktion, Legendre-Transformation, Regression — `3aeffa6`, `78ccc80`, `de735dc`
-- [x] Provenienz-Manifest für alle generierten Daten (Upsert statt Append) — `a688b99`, `9f3436d`
-- [x] Claim-Ledger `theory/claims.yaml` + Validator `scripts/check_claims.py` — `625ce82`, `1b4dca0`, `9f3436d`
-- [x] Projekt-Skills `rc-numerics`, `claim-ledger` — `0d377c1`, `7e83f82`
-- [x] Lean-Entwicklung kompiliert erstmals (elan, Mathlib v4.14.0, `lake-manifest.json` versioniert) — `543c8b0`
-- [x] Lean auf das *richtige* Objekt umgestellt: positionsabhängige Schranke statt konstanter Kapazität — `53f8030`
+- [x] Benchmark scaffolding removed, repo rebuilt around the research programme — `6095170`
+- [x] `capfib` package: place values, brute-force oracle, two independent fast paths — `425b503`, `0140c82`, `674058b`, `054f968`
+- [x] Log-space evaluation of the generating function, Legendre transform, regression — `3aeffa6`, `78ccc80`, `de735dc`
+- [x] Provenance manifest for all generated data (upsert instead of append) — `a688b99`, `9f3436d`
+- [x] Claim ledger `theory/claims.yaml` + validator `scripts/check_claims.py` — `625ce82`, `1b4dca0`, `9f3436d`
+- [x] Project skills `rc-numerics`, `claim-ledger` — `0d377c1`, `7e83f82`
+- [x] Lean development compiles for the first time (elan, Mathlib v4.14.0, `lake-manifest.json` under version control) — `543c8b0`
+- [x] Lean switched to the *right* object: position-dependent bound instead of constant capacity — `53f8030`
 
-### Phase 0 — Präzisierung ✅
+### Phase 0 — Specification ✅
 
-- [x] Fibonacci-Konvention festgelegt: $F_1=F_2=1$, $F_3=2$, $F_4=3$, $F_5=5$ — `425b503`, `860dd5b`
-- [x] $R_c$, $R_u$, $b$ präzise definiert; $R_c$ über **alle** Stellen $F_k \le N$ — `625ce82`
-- [x] Forschungsfragen (A), (B), (C) formuliert — `625ce82`
-      ((A) „Existiert $C_c$?“ ist seit Phase 2 **beantwortet**: ja, $C_c = 1/(4\log\varphi)$ — `43397a2`)
+- [x] Fibonacci convention fixed: $F_1=F_2=1$, $F_3=2$, $F_4=3$, $F_5=5$ — `425b503`, `860dd5b`
+- [x] $R_c$, $R_u$, $b$ precisely defined; $R_c$ over **all** places $F_k \le N$ — `625ce82`
+- [x] Research questions (A), (B), (C) formulated — `625ce82`
+      ((A) "Does $C_c$ exist?" has been **answered** since Phase 2: yes, $C_c = 1/(4\log\varphi)$ — `43397a2`)
 - [x] Deliverable `theory/00-definitions.md` — `625ce82`
-- [x] Bekannt / Konjektur / offen im Ledger getrennt — `625ce82`
+- [x] Known / conjecture / open separated in the ledger — `625ce82`
 
-### Phase 0.5 — Konstanten-Gate ✅
+### Phase 0.5 — Constant gate ✅
 
 - [x] `scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png` — `1d218a6`
-- [x] Messung: lokale Steigung **0.518710** bei $N = 10^{3200}$ gegen $1/(4\log\varphi) = 0.519522$ {claim:gate-local-slope} — `1d218a6`
-- [x] Ergebnis korrekt als *obere* Schranke formuliert; $1/(8\log\varphi)$ nur unter Sattelpunkt-Straffheit ausgeschlossen — `1b4dca0`, `3c97822`
-      (**Nachtrag Phase 2:** Der Vorbehalt ist entfallen — C5 schließt $1/(8\log\varphi)$
-      unbedingt aus, auf einem Weg, der diese Messung gar nicht benutzt; die Messung selbst
-      ist davon unberührt — `30da98a`)
+- [x] Measurement: local slope **0.518710** at $N = 10^{3200}$ against $1/(4\log\varphi) = 0.519522$ {claim:gate-local-slope} — `1d218a6`
+- [x] Result correctly stated as an *upper* bound; $1/(8\log\varphi)$ ruled out only under saddle-point tightness — `1b4dca0`, `3c97822`
+      (**Addendum Phase 2:** The caveat no longer applies — C5 rules out $1/(8\log\varphi)$
+      unconditionally, by a route that does not use this measurement at all; the measurement itself
+      is unaffected by this — `30da98a`)
 - [x] Deliverable `docs/phases/phase0_5/report.md` — `1d218a6`, `1b4dca0`, `3c97822`
-- [x] Roadmap an die revidierte Phasenfolge angepasst — `860dd5b`
+- [x] Roadmap adapted to the revised phase sequence — `860dd5b`
 
-### Phase 1 — Exakte Berechnung ✅
+### Phase 1 — Exact computation ✅
 
-**Ergebnis:** [`docs/phases/phase1/summary.md`](phases/phase1/summary.md) — Zusammenfassung; Details in
+**Result:** [`docs/phases/phase1/summary.md`](phases/phase1/summary.md) — summary; details in
 [`docs/phases/phase1/report.md`](phases/phase1/report.md).
 
-Erledigt:
+Done:
 
-- [x] DP-Rekurrenz (naive Ziffernschleife) — `674058b`
-- [x] Unabhängige Zweitimplementierung über die geschlossene Produktform — `054f968`
-- [x] Brute-Force-Orakel (bewusst langsam, dient als Spezifikation) — `0140c82`
-- [x] **Korrektheits-Gate:** DP gegen Orakel für alle $N \le 200$, beide schnellen Pfade gegeneinander für alle $N \le 500$ — `054f968`
-- [x] Tabelle aus `theory/01-background.md` §4 exakt reproduziert für $n = 1..10$ — `674058b`
-- [x] Vollständigkeit numerisch bestätigt (Details: `docs/phases/phase1/summary.md` Abschnitt „Completeness") — `674058b`
-- [x] Lauf bis $N = 10^6$ (exakt, nicht Log-Domain — der zurückgestellte Pfad wird nicht gebraucht) — `9ce15e9`
+- [x] DP recurrence (naive digit loop) — `674058b`
+- [x] Independent second implementation via the closed product form — `054f968`
+- [x] Brute-force oracle (deliberately slow, serves as the specification) — `0140c82`
+- [x] **Correctness gate:** DP against the oracle for all $N \le 200$, both fast paths against each other for all $N \le 500$ — `054f968`
+- [x] Table from `theory/01-background.md` §4 reproduced exactly for $n = 1..10$ — `674058b`
+- [x] Completeness confirmed numerically (details: `docs/phases/phase1/summary.md` section "Completeness") — `674058b`
+- [x] Run up to $N = 10^6$ (exact, not log-domain — the deferred path is not needed) — `9ce15e9`
 - [x] `phase1_data.csv` — `9ce15e9`
-- [x] `phase1_plot.png` → geliefert als `phase1_growth.png` und `phase1_fluctuation.png` — `9ce15e9`
+- [x] `phase1_plot.png` → delivered as `phase1_growth.png` and `phase1_fluctuation.png` — `9ce15e9`
 - [x] `docs/phases/phase1/report.md` — `8601426`
-- [x] Deskriptive Statistik: Monotonie, lokale Fluktuation — `9ce15e9`
-- [x] Extremale $N$ (offenes Problem 2) — `9ce15e9`
-- [x] **Fluktuations-Befund:** `R_c(N)` ist stark fluktuierend (49.6
-      {fig:decreasing-fraction}% fallende Schritte, aus
-      `data/phase1_summary.json`) {claim:rc-not-monotone}, damit
-      ist die in Phase 0 offengelassene Frage entschieden: der Befund
-      **schränkt Route B ein** (ist eine Randbedingung an sie, keine Auswahl
-      gegen Route A) — er macht es ratsam, einen Tauber-Angriff über die
-      summatorische Funktion `S_c(N)` zu führen statt direkt über `R_c(N)`;
-      Route A bleibt die primäre Route für den strengen Asymptotik-Beweis
-      (siehe Phase 5) — `8601426`
+- [x] Descriptive statistics: monotonicity, local fluctuation — `9ce15e9`
+- [x] Extremal $N$ (open problem 2) — `9ce15e9`
+- [x] **Fluctuation finding:** `R_c(N)` fluctuates strongly (49.6
+      {fig:decreasing-fraction}% decreasing steps, from
+      `data/phase1_summary.json`) {claim:rc-not-monotone}; this
+      settles the question left open in Phase 0: the finding
+      **constrains Route B** (it is a boundary condition on it, not a choice
+      against Route A) — it makes it advisable to conduct a Tauberian attack via the
+      summatory function `S_c(N)` rather than directly via `R_c(N)`;
+      Route A remains the primary route for the rigorous proof of the asymptotics
+      (see Phase 5) — `8601426`
 
-### Phase 2 — Elementare Schranken ✅ Sandwich geschlossen, Grenzwert bewiesen
+### Phase 2 — Elementary bounds ✅ Sandwich closed, limit proved
 
-- [x] $\sum_{k \le n} F_k^2 = F_n F_{n+1}$ **in Lean bewiesen** (nicht in Mathlib vorhanden) — `53f8030`
-- [x] `countReps_le_uncapped` **in Lean bewiesen**, ohne `sorry` — `53f8030`, `3a1b8c1`.
-      Bewiesen ist die **längenindizierte** Ungleichung `countReps n N ≤ countRepsUncapped n N`
-      bei festem $n$, **nicht** das All-Stellen-$R_c(N) \le R_u(N)$ (Trap 1 in `CLAUDE.md`,
-      Unterscheidung in `docs/phases/phase2/report.md` §7). Der Satz ist außerdem **nicht tragend**:
-      T1/T2 beweisen die obere Schranke direkt und ohne CKL-Zitat, die Ungleichung stützt
-      nur die qualitative CKL-Bemerkung.
-- [x] Vollständigkeit **in Lean bewiesen**, ohne `sorry` (`exists_numeral_of_le`, gieriger Abstieg) — `53f8030`, `613da4f`
-- [x] Zusatz: „1 > 1“ formal bewiesen — zwei verschiedene Numerale mit gleichem Wert (`exists_two_numerals_same_value`) — `53f8030`
-- [x] Obere Schranke **ohne** Coons–Kristensen–Laursen: T1 (effektive Chernoff-Schranke) und T2
-      (asymptotisch), Koeffizient $1/(4\log\varphi)$ — `9d282c1`
-- [x] Untere Schranke: konstruktiver Beweis T3 (Zwei-Block-Konstruktion L1), Koeffizient
-      $1/(8\log\varphi)$ für $N \ge 10000$, mit $(C, N_0) = (2, 10000)$ — `9d282c1`
-- [x] `docs/phases/phase2/report.md` mit T1, T2, T3, C4 und expliziten Fehlertermen — `9d282c1`, `4f93517`, `48cb082`
-- [x] Zertifizierte numerische Konfrontation (Intervallarithmetik, Gate 1e-12) an den
-      37 Stichprobenwerten aus `data/phase1_data.csv` — `2a5ee43`, `9ac2198`, `199d7dd`
-- [x] Zusammenführung: C4 liefert — **falls** $C_c$ überhaupt existiert — $C' \in [4,8]$;
-      C4 selbst behauptet die Existenz nicht — `9d282c1`
-- [x] Zusammenfassung `docs/phases/phase2/summary.md`, Ledger-Einträge `sandwich-bounds`,
+- [x] $\sum_{k \le n} F_k^2 = F_n F_{n+1}$ **proved in Lean** (not present in Mathlib) — `53f8030`
+- [x] `countReps_le_uncapped` **proved in Lean**, without `sorry` — `53f8030`, `3a1b8c1`.
+      What is proved is the **length-indexed** inequality `countReps n N ≤ countRepsUncapped n N`
+      at fixed $n$, **not** the all-places $R_c(N) \le R_u(N)$ (Trap 1 in `CLAUDE.md`,
+      distinction in `docs/phases/phase2/report.md` §7). The theorem is moreover **not load-bearing**:
+      T1/T2 prove the upper bound directly and without citing CKL; the inequality supports
+      only the qualitative CKL remark.
+- [x] Completeness **proved in Lean**, without `sorry` (`exists_numeral_of_le`, greedy descent) — `53f8030`, `613da4f`
+- [x] Extra: "1 > 1" formally proved — two different numerals with the same value (`exists_two_numerals_same_value`) — `53f8030`
+- [x] Upper bound **without** Coons–Kristensen–Laursen: T1 (effective Chernoff bound) and T2
+      (asymptotic), coefficient $1/(4\log\varphi)$ — `9d282c1`
+- [x] Lower bound: constructive proof T3 (two-block construction L1), coefficient
+      $1/(8\log\varphi)$ for $N \ge 10000$, with $(C, N_0) = (2, 10000)$ — `9d282c1`
+- [x] `docs/phases/phase2/report.md` with T1, T2, T3, C4 and explicit error terms — `9d282c1`, `4f93517`, `48cb082`
+- [x] Certified numerical confrontation (interval arithmetic, gate 1e-12) at the
+      37 sample values from `data/phase1_data.csv` — `2a5ee43`, `9ac2198`, `199d7dd`
+- [x] Synthesis: C4 yields — **if** $C_c$ exists at all — $C' \in [4,8]$;
+      C4 itself does not assert existence — `9d282c1`
+- [x] Summary `docs/phases/phase2/summary.md`, ledger entries `sandwich-bounds`,
       `chernoff-effective-verified`, `product-residual-sampled` — `c4743bc`
-- [x] **Sandwich geschlossen** (Route L2b): Flachheitslemma F — der Block $[1,a]$ ist auf
-      seinem mittleren Band flach, $B(a,m) \ge \exp(\lambda a^2/2 - O(a))$ gleichmäßig in
-      $m$ — und daraus T5: $\log R_c(N) \ge t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$
-      für $N \ge 10000$, $t = \log N$. Route L2a schließt **nicht**; wo sie stehenbleibt,
-      ist in `docs/phases/phase2/report.md` §8.6 festgehalten — `43397a2`
-- [x] **Existenz von $C_c$ bewiesen** — Forschungsfrage (A) damit **beantwortet**: C5 zeigt,
-      dass $\lim_N \log R_c(N)/(\log N)^2$ existiert und $= 1/(4\log\varphi)$ ist. Damit
-      gilt $C' = 4$ **unbedingt**, nicht mehr unter Existenzvorbehalt. C4 bleibt als
-      schwächere, weiterhin wahre Aussage bestehen (Limes inferior / superior), T3 ebenso
-      — T5 ersetzt sie nicht, sondern verbessert sie — `43397a2`
-- [x] Ledger: `leading-constant` von `conjecture` auf `theorem` gehoben, `sandwich-bounds`
-      gegen C5 abgegrenzt — `43397a2`
+- [x] **Sandwich closed** (Route L2b): flatness lemma F — the block $[1,a]$ is flat on
+      its middle band, $B(a,m) \ge \exp(\lambda a^2/2 - O(a))$ uniformly in
+      $m$ — and from it T5: $\log R_c(N) \ge t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$
+      for $N \ge 10000$, $t = \log N$. Route L2a does **not** close; where it stalls
+      is recorded in `docs/phases/phase2/report.md` §8.6 — `43397a2`
+- [x] **Existence of $C_c$ proved** — research question (A) is thereby **answered**: C5 shows
+      that $\lim_N \log R_c(N)/(\log N)^2$ exists and $= 1/(4\log\varphi)$. Hence
+      $C' = 4$ holds **unconditionally**, no longer subject to an existence caveat. C4 remains as
+      a weaker, still true statement (limit inferior / superior), as does T3
+      — T5 does not replace them but improves on them — `43397a2`
+- [x] Ledger: `leading-constant` promoted from `conjecture` to `theorem`, `sandwich-bounds`
+      delimited from C5 — `43397a2`
 
-### Phase 3 — Sattelpunkt-Heuristik ⬜ offen
+### Phase 3 — Saddle-point heuristic ⬜ open
 
-- [ ] Drei-Regime-Zerlegung sauber ausgearbeitet
-- [ ] Legendre-Transformation zur Konstante hergeleitet
-- [ ] `phase3_heuristic.md` mit expliziter Heuristik-Warnung
-- [ ] Sekundärterm-Entwicklung ($C_1$, $C_2$)
-      (**Nachtrag Phase 2:** Der $\log N\log\log N$-Term ist bereits festgelegt — T2s
-      effektive Form und T5 tragen denselben Koeffizienten, also gilt
-      $\log R_c(N) = t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$ mit $t=\log N$.
-      **Achtung auf die Normierung:** in der unten in diesem Abschnitt benutzten Schreibweise,
-      die $1/\log\varphi$ ausklammert, heißt das $C_1 = -1/2$; in der Schreibweise der
-      Forschungsfrage (B) in `theory/00-definitions.md`, die nichts ausklammert, heißt
-      dieselbe Aussage $c_1 = -1/(2\log\varphi)$. Offen bleibt $C_2$ bzw. $c_2$ — Ledger
-      `secondary-term-constant`, nicht `saddle-correction-constant`; das sind zwei
-      verschiedene Fragen.)
+- [ ] Three-regime decomposition worked out cleanly
+- [ ] Legendre transform to the constant derived
+- [ ] `phase3_heuristic.md` with an explicit heuristic warning
+- [ ] Secondary-term expansion ($C_1$, $C_2$)
+      (**Addendum Phase 2:** The $\log N\log\log N$ term is already determined — T2's
+      effective form and T5 carry the same coefficient, so
+      $\log R_c(N) = t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$ holds with $t=\log N$.
+      **Mind the normalisation:** in the notation used further down in this section,
+      which factors out $1/\log\varphi$, this means $C_1 = -1/2$; in the notation of
+      research question (B) in `theory/00-definitions.md`, which factors out nothing,
+      the same statement reads $c_1 = -1/(2\log\varphi)$. What remains open is $C_2$ resp. $c_2$ — ledger
+      `secondary-term-constant`, not `saddle-correction-constant`; these are two
+      different questions.)
 
-Hinweis: Die Konstante ist durch Phase 0.5 bereits *gemessen* und seit Phase 2 auch
-*bewiesen* (C5, `docs/phases/phase2/report.md` §8). Phase 3 muss sie nun *erklären*, nicht
-vorhersagen und nicht etablieren.
+Note: The constant has already been *measured* by Phase 0.5 and, since Phase 2, also
+*proved* (C5, `docs/phases/phase2/report.md` §8). Phase 3 must now *explain* it, not
+predict it and not establish it.
 
-### Phase 4 — Numerische Konfrontation ⬜ offen
+### Phase 4 — Numerical confrontation ⬜ open
 
-- [x] Direkte Produktauswertung $\log F_c(e^{-s})$ (Werkzeug vorhanden, gegen die exakte Reihe auf $10^{-16}$ verifiziert) — `3aeffa6`
-- [x] Vier-Term-Regression als Werkzeug vorhanden — `de735dc`
-- [ ] Fit an Phase-1-Daten (benötigt Phase 1)
-- [ ] Oszillationsdetektion: Residuen gegen $\{\log_\varphi N\}$, Fourieranalyse
-- [ ] `capfib/oscillation.py` (bewusst noch nicht angelegt — kein Testmaterial ohne Phase 1)
+- [x] Direct product evaluation $\log F_c(e^{-s})$ (tool in place, verified against the exact series to $10^{-16}$) — `3aeffa6`
+- [x] Four-term regression available as a tool — `de735dc`
+- [ ] Fit to Phase 1 data (requires Phase 1)
+- [ ] Oscillation detection: residuals against $\{\log_\varphi N\}$, Fourier analysis
+- [ ] `capfib/oscillation.py` (deliberately not created yet — no test material without Phase 1)
 - [ ] `phase4_numerical_report.md`
 
-### Phase 5 — Rigorisierung ⬜ offen
+### Phase 5 — Rigorisation ⬜ open
 
-- [ ] Route A: Mellin-Transformation und $\zeta_F^{(F+1)}$
-- [ ] Route B: Taubersätze für $S_c(N)$
-- [ ] Route C: Funktionalgleichung (explorativ)
-- [x] **Sattelpunkt-Straffheit bewiesen** — `saddle-tightness` ist seit Phase 2 ein
-      `theorem`, nicht mehr eine Heuristik. Mit $t=\log N$ und
-      $\Lambda(N) = \min_s\,[sN + \log F_c(e^{-s})]$: T1 legt $\log R_c(N)$ unter
-      $\Lambda(N)$; T2, ausgewertet bei $s = t/(2\lambda N)$, legt $\Lambda(N)$ unter
-      $t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$ — dieses $s$ ist ein Kandidat im
-      Minimum; T5 legt $\log R_c(N)$ über $t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$.
-      Die $t^2$- **und** die $t\log t$-Terme heben sich weg, die Sattelpunkt-Korrektur ist
-      also $O(t) = O(\log N)$, insbesondere $o(t^2)$, und beide teilen den
-      Leitkoeffizienten. (Die gröbere Lesart $O(t\log t)$ ist falsch — $\Lambda(N)$ ist
-      **nicht** $t^2/(4\lambda) + O(t)$, der Term $-t\log t/(2\lambda)$ ist nicht $O(t)$.)
-      Der ursprüngliche Zweck des Punktes — $1/(8\log\varphi)$ auszuschließen — ist
-      ohnehin entfallen, weil C5 diesen Wert unbedingt ausschließt — `43397a2`, `30da98a`
-- [ ] **Zwei feinere Aussagen, beide weiterhin offen.** Die *Ordnung* der
-      Sattelpunkt-Korrektur ist durch Phase 2 mitbewiesen — sie ist $O(\log N)$, weil sich
-      die $t^2$- und $t\log t$-Terme zwischen T2 und T5 wegheben. Offen sind zwei
-      **verschiedene** Konstanten, und sie dürfen nicht gleichgesetzt werden:
-      `saddle-correction-constant` (hat $\Lambda(N) - \log R_c(N)$ einen bestimmten
-      Leitkoeffizienten in $\log N$?) und `secondary-term-constant` (existiert $c_2$ in
-      der Entwicklung von $\log R_c(N)$?). Beide im Ledger mit Status `open`, keine von
-      beiden Teil von `saddle-tightness`, das die gröbere und inzwischen bewiesene Aussage
-      macht. Sie unterscheiden sich um den Leitkoeffizienten von
-      $\Lambda(N) - [t^2/(4\lambda) - t\log t/(2\lambda)]$, der selbst unbewiesen ist:
-      T2s $O(t)$ ist eine Schranke, keine Asymptotik.
+- [ ] Route A: Mellin transform and $\zeta_F^{(F+1)}$
+- [ ] Route B: Tauberian theorems for $S_c(N)$
+- [ ] Route C: functional equation (exploratory)
+- [x] **Saddle-point tightness proved** — `saddle-tightness` has been a
+      `theorem` since Phase 2, no longer a heuristic. With $t=\log N$ and
+      $\Lambda(N) = \min_s\,[sN + \log F_c(e^{-s})]$: T1 places $\log R_c(N)$ below
+      $\Lambda(N)$; T2, evaluated at $s = t/(2\lambda N)$, places $\Lambda(N)$ below
+      $t^2/(4\lambda) - t\log t/(2\lambda) + O(t)$ — this $s$ is a candidate in the
+      minimum; T5 places $\log R_c(N)$ above $t^2/(4\lambda) - t\log t/(2\lambda) - 7.5\,t$.
+      The $t^2$ **and** the $t\log t$ terms cancel, so the saddle-point correction is
+      $O(t) = O(\log N)$, in particular $o(t^2)$, and both share the
+      leading coefficient. (The coarser reading $O(t\log t)$ is wrong — $\Lambda(N)$ is
+      **not** $t^2/(4\lambda) + O(t)$; the term $-t\log t/(2\lambda)$ is not $O(t)$.)
+      The original purpose of this item — ruling out $1/(8\log\varphi)$ — has
+      lapsed anyway, because C5 rules out this value unconditionally — `43397a2`, `30da98a`
+- [ ] **Two finer statements, both still open.** The *order* of the
+      saddle-point correction is proved along with Phase 2 — it is $O(\log N)$, because
+      the $t^2$ and $t\log t$ terms cancel between T2 and T5. What is open are two
+      **different** constants, and they must not be equated:
+      `saddle-correction-constant` (does $\Lambda(N) - \log R_c(N)$ have a definite
+      leading coefficient in $\log N$?) and `secondary-term-constant` (does $c_2$ exist in
+      the expansion of $\log R_c(N)$?). Both in the ledger with status `open`, neither of
+      them part of `saddle-tightness`, which makes the coarser and now proved statement.
+      They differ by the leading coefficient of
+      $\Lambda(N) - [t^2/(4\lambda) - t\log t/(2\lambda)]$, which is itself unproved:
+      T2's $O(t)$ is a bound, not an asymptotic.
 
-### Phase 6 — Oszillationen ⬜ offen
+### Phase 6 — Oscillations ⬜ open
 
-- [ ] Pol-Spektrum aus Phase 5
-- [ ] Fourierkoeffizienten von $\Psi(\log_\varphi N)$
-- [ ] Explizite Fehlerschranken
+- [ ] Pole spectrum from Phase 5
+- [ ] Fourier coefficients of $\Psi(\log_\varphi N)$
+- [ ] Explicit error bounds
 - [ ] `phase6_oscillations.md`
 
-### Phase 7 — Verallgemeinerung und Writeup ⬜ offen
+### Phase 7 — Generalisation and write-up ⬜ open
 
-- [x] `paper/main.tex` und `paper/refs.bib` angelegt, damit Zitate ab Tag 1 in BibTeX auflaufen — `6095170`
-- [ ] Verallgemeinerung auf $d_k \le c F_k^\alpha$
-- [ ] Allgemeine lineare Rekurrenzen (Pisot-Basis)
+- [x] `paper/main.tex` and `paper/refs.bib` created, so that citations accumulate in BibTeX from day 1 — `6095170`
+- [ ] Generalisation to $d_k \le c F_k^\alpha$
+- [ ] General linear recurrences (Pisot base)
 - [ ] Paper
-- [ ] arXiv-Preprint
+- [ ] arXiv preprint
 
 ---
 
-## Phase 0 — Präzisierung
+## Phase 0 — Specification
 
-**Zeithorizont:** 1–2 Tage  
-**Kritikalität:** ESSENTIELL — alle späteren Phasen ruhen darauf
+**Time horizon:** 1–2 days  
+**Criticality:** ESSENTIAL — all later phases rest on it
 
-### Ziele
+### Goals
 
-- Alle Notationskonventionen fixieren  
-- Die zentralen Forschungsfragen in präzise mathematische Aussagen umwandeln  
-- Abgrenzung: Welche Fragen sind gestellt, welche sind offen?
+- Fix all notational conventions  
+- Turn the central research questions into precise mathematical statements  
+- Scoping: which questions are posed, which are open?
 
-### Substanz
+### Substance
 
-1. **Fibonacci-Konvention:**  
-   Festlegen: $F_1, F_2, F_3, \ldots$ mit expliziten Werten.  
-   **Festgelegt:** $F_1=1, F_2=1, F_3=2, F_4=3, F_5=5, \ldots$ — siehe `theory/00-definitions.md`.
-   Die doppelte 1-Stelle ist beabsichtigt: sie ist der Ursprung des "1 > 1"-Phänomens
-   (Numerale `1000` und `0100` haben beide den Wert 1), und nur unter dieser Konvention
-   gilt $\sum_{k\le n} F_k^2 = F_n F_{n+1}$, das die Vollständigkeitsschranke fixiert.
-   **Konsequenz:** $d_1, d_2 \in \{0,1\}$.
+1. **Fibonacci convention:**  
+   To fix: $F_1, F_2, F_3, \ldots$ with explicit values.  
+   **Fixed:** $F_1=1, F_2=1, F_3=2, F_4=3, F_5=5, \ldots$ — see `theory/00-definitions.md`.
+   The duplicated 1-place is intentional: it is the origin of the "1 > 1" phenomenon
+   (numerals `1000` and `0100` both have value 1), and only under this convention
+   does $\sum_{k\le n} F_k^2 = F_n F_{n+1}$ hold, which fixes the completeness bound.
+   **Consequence:** $d_1, d_2 \in \{0,1\}$.
 
-2. **Definitionen schärfen:**  
-   - $R_c(N):=$ Anzahl der Folgen $(d_k)_{k\ge1}$ mit $0\le d_k\le F_k$ und $\sum_k d_k F_k=N$.  
-   - $R_u(N):=$ wie oben, aber $d_k$ unbeschränkt.  
-   - $b(N):=$ binäre Partitionsfunktion (Partitionen in Zweierpotenzen, unbeschränkt).
+2. **Sharpen definitions:**  
+   - $R_c(N):=$ number of sequences $(d_k)_{k\ge1}$ with $0\le d_k\le F_k$ and $\sum_k d_k F_k=N$.  
+   - $R_u(N):=$ as above, but $d_k$ unbounded.  
+   - $b(N):=$ binary partition function (partitions into powers of two, unbounded).
 
-3. **Asymptotics-Zieldefinition:**  
-   Welche der folgenden drei Fragen sind für diese Roadmap zentral?
-   - **(A) Existenz der führenden Asymptotik:**  
-     Existiert $C_c$ so, dass $\log R_c(N) \sim C_c (\log N)^2$?
-   - **(B) Verfeinerte Entwicklung:**  
-     $\log R_c(N) = C_c(\log N)^2 + c_1 \log N \log\log N + c_2 \log N + (\text{Oszillation}) + o(1)$?
-   - **(C) Oszillationsstruktur:**  
-     Falls Oszillationen existieren: periodisch in $\log_\varphi N$? Welche Periode(n)?
+3. **Asymptotics target definition:**  
+   Which of the following three questions are central to this roadmap?
+   - **(A) Existence of the leading asymptotics:**  
+     Does $C_c$ exist such that $\log R_c(N) \sim C_c (\log N)^2$?
+   - **(B) Refined expansion:**  
+     $\log R_c(N) = C_c(\log N)^2 + c_1 \log N \log\log N + c_2 \log N + (\text{oscillation}) + o(1)$?
+   - **(C) Oscillation structure:**  
+     If oscillations exist: periodic in $\log_\varphi N$? Which period(s)?
 
-   **Fokus dieser Roadmap:** Primär (A) und (B); (C) nachgelagert in Phase 6.
+   **Focus of this roadmap:** Primarily (A) and (B); (C) downstream in Phase 6.
 
-4. **Fluktuations-Vorüberlegung:**  
-   Die klassische Partitionsfunktion $p(n)$ ist monoton wachsend.  
-   $R_c(N)$ könnte lokal stark fluktuieren (analog zur distinkten Fibonacci-Partitionsfunktion A000119).  
-   Entscheidung: 
-   - Falls $R_c(N)$ sehr fluktuiert → verwende summatorische Funktion $S_c(N):=\sum_{n\le N}R_c(n)$ für Taubersätze (Phase 5B).
-   - Falls $R_c(N)$ glatt ist → direkter Attack auf $R_c(N)$ selbst.  
-   Diese Klärung wird in Phase 1 durch Daten entschieden.
+4. **Preliminary consideration on fluctuation:**  
+   The classical partition function $p(n)$ is monotonically increasing.  
+   $R_c(N)$ might fluctuate strongly locally (analogous to the distinct Fibonacci partition function A000119).  
+   Decision: 
+   - If $R_c(N)$ fluctuates a lot → use the summatory function $S_c(N):=\sum_{n\le N}R_c(n)$ for Tauberian theorems (Phase 5B).
+   - If $R_c(N)$ is smooth → direct attack on $R_c(N)$ itself.  
+   This question will be decided by data in Phase 1.
 
 ### Deliverable
 
-**Dokument:** `00-Definitionen.md` (1 Seite)  
-Enthält:
-- Fibonacci-Konvention mit expliziten Werten bis $F_{10}$  
-- Präzise Definition von $R_c, R_u, b$ je in 2–3 Zeilen  
-- Zentrale Forschungsfragen (A), (B), (C) in mathform  
-- Zeichen: Welche Asymptotiken sind *bekannt* (mit Referenz), welche sind *Konjekturen*, welche sind *offen*?
+**Document:** `theory/00-definitions.md` (1 page)  
+Contains:
+- Fibonacci convention with explicit values up to $F_{10}$  
+- Precise definition of $R_c, R_u, b$, each in 2–3 lines  
+- Central research questions (A), (B), (C) in mathematical form  
+- Labelling: which asymptotics are *known* (with reference), which are *conjectures*, which are *open*?
 
 ---
 
-## Phase 0.5 — Konstanten-Gate
+## Phase 0.5 — Constant gate
 
-**Zeithorizont:** 1 Tag
-**Kritikalität:** HOCH — Entscheidungspunkt vor jeder monatelangen Investition
+**Time horizon:** 1 day
+**Criticality:** HIGH — decision point before any months-long investment
 
-### Ziel
+### Goal
 
-Die führende Konstante $C_c$ *messen*, bevor die Heuristik sie *herleitet*.
+*Measure* the leading constant $C_c$ before the heuristic *derives* it.
 
-### Substanz
+### Substance
 
-Direkte Auswertung von $\log F_c(e^{-s})$ im Log-Raum plus numerische
-Legendre-Transformation $\log R_c(N) \le \min_s [sN + \log F_c(e^{-s})]$.
-Schätzer ist die lokale Steigung $d(\log R)/d((\log N)^2)$, die weit schneller
-konvergiert als das Verhältnis $\log R/(\log N)^2$.
+Direct evaluation of $\log F_c(e^{-s})$ in log space plus numerical
+Legendre transform $\log R_c(N) \le \min_s [sN + \log F_c(e^{-s})]$.
+The estimator is the local slope $d(\log R)/d((\log N)^2)$, which converges far faster
+than the ratio $\log R/(\log N)^2$.
 
-Kandidaten: $1/(2\log\varphi)=1.039$, $1/(4\log\varphi)=0.520$, $1/(8\log\varphi)=0.260$.
+Candidates: $1/(2\log\varphi)=1.039$, $1/(4\log\varphi)=0.520$, $1/(8\log\varphi)=0.260$.
 
 ### Deliverables
 
 `scripts/run_phase0_gate.py`, `data/phase0_5_gate.csv`, `figures/phase0_5_gate.png`,
 `docs/phases/phase0_5/report.md`.
 
-### Konsequenz
+### Consequence
 
-Phase 3 erklärt danach eine *gemessene* Zahl statt eine unbekannte vorherzusagen.
+Phase 3 then explains a *measured* number instead of predicting an unknown one.
 
 ---
 
-## Phase 1 — Exakte Berechnung und Sanity Checks
+## Phase 1 — Exact computation and sanity checks
 
-> **✅ Abgeschlossen.** Ergebnis: [`docs/phases/phase1/summary.md`](phases/phase1/summary.md). Exakte Werte für
-> alle `N ≤ 10^6`, abgesichert durch einen punktweisen Abgleich zwischen zwei
-> unabhängigen Algorithmen über den gesamten Bereich. Zentraler Befund:
-> `R_c(N)` fluktuiert stark (knapp die Hälfte der Schritte fällt), was `S_c(N)` als
-> Zielobjekt eines Tauber-Arguments nahelegt. Der folgende Abschnitt ist die
-> ursprüngliche Planung und wird als solche beibehalten.
+> **✅ Completed.** Result: [`docs/phases/phase1/summary.md`](phases/phase1/summary.md). Exact values for
+> all `N ≤ 10^6`, secured by a pointwise comparison between two
+> independent algorithms over the whole range. Central finding:
+> `R_c(N)` fluctuates strongly (just under half of the steps decrease), which suggests `S_c(N)` as the
+> target object of a Tauberian argument. The following section is the
+> original plan and is retained as such.
 
-**Zeithorizont:** 1–2 Wochen  
-**Kritikalität:** HOCH — Benchmark für alle theoretischen Ansprüche
+**Time horizon:** 1–2 weeks  
+**Criticality:** HIGH — benchmark for all theoretical claims
 
-### Ziele
+### Goals
 
-- Zuverlässige numerische Daten für $R_c(N)$ bis zu praktischem Limit (ca. $N \le 10^6$–$10^7$)  
-- Verifikation der erzeugenden Funktion gegen Brute-Force  
-- Erste deskriptive Statistik: Monotonie, lokale Fluktuation, Symmetrien
+- Reliable numerical data for $R_c(N)$ up to a practical limit (approx. $N \le 10^6$–$10^7$)  
+- Verification of the generating function against brute force  
+- First descriptive statistics: monotonicity, local fluctuation, symmetries
 
-### Substanz
+### Substance
 
-1. **Algorithmus: Dynamische Programmierung**  
+1. **Algorithm: dynamic programming**  
    ```
-   Rekurrenz: P_0(x) = 1
+   Recurrence: P_0(x) = 1
               P_k(x) = P_{k-1}(x) · G_k(x),
-   wobei G_k(x) = 1 + x^{F_k} + x^{2F_k} + ... + x^{F_k^2}
-                = (x^{F_k(F_k+1)} - 1) / (x^{F_k} - 1)  [geschlossene Form]
+   where G_k(x) = 1 + x^{F_k} + x^{2F_k} + ... + x^{F_k^2}
+                = (x^{F_k(F_k+1)} - 1) / (x^{F_k} - 1)  [closed form]
    
-   Koeffizient [x^N]P_k(x) = R_c^{(k)}(N)  [mit nur 1..k verfügbar]
+   Coefficient [x^N]P_k(x) = R_c^{(k)}(N)  [with only 1..k available]
    ```
    
-   **Umsetzung:**  
-   - Für exakte Koeffizienten: Array-Faltung mit ganzzahligen Potenzen (Speicher ~GiB für $N_{\max}\sim 10^7$).  
-   - Für $\log R_c(N)$ (ausreichend für Asymptotik): Logistic-Faltung via Floating-Point, dann Umrechnung. Oder Bigint mit periodischem Logarithmieren.  
-   - **Checksum:** Code gegen kleine Fälle $(N \le 200)$ via Brute-Force verifizieren (explizites Aufzählen aller $(d_k)$-Folgen).
+   **Implementation:**  
+   - For exact coefficients: array convolution with integer powers (memory ~GiB for $N_{\max}\sim 10^7$).  
+   - For $\log R_c(N)$ (sufficient for asymptotics): logistic convolution via floating point, then conversion. Or bigint with periodic taking of logarithms.  
+   - **Checksum:** verify the code against small cases $(N \le 200)$ via brute force (explicit enumeration of all $(d_k)$ sequences).
 
-2. **Erzeugungsfunktion-Test**  
-   Produktform: $\prod_{k=1}^{K} \frac{1-x^{F_k(F_k+1)}}{1-x^{F_k}}$ für trunkiertes Produkt.  
-   Abgleich gegen DP-Rekurrenz bis $N=500$: Sollten identisch sein.
+2. **Generating-function test**  
+   Product form: $\prod_{k=1}^{K} \frac{1-x^{F_k(F_k+1)}}{1-x^{F_k}}$ for the truncated product.  
+   Comparison against the DP recurrence up to $N=500$: should be identical.
 
-3. **Deskriptive Statistik**  
-   - Tabelle: $N$, $R_c(N)$, $\log R_c(N)$, $(\log N)^2$, $\frac{\log R_c(N)}{(\log N)^2}$ für $N\in\{100,500,1000,5000,10000,\ldots\}$.
-   - Monotonie: Ist $R_c(N)$ wachsend? Oder gibt es Einbrüche (z.B. bei $N=F_m-1$)?  
-   - Lokale Fluktuation: Ratio $R_c(N+1)/R_c(N)$; gibt es Spitzen oder systematische Muster?
-   - **Vollständigkeit (erledigt):** Es gibt *keine* Lücken. Die Kempner–Fraenkel-Bedingung
-     $F_k \le 1 + F_{k-1}F_k$ ist mit großem Spielraum erfüllt, also ist jedes $N \in [0, \sum_k F_k^2]$
-     darstellbar (`theory/01-background.md` §3, numerisch bestätigt in `tests/test_dp.py`)
+3. **Descriptive statistics**  
+   - Table: $N$, $R_c(N)$, $\log R_c(N)$, $(\log N)^2$, $\frac{\log R_c(N)}{(\log N)^2}$ for $N\in\{100,500,1000,5000,10000,\ldots\}$.
+   - Monotonicity: is $R_c(N)$ increasing? Or are there drops (e.g. at $N=F_m-1$)?  
+   - Local fluctuation: ratio $R_c(N+1)/R_c(N)$; are there spikes or systematic patterns?
+   - **Completeness (done):** There are *no* gaps. The Kempner–Fraenkel condition
+     $F_k \le 1 + F_{k-1}F_k$ is satisfied with a large margin, so every $N \in [0, \sum_k F_k^2]$
+     is representable (`theory/01-background.md` §3, confirmed numerically in `tests/test_dp.py`)
      {claim:completeness-no-gaps}.
-     Aufgabe ist daher der *Beweis* der Vollständigkeit (Phase 2, Lean-Ziel), nicht die Suche nach Lücken.
+     The task is therefore the *proof* of completeness (Phase 2, Lean target), not the search for gaps.
 
 ### Deliverables
 
-1. **Code:** `phase1_DP.py` (oder Sprache der Wahl)  
-   - Eingabe: $N_{\max}$  
-   - Ausgabe: Array $[R_c(1), R_c(2), \ldots, R_c(N_{\max})]$ oder $[\log R_c(1), \ldots]$  
-   - Eingebaute Checks gegen $N=\text{small}$ via Brute-Force
+1. **Code:** `phase1_DP.py` (or language of choice)  
+   - Input: $N_{\max}$  
+   - Output: array $[R_c(1), R_c(2), \ldots, R_c(N_{\max})]$ or $[\log R_c(1), \ldots]$  
+   - Built-in checks against $N=\text{small}$ via brute force
 
-2. **Daten:** `phase1_data.csv`  
-   Spalten: `N, R_c(N), log(R_c(N)), (log N)^2, ratio_to_quad, log(R_c(N))/(log N)^2`  
-   Mindestens für $N \in \{10^i \cdot 10^j : i=2,\ldots,7; j=0,\ldots,9\}$.
+2. **Data:** `phase1_data.csv`  
+   Columns: `N, R_c(N), log(R_c(N)), (log N)^2, ratio_to_quad, log(R_c(N))/(log N)^2`  
+   At least for $N \in \{10^i \cdot 10^j : i=2,\ldots,7; j=0,\ldots,9\}$.
 
-3. **Grafik:** `phase1_plot.png`  
-   - Oben: $\log R_c(N)$ vs. $(\log N)^2$ (sollten proportional aussehen)  
-   - Unten: Residuen nach Abzug des $(\log N)^2$-Terms (oszillatorische Struktur visualisieren)  
-   - Kennzeichnung verdächtiger Stellen (lokale Minima etc.)
+3. **Figure:** `phase1_plot.png`  
+   - Top: $\log R_c(N)$ vs. $(\log N)^2$ (should look proportional)  
+   - Bottom: residuals after subtracting the $(\log N)^2$ term (visualise oscillatory structure)  
+   - Marking of suspicious points (local minima etc.)
 
-4. **Report:** `docs/phases/phase1/report.md` (2–3 Seiten)  
-   - Zusammenfassung der Dataquality  
-   - Beobachtete Muster mit Hypothesen  
-   - Offene numerische Rätsel  
+4. **Report:** `docs/phases/phase1/report.md` (2–3 pages)  
+   - Summary of data quality  
+   - Observed patterns with hypotheses  
+   - Open numerical puzzles  
 
-### Risiken
+### Risks
 
-- **Speicher/Rechenzeit:** $10^7$ Koeffizienten brauchen effiziente Arithmetik. Falls zu langsam: auf $10^6$ reduzieren, oder nur $\log R_c$ approximieren.  
-- **Numerische Stabilität bei $\log$:** Vorsicht mit underflow; BigInt-Logarithmieren via Mantisse+Exponent.
+- **Memory/compute time:** $10^7$ coefficients need efficient arithmetic. If too slow: reduce to $10^6$, or only approximate $\log R_c$.  
+- **Numerical stability of $\log$:** beware of underflow; BigInt logarithms via mantissa+exponent.
 
 ---
 
-## Phase 2 — Elementare Schranken: Das Sandwich
+## Phase 2 — Elementary bounds: the sandwich
 
-**Zeithorizont:** 2–3 Wochen  
-**Kritikalität:** MITTEL — Erstes bewiesenes Theorem, gibt Orientierung
+**Time horizon:** 2–3 weeks  
+**Criticality:** MEDIUM — first proved theorem, gives orientation
 
-### Ziele
+### Goals
 
-- Obere und untere Schranken $c_1(\log N)^2 \le \log R_c(N) \le c_2(\log N)^2$ rigorös beweisen  
-- Die Konstanten $c_1, c_2$ mit Referenzen angeben  
-- Damit die *Größenordnung* schlüssig etablieren, ohne volle Asymptotik zu behaupten
+- Rigorously prove upper and lower bounds $c_1(\log N)^2 \le \log R_c(N) \le c_2(\log N)^2$  
+- State the constants $c_1, c_2$ with references  
+- Thereby conclusively establish the *order of magnitude*, without claiming the full asymptotics
 
-### Substanz
+### Substance
 
-1. **Obere Schranke:**  
-   Trivial: $R_c(N) \le R_u(N)$ (Caps schwächen nur ein).  
-   Aus Coons–Kristensen–Laursen (arXiv:2312.07404):
-   $$\log R_u(N) \sim \frac{(\log N)^2}{2\log\varphi}, \quad \log\varphi = \frac{\log(1+\sqrt{5})}{2} \approx 0.481.$$
+1. **Upper bound:**  
+   Trivial: $R_c(N) \le R_u(N)$ (caps only restrict).  
+   From Coons–Kristensen–Laursen (arXiv:2312.07404):
+   $$\log R_u(N) \sim \frac{(\log N)^2}{2\log\varphi}, \quad \log\varphi = \log\frac{1+\sqrt{5}}{2} \approx 0.481.$$
    
-   Daher: **Theorem (Obere Schranke):**  
+   Hence: **Theorem (upper bound):**  
    $$\log R_c(N) \le (1+o(1)) \cdot \frac{(\log N)^2}{2\log\varphi}.$$
    
-   Dies ist sofort zitierbar und benötigt keinen Beweis.
+   This is immediately citable and needs no proof.
 
-   **Korrektur (Phase 2):** Diese Route wurde nicht genommen. T1 und T2 in
-   [`docs/phases/phase2/report.md`](phases/phase2/report.md) beweisen den schärferen
-   Koeffizienten $1/(4\log\varphi)$ direkt aus der erzeugenden Funktion, ohne CKL und ohne
-   $R_c \le R_u$. Die Identifikation unseres $R_u$ mit dem $p_F$ von Coons–Kristensen–Laursen
-   ist in `theory/00-definitions.md` weiterhin als *pending verification* geführt.
+   **Correction (Phase 2):** This route was not taken. T1 and T2 in
+   [`docs/phases/phase2/report.md`](phases/phase2/report.md) prove the sharper
+   coefficient $1/(4\log\varphi)$ directly from the generating function, without CKL and without
+   $R_c \le R_u$. The identification of our $R_u$ with the $p_F$ of Coons–Kristensen–Laursen
+   is still listed as *pending verification* in `theory/00-definitions.md`.
 
-2. **Untere Schranke — konstruktive Methode:**  
-   Partitioniere die Positionen $k$ in zwei Klassen:
-   - **Bindet-Klasse $\mathcal{B}$:** $F_k \le N^{1/4}$ (hier kann der Cap die Verfügbarkeit ernsthaft einschränken).  
-   - **Nichts-Klasse $\mathcal{N}$:** $F_k > N^{1/4}$ (hier ist jede Position einzeln viel zu groß, Cap ist irrelevant).  
+2. **Lower bound — constructive method:**  
+   Partition the positions $k$ into two classes:
+   - **Binding class $\mathcal{B}$:** $F_k \le N^{1/4}$ (here the cap can seriously restrict availability).  
+   - **Nothing class $\mathcal{N}$:** $F_k > N^{1/4}$ (here each position on its own is far too large, the cap is irrelevant).  
    
-   In Klasse $\mathcal{N}$ können wir höchstens eine Position verwenden, und zwar eine mit $F_k \le N < F_{k+1}$.  
-   Jede Darstellung von $N$ muss also ein Präfix aus $\mathcal{B}$ und einen einzelnen Summand aus $\mathcal{N}$ (oder aus $\mathcal{B}$ selbst) haben.
+   In class $\mathcal{N}$ we can use at most one position, namely one with $F_k \le N < F_{k+1}$.  
+   Every representation of $N$ must therefore have a prefix from $\mathcal{B}$ and a single summand from $\mathcal{N}$ (or from $\mathcal{B}$ itself).
    
-   Untere Schranke aus expliziter Injektion:  
-   Für beliebiges $M \in \mathcal{B}$ zähle alle $(d_k)_{k\in\mathcal{B}}$ mit $\sum_{k\in\mathcal{B}}d_k F_k = N - M$.  
+   Lower bound from an explicit injection:  
+   For arbitrary $M \in \mathcal{B}$ count all $(d_k)_{k\in\mathcal{B}}$ with $\sum_{k\in\mathcal{B}}d_k F_k = N - M$.  
 
-   **Korrektur (Phase 2):** Der ursprünglich hier stehende Schritt — „dies gibt mindestens
-   $R_u(N-M)$ Möglichkeiten" — läuft in die falsche Richtung und steht so nicht zur Verfügung.
-   Das Kappen entfernt Darstellungen, liefert also $R_c \le R_u$; $R_u$ kann $R_c$ daher nicht
-   von unten beschränken. Die Konstruktion, die trägt, ist die Zwei-Block-Konstruktion L1 in
-   [`docs/phases/phase2/report.md`](phases/phase2/report.md) §4: ein Fixup-Block $[1,a]$ mit
-   $F_a F_{a+1} \ge N$ plus eine rechteckige freie Familie auf den übrigen Stellen.
+   **Correction (Phase 2):** The step that originally stood here — "this gives at least
+   $R_u(N-M)$ possibilities" — runs in the wrong direction and is not available as stated.
+   Capping removes representations, so it yields $R_c \le R_u$; $R_u$ therefore cannot bound $R_c$
+   from below. The construction that does carry is the two-block construction L1 in
+   [`docs/phases/phase2/report.md`](phases/phase2/report.md) §4: a fixup block $[1,a]$ with
+   $F_a F_{a+1} \ge N$ plus a rectangular free family on the remaining places.
    
-   Feinere Analyse: Nutze spezielle Struktur von $\mathcal{N}$ (geometrisches Wachstum der Fibonacci), um zu zeigen:
+   Finer analysis: use the special structure of $\mathcal{N}$ (geometric growth of the Fibonacci numbers) to show:
    $$\log R_c(N) \ge \frac{(\log N)^2}{4\log\varphi}(1-o(1)) + O(\log N).$$
    
-   **Detaillierter Beweis erforderlich**, aber konzeptionell machbar mit Standard-Bijektionen.
+   **Detailed proof required**, but conceptually feasible with standard bijections.
 
-   **Korrektur (Phase 2):** Erreicht wurde $1/(8\log\varphi)$, nicht $1/(4\log\varphi)$ — L1
-   verbraucht die kappenbindenden Stellen im Fixup-Block. Der Faktor 2 ist für L1 in der
-   angegebenen Form strukturell; ihn zurückzugewinnen erfordert eine andere Blockaufteilung
-   (L2a / L2b, `docs/phases/phase2/report.md` §4.4), nicht schärfere Abschätzungen.
+   **Correction (Phase 2):** What was achieved is $1/(8\log\varphi)$, not $1/(4\log\varphi)$ — L1
+   uses up the cap-binding places in the fixup block. The factor 2 is structural for L1 in the
+   stated form; recovering it requires a different block split
+   (L2a / L2b, `docs/phases/phase2/report.md` §4.4), not sharper estimates.
 
-   **Nachtrag (Phase 2, Stretch):** $1/(4\log\varphi)$ *ist* von unten erreichbar. Route L2b
-   liefert es — nicht durch eine andere Reservierung, sondern indem der Block gezählt statt
-   reserviert wird (Lemma F, T5 in `docs/phases/phase2/report.md` §8). Die hier skizzierte Aussage
-   $\log R_c(N) \ge \frac{(\log N)^2}{4\log\varphi}(1-o(1))$ ist damit bewiesen; der Weg
-   dorthin führte aber nicht über „Standard-Bijektionen“, sondern über eine gleichmäßige
-   untere Schranke für die Blockzählfunktion.
+   **Addendum (Phase 2, stretch):** $1/(4\log\varphi)$ *is* attainable from below. Route L2b
+   delivers it — not through a different reservation, but by counting the block instead of
+   reserving it (Lemma F, T5 in `docs/phases/phase2/report.md` §8). The statement sketched here,
+   $\log R_c(N) \ge \frac{(\log N)^2}{4\log\varphi}(1-o(1))$, is thereby proved; the path
+   there, however, did not go through "standard bijections" but through a uniform
+   lower bound for the block counting function.
 
-3. **Konvergenz der Schranken:**  
-   Falls obere und untere Schranke auf denselben Hauptterm hindeuten, hast du:
-   $$C_c = \frac{1}{C'\log\varphi} \quad \text{für explizites } C'.$$
+3. **Convergence of the bounds:**  
+   If the upper and lower bounds point to the same main term, you have:
+   $$C_c = \frac{1}{C'\log\varphi} \quad \text{for explicit } C'.$$
 
-   **Korrektur (Phase 2), zwei Punkte.** Erstens stand hier
-   $C_c = (\log N)^2/(C'\log\varphi)$ — ein $(\log N)^2$ gehört nicht in eine Konstante.
-   Zweitens ist das erwartete Intervall $C' \in [2,4]$ durch C4 ersetzt: **falls** $C_c$
-   existiert, gilt $C' \in [4,8]$. Die Parametrisierung setzt die Existenz voraus; C4
-   beschränkt nur Limes inferior und Limes superior und sagt über die Existenz nichts aus.
+   **Correction (Phase 2), two points.** First, this used to read
+   $C_c = (\log N)^2/(C'\log\varphi)$ — a $(\log N)^2$ does not belong in a constant.
+   Second, the expected interval $C' \in [2,4]$ is replaced by C4: **if** $C_c$
+   exists, then $C' \in [4,8]$. The parametrisation presupposes existence; C4
+   bounds only the limit inferior and limit superior and says nothing about existence.
 
-   **Nachtrag (Phase 2, Stretch):** Der Existenzvorbehalt ist entfallen. C5
-   (`docs/phases/phase2/report.md` §8) beweist, dass der Grenzwert existiert; damit gilt
-   $C' = 4$ **unbedingt**. Die Unterscheidung bleibt trotzdem wichtig und wird nicht
-   eingeebnet: C4 beschränkt Limes inferior und Limes superior, C5 behauptet die Existenz
-   des Grenzwerts — zwei verschiedene Aussagen, und genau die zweite musste T5 zusätzlich
-   zur Konstanten liefern.
+   **Addendum (Phase 2, stretch):** The existence caveat no longer applies. C5
+   (`docs/phases/phase2/report.md` §8) proves that the limit exists; hence
+   $C' = 4$ holds **unconditionally**. The distinction nevertheless remains important and is not
+   flattened: C4 bounds the limit inferior and limit superior, C5 asserts the existence
+   of the limit — two different statements, and it is precisely the second that T5 had to deliver in addition
+   to the constant.
 
-   Das ist **keine** Verschärfung von $[2,4]$: der obere Koeffizient wurde von
-   $1/(2\log\varphi)$ (aus CKL zitiert) auf $1/(4\log\varphi)$ verschärft, der untere von
-   $1/(4\log\varphi)$ (aus der obigen Skizze) auf $1/(8\log\varphi)$ abgeschwächt. Die
-   beiden Intervalle sind nicht ineinander enthalten — sie berühren sich bei $C' = 4$ und
-   sind sonst disjunkt.
+   This is **not** a sharpening of $[2,4]$: the upper coefficient was sharpened from
+   $1/(2\log\varphi)$ (cited from CKL) to $1/(4\log\varphi)$, the lower one weakened from
+   $1/(4\log\varphi)$ (from the sketch above) to $1/(8\log\varphi)$. The
+   two intervals are not contained in one another — they touch at $C' = 4$ and
+   are otherwise disjoint.
 
-   Falls $C'=4$: der obere Endpunkt des bewiesenen Intervalls wird angenommen — genau die
-   Phase-3-Konjektur $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$.
+   If $C'=4$: the upper endpoint of the proved interval is attained — exactly the
+   Phase 3 conjecture $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$.
 
-   Falls $C'=8$: der untere Endpunkt wird angenommen, L1 wäre also bereits scharf.
+   If $C'=8$: the lower endpoint is attained, so L1 would already be sharp.
 
-   **Nachtrag (Phase 2, Stretch):** Es ist $C' = 4$; die frühere Phase-3-Konjektur ist als
-   C5 bewiesen (Ledger: `leading-constant`, Status `theorem`). $C'=8$ ist damit
-   ausgeschlossen — L1 ist nicht scharf. Die obige Fallunterscheidung ist damit
-   erledigt: $C'\in(4,8)$ war eine der offenen Möglichkeiten und ist ausgeschlossen.
+   **Addendum (Phase 2, stretch):** $C' = 4$; the former Phase 3 conjecture is proved as
+   C5 (ledger: `leading-constant`, status `theorem`). $C'=8$ is thereby
+   ruled out — L1 is not sharp. The case distinction above is thereby
+   settled: $C'\in(4,8)$ was one of the open possibilities and is ruled out.
 
 ### Deliverables
 
-1. **Satz: Sandwich-Bounds**  
-   Präzise Formulierung, Beweis von Ober- und Untergrenzen, mit Fehlerterme.
+1. **Theorem: sandwich bounds**  
+   Precise formulation, proof of upper and lower bounds, with error terms.
 
-2. **Technical Note:** `docs/phases/phase2/report.md` (4–5 Seiten)  
-   - Theorem + Beweis Obere Schranke (trivial, aber explizit).  
-   - Theorem + Beweis Untere Schranke (Kern der Phase).  
-   - Visualisierung: Numerische Daten aus Phase 1 gegen beide Grenzen plotten.  
-   - Konklusion: Welchen Wert von $C'$ deuten die Daten an?
+2. **Technical note:** `docs/phases/phase2/report.md` (4–5 pages)  
+   - Theorem + proof of the upper bound (trivial, but explicit).  
+   - Theorem + proof of the lower bound (core of the phase).  
+   - Visualisation: plot numerical data from Phase 1 against both bounds.  
+   - Conclusion: which value of $C'$ do the data suggest?
 
-### Risiken
+### Risks
 
-- Der Untergrenzen-Beweis könnte technisch knifflig werden (genaue Regimeeinteilung, Überlappungen).  
-- Fallstricke beim Übersprechen von endlichen Produkten (bis zu welcher Position summieren?) zu Grenzwerten.
+- The lower-bound proof could become technically tricky (exact regime division, overlaps).  
+- Pitfalls in passing from finite products (up to which position to sum?) to limits.
 
 ---
 
-## Phase 3 — Die Sattelpunkt-Heuristik (Herzstück)
+## Phase 3 — The saddle-point heuristic (core piece)
 
-> **Nachtrag (Phase 2).** Wo dieser Abschnitt „Konjektur" sagt, ist der Status vor Phase 2
-> gemeint. $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$ ist bewiesen (C5, Ledger
-> `leading-constant`, Status `theorem`), und ebenso die Straffheit der Sattelpunktschranke
-> (`saddle-tightness`). Phase 3 bleibt sinnvoll und ändert nur ihr Ziel: die Konstante
-> *erklären* statt sie zu *raten*, und den Sekundärterm angreifen, wo tatsächlich noch
-> etwas offen ist (`saddle-correction-constant`, `secondary-term-constant`).
+> **Addendum (Phase 2).** Where this section says "conjecture", the status before Phase 2
+> is meant. $\log R_c(N) \sim (\log N)^2/(4\log\varphi)$ is proved (C5, ledger
+> `leading-constant`, status `theorem`), and so is the tightness of the saddle-point bound
+> (`saddle-tightness`). Phase 3 remains worthwhile and only changes its goal: to *explain*
+> the constant instead of *guessing* it, and to attack the secondary term, where something
+> is actually still open (`saddle-correction-constant`, `secondary-term-constant`).
 
-**Zeithorizont:** 3–4 Wochen  
-**Kritikalität:** SEHR HOCH — Liefert die Konjektur und Intuition für Phase 5
+**Time horizon:** 3–4 weeks  
+**Criticality:** VERY HIGH — delivers the conjecture and intuition for Phase 5
 
-### Ziele
+### Goals
 
-- Die vermutete Konstante $C_c$ aus einer **expliziten, sauberen Heuristik** ableiten  
-- Das Phänomen der "Drei Regime" offenlegen und erklären, warum der Cap die Asymptotik *halbiert*  
-- Alles als **Konjektur und Heuristik klar markieren** (nicht als Theorem)
+- Derive the conjectured constant $C_c$ from an **explicit, clean heuristic**  
+- Expose the "three regimes" phenomenon and explain why the cap *halves* the asymptotics  
+- **Clearly mark** everything **as conjecture and heuristic** (not as a theorem)
 
-### Substanz
+### Substance
 
-Die Kernidee: Analysiere die Produktseite der erzeugenden Funktion
+The core idea: analyse the product side of the generating function
 $$F_c(x) := \prod_{k\ge1}\frac{1-x^{F_k(F_k+1)}}{1-x^{F_k}}$$
-durch die Transformation $x=e^{-s}$, $s\to0^+$. Dann
+via the transformation $x=e^{-s}$, $s\to0^+$. Then
 $$\log F_c(e^{-s}) = \sum_{k\ge1}\left[\log(1-e^{-sF_k(F_k+1)})-\log(1-e^{-sF_k})\right].$$
 
-1. **Drei-Regime-Zerlegung:**  
+1. **Three-regime decomposition:**  
    
-   Für jeden Summanden, parametriert durch $z=sF_k$:
-   - Wenn $z\gg 1$: $\log(1-e^{-z})\approx -e^{-z}\approx 0$ (exponentiell kleine Beiträge).  
-   - Wenn $z\approx 1$: kritischer Bereich (Übergänge).  
-   - Wenn $z\ll 1$: $\log(1-e^{-z})\approx \log z$ (linear in $\log z$).  
+   For each summand, parametrised by $z=sF_k$:
+   - If $z\gg 1$: $\log(1-e^{-z})\approx -e^{-z}\approx 0$ (exponentially small contributions).  
+   - If $z\approx 1$: critical range (transitions).  
+   - If $z\ll 1$: $\log(1-e^{-z})\approx \log z$ (linear in $\log z$).  
    
-   Da $F_k\approx \varphi^k/\sqrt{5}$ geometrisch wächst, gibt es für festes $s$ eine *eindeutige* Schwelle $k^*(s)$ mit $F_{k^*} \approx 1/s$.  
+   Since $F_k\approx \varphi^k/\sqrt{5}$ grows geometrically, for fixed $s$ there is a *unique* threshold $k^*(s)$ with $F_{k^*} \approx 1/s$.  
    
-   Dies induziert drei Regime:
+   This induces three regimes:
 
-   | Regime | Bedingung | $k$ liegt in | Beitrag pro Term |
+   | Regime | Condition | $k$ lies in | Contribution per term |
    |---|---|---|---|
-   | **A (Cap bindet)** | $s F_k \gg F_k(F_k+1) \cdot s$ (unmöglich, Widerspruch — Revision notwendig) | — | — |
+   | **A (cap binds)** | $s F_k \gg F_k(F_k+1) \cdot s$ (impossible, contradiction — revision necessary) | — | — |
    
-   **Korrekte Regimeeinteilung** (nach Überdenken):  
+   **Correct regime division** (after reconsideration):  
    
-   Nutze den Fakt, dass jeder Term $k$ den Beitrag
+   Use the fact that each term $k$ contributes the amount
    $$a_k(s):=\log\left(\frac{1-e^{-sF_k(F_k+1)}}{1-e^{-sF_k}}\right)$$
-   liefert. Für $F_k \gg 1/s$: Zähler und Nenner sind beide $\approx 1$, also $a_k\approx 0$.  
-   Für $F_k \ll 1/s$: 
+   For $F_k \gg 1/s$: numerator and denominator are both $\approx 1$, so $a_k\approx 0$.  
+   For $F_k \ll 1/s$: 
    $$a_k \approx \log\left(\frac{sF_k(F_k+1)}{sF_k}\right) = \log(F_k+1)\approx\log F_k.$$
    
-   Die **Drei Regime** sind genauer:
+   The **three regimes** are, more precisely:
 
-   | Regime | Bedingung auf $k$ | Beitrag zu Summe | Anzahl Positionen |
+   | Regime | Condition on $k$ | Contribution to sum | Number of positions |
    |---|---|---|---|
-   | **A** | $F_k \ll (sF_k)^{-1/2}$, d.h. $F_k^2 s\ll 1$ | $\approx \log F_k$ pro Term | $\approx \frac{1}{2}\frac{\log(1/s)}{\log\varphi}$ |
-   | **B** | $(sF_k)^{-1/2} \ll F_k \ll s^{-1}$ | $\log F_k$-artig (linear in Summe) | $\approx \frac{1}{2}\frac{\log(1/s)}{\log\varphi}$ |
-   | **C** | $F_k \gg s^{-1}$ | exponentiell klein | $\lesssim \text{const}$ |
+   | **A** | $F_k \ll (sF_k)^{-1/2}$, i.e. $F_k^2 s\ll 1$ | $\approx \log F_k$ per term | $\approx \frac{1}{2}\frac{\log(1/s)}{\log\varphi}$ |
+   | **B** | $(sF_k)^{-1/2} \ll F_k \ll s^{-1}$ | $\log F_k$-like (linear in sum) | $\approx \frac{1}{2}\frac{\log(1/s)}{\log\varphi}$ |
+   | **C** | $F_k \gg s^{-1}$ | exponentially small | $\lesssim \text{const}$ |
    
-   *(Diese Einteilung bedarf sorgfältiger Ausarbeitung; erste Skizze hier.)*
+   *(This division needs careful working out; first sketch here.)*
 
-2. **Asymptotische Auswertung der Summe:**  
+2. **Asymptotic evaluation of the sum:**  
    
-   Regime A + B gemeinsam liefern:
+   Regimes A + B together yield:
    $$\sum_{k \in A \cup B} \log F_k \approx \int_{k_{\min}}^{k_{\max}} \log(\varphi^k/\sqrt{5})\,dk$$
-   wobei Grenzen durch $F_k^2 s \sim 1$ und $F_k s\sim 1$ gegeben sind.
+   where the limits are given by $F_k^2 s \sim 1$ and $F_k s\sim 1$.
    
-   Dies ergibt:
+   This gives:
    $$\int \log(\varphi^k)\,dk = \sum k \log\varphi = O((\log(1/s))^2 / \log\varphi).$$
    
-   (Die genaue Konstante hängt von Regime-Grenzen ab; Legendre-Trafo unten liefert Hauptbeitrag.)
+   (The exact constant depends on the regime boundaries; the Legendre transform below supplies the main contribution.)
 
-3. **Legendre-Transformation zum asymptotischen Verhalten von $R_c(N)$:**  
+3. **Legendre transform to the asymptotic behaviour of $R_c(N)$:**  
    
-   Die Beziehung $N \leftrightarrow s$ über Sattelpunkt:
+   The relation $N \leftrightarrow s$ via the saddle point:
    $$\frac{d}{ds}\log F_c(e^{-s}) \Big|_{s=s^*} = N.$$
    
-   Dies ist ein implicit-function-Theorem-Argument: Finde $s^*(N)$ so, dass die Ableitung der log-Erzeugungsfkt. gleich $N$ ist.
+   This is an implicit-function-theorem argument: find $s^*(N)$ such that the derivative of the log generating function equals $N$.
    
-   Im binären Fall (de Bruijn) bekannt: $\frac{d}{ds}\log b(e^{-s})\approx \frac{\log(1/s)}{s}$, was auf $s^* \sim \frac{1}{\log N}$ und somit auf $\log b(N) \sim \frac{(\log N)^2}{2\log 2}$ führt.
+   Known in the binary case (de Bruijn): $\frac{d}{ds}\log b(e^{-s})\approx \frac{\log(1/s)}{s}$, which leads to $s^* \sim \frac{1}{\log N}$ and hence to $\log b(N) \sim \frac{(\log N)^2}{2\log 2}$.
    
-   Im Fibonacci-Cap-Fall sollte die Struktur ähnlich sein, aber **eine weitere Halbierung tritt auf** wegen der Symmetrie der Cap-Regel: nur *Hälfte* der Positionen trägt zum Hauptterm bei (die, deren Cap *bindet*). Dies führt zur Konjektur:
+   In the Fibonacci cap case the structure should be similar, but **a further halving occurs** because of the symmetry of the cap rule: only *half* of the positions contribute to the main term (those whose cap *binds*). This leads to the conjecture:
    $$\log R_c(N) \sim \frac{(\log N)^2}{4\log\varphi}.$$
 
-4. **Graphische Visualisierung:**  
-   - Plot von $\log F_c(e^{-s})$ für $s$ von $0.1$ bis $0.001$.  
-   - Überlagert: die Vorhersage $\frac{(\log(1/s))^2}{4\log\varphi}$ (sollte als Kurve sichtbar sein).  
-   - Residuum: Abweichung vom asymptotischen Ansatz (offenbart Übergangszonen, Sekundärtermstrukturen).
+4. **Graphical visualisation:**  
+   - Plot of $\log F_c(e^{-s})$ for $s$ from $0.1$ to $0.001$.  
+   - Overlaid: the prediction $\frac{(\log(1/s))^2}{4\log\varphi}$ (should be visible as a curve).  
+   - Residual: deviation from the asymptotic ansatz (reveals transition zones, secondary-term structures).
 
 ### Deliverables
 
-1. **Heuristik-Kapitel:** `phase3_heuristic.md` (8–10 Seiten)  
-   - Sorgfältige Erklärung des Sattelpunkt-Ansatzes.  
-   - Drei-Regime-Zerlegung mit Skizzen und Begründung.  
-   - Legendre-Transformation zur Konstante.  
-   - Grafiken (s.o.).  
-   - **Riesengroße Warnung:** "Das Folgende ist eine Heuristik. Rigorose Beweise folgen in Phase 5."
+1. **Heuristic chapter:** `phase3_heuristic.md` (8–10 pages)  
+   - Careful explanation of the saddle-point approach.  
+   - Three-regime decomposition with sketches and justification.  
+   - Legendre transform to the constant.  
+   - Figures (see above).  
+   - **Huge warning:** "What follows is a heuristic. Rigorous proofs follow in Phase 5."
 
-2. **Konjektur-Statement:**  
-   $$\boxed{\ \log R_c(N) \sim \frac{(\log N)^2}{4\log\varphi} \quad \text{(KONJEKTUR)}\ }$$
-   Mit explizitem Numerant: $\frac{1}{4\log\varphi} = \frac{1}{4 \cdot 0.481\ldots} \approx 0.520$.
+2. **Conjecture statement:**  
+   $$\boxed{\ \log R_c(N) \sim \frac{(\log N)^2}{4\log\varphi} \quad \text{(CONJECTURE)}\ }$$
+   With explicit numerical value: $\frac{1}{4\log\varphi} = \frac{1}{4 \cdot 0.481\ldots} \approx 0.520$.
 
-   > **Numerische Stütze (Phase 0.5):** Die lokale Steigung der Legendre-Transformierten misst
-   > 0.518710 bei $N = 10^{3200}$ und steigt monoton gegen $1/(4\log\varphi) = 0.519522$
+   > **Numerical support (Phase 0.5):** The local slope of the Legendre transform measures
+   > 0.518710 at $N = 10^{3200}$ and rises monotonically towards $1/(4\log\varphi) = 0.519522$
    > {claim:gate-local-slope}.
-   > Da es sich um eine *obere* Schranke handelt, schließt dies $1/(2\log\varphi)$ unmittelbar aus;
-   > der Ausschluss von $1/(8\log\varphi)$ setzt zusätzlich voraus, dass die Sattelpunkt-Korrektur
-   > von niedrigerer Ordnung ist — erwartet, aber in Phase 0.5 nicht bewiesen.
-   > Siehe `docs/phases/phase0_5/report.md`.
+   > Since this is an *upper* bound, it immediately rules out $1/(2\log\varphi)$;
+   > ruling out $1/(8\log\varphi)$ additionally presupposes that the saddle-point correction
+   > is of lower order — expected, but not proved in Phase 0.5.
+   > See `docs/phases/phase0_5/report.md`.
    >
-   > **Nachtrag (Phase 2):** Die eingerahmte Aussage ist **kein** Konjektur-Statement mehr —
-   > sie ist als C5 bewiesen (`docs/phases/phase2/report.md` §8, Ledger `leading-constant`, Status
-   > `theorem`), und zwar elementar und ohne Sattelpunkt. Für Phase 3 ändert das die
-   > Aufgabe, nicht ihren Wert: die Konstante ist nun zu *erklären*, nicht mehr zu
-   > *etablieren*. Die numerische Stütze oben bleibt, was sie war — eine Messung, kein
-   > Beweis.
+   > **Addendum (Phase 2):** The boxed statement is **no longer** a conjecture statement —
+   > it is proved as C5 (`docs/phases/phase2/report.md` §8, ledger `leading-constant`, status
+   > `theorem`), and in fact elementarily and without the saddle point. For Phase 3 this changes the
+   > task, not its value: the constant is now to be *explained*, no longer to be
+   > *established*. The numerical support above remains what it was — a measurement, not a
+   > proof.
 
-3. **Sekundär-Entwicklung (optional, aber wertvoll):**  
-   Falls die Heuristik auch Logarithmische Terme anderer Ordnung andeutet, z.B.
-   $$\log R_c(N) = \frac{(\log N)^2}{4\log\varphi} + C_1 \frac{\log N \log\log N}{\log\varphi} + C_2 \frac{\log N}{\log\varphi} + \text{Oszillation} + o(1),$$
-   dann die Konstanten $C_1, C_2$ aus der Heuristik herauspräparieren.
+3. **Secondary expansion (optional, but valuable):**  
+   If the heuristic also hints at logarithmic terms of other orders, e.g.
+   $$\log R_c(N) = \frac{(\log N)^2}{4\log\varphi} + C_1 \frac{\log N \log\log N}{\log\varphi} + C_2 \frac{\log N}{\log\varphi} + \text{oscillation} + o(1),$$
+   then extract the constants $C_1, C_2$ from the heuristic.
 
-### Risiken
+### Risks
 
-- Die Übergangszonen zwischen Regimen sind mathematisch heiklig — kleine Fehler in der Asymptotics-Analyse können zu falschen Konstanten führen.  
-- Die Legendre-Trafo setzt partielle Analytizität des Sattelpunkts voraus; dies muss plausibel gemacht werden (oder ist es der Punkt, an dem Phase 5A Rigorisierung braucht?).
+- The transition zones between regimes are mathematically delicate — small errors in the asymptotic analysis can lead to wrong constants.  
+- The Legendre transform presupposes partial analyticity of the saddle point; this has to be made plausible (or is this the point at which Phase 5A needs rigorisation?).
 
 ---
 
-## Phase 4 — Numerische Konfrontation (parallel zu Phase 3)
+## Phase 4 — Numerical confrontation (in parallel with Phase 3)
 
-> **Nachtrag (Phase 2).** „Die Konjektur" heißt hier durchgehend die Aussage, die vor
-> Phase 2 eine war; sie ist als C5 bewiesen. Die numerische Arbeit dieser Phase verliert
-> dadurch nichts: sie wird von einem Konjekturtest zu einer *Konfrontation* eines Theorems
-> mit Daten, und der Sekundärterm samt Oszillation, auf den sie eigentlich zielt, ist
-> weiterhin offen.
+> **Addendum (Phase 2).** "The conjecture" here consistently means the statement that was one before
+> Phase 2; it is proved as C5. The numerical work of this phase loses
+> nothing by this: it turns from a conjecture test into a *confrontation* of a theorem
+> with data, and the secondary term together with the oscillation, which is what it actually targets, is
+> still open.
 
-**Zeithorizont:** 2–3 Wochen  
-**Kritikalität:** HOCH — Quantitatives Feedback auf die Konjektur
+**Time horizon:** 2–3 weeks  
+**Criticality:** HIGH — quantitative feedback on the conjecture
 
-### Ziele
+### Goals
 
-- Die Konjektur $\log R_c(N)\sim\frac{(\log N)^2}{4\log\varphi}$ numerisch gegen Phase-1-Daten testen  
-- Oszillationen erkennen und quantifizieren  
-- Größenordnung und evtl. Sekundärtermstruktur klären
+- Test the conjecture $\log R_c(N)\sim\frac{(\log N)^2}{4\log\varphi}$ numerically against Phase 1 data  
+- Detect and quantify oscillations  
+- Clarify the order of magnitude and possibly the secondary-term structure
 
-### Substanz
+### Substance
 
-1. **Direkte Produktauswertung (schnellster Test):**  
+1. **Direct product evaluation (fastest test):**  
    
-   Berechne $\log F_c(e^{-s})$ direkt aus dem Produkt für kleine $s$ (z.B. $s=0.01, 0.003, 0.001$):
+   Compute $\log F_c(e^{-s})$ directly from the product for small $s$ (e.g. $s=0.01, 0.003, 0.001$):
    $$\log F_c(e^{-s}) = \sum_{k=1}^{K} \log\left(\frac{1-e^{-sF_k(F_k+1)}}{1-e^{-sF_k}}\right),$$
-   wobei $K$ so groß gewählt wird, dass weitere Terme exponentiell klein sind.
+   where $K$ is chosen large enough that further terms are exponentially small.
    
-   Vergleiche gegen $\frac{(\log(1/s))^2}{4\log\varphi}$:
+   Compare against $\frac{(\log(1/s))^2}{4\log\varphi}$:
    
-   | $s$ | $\log F_c(e^{-s})$ (numerisch) | $\frac{(\log(1/s))^2}{4\log\varphi}$ | Ratio |
+   | $s$ | $\log F_c(e^{-s})$ (numerical) | $\frac{(\log(1/s))^2}{4\log\varphi}$ | Ratio |
    |---|---|---|---|
    | $0.01$ | ? | $\approx 1.35$ | ? |
    | $0.001$ | ? | $\approx 5.40$ | ? |
    | $0.0001$ | ? | $\approx 12.1$ | ? |
    
-   Falls Ratio gegen 1 konvergiert: ✓ Konjektur konsistent.  
-   Falls nicht: Konjektur needs revision oder zusätzliche Terme (Sekundärterme dominieren noch).
+   If the ratio converges to 1: ✓ conjecture consistent.  
+   If not: conjecture needs revision or additional terms (secondary terms still dominate).
 
-2. **Fitting an Phase-1-Daten:**  
+2. **Fitting to Phase 1 data:**  
    
-   Die Konvergenz in $(log N)^2$-Regressionen ist infamously langsam (Fehler wie $O(1/\log N)$). Stattdessen parametrischer Fit:
+   Convergence in $(log N)^2$ regressions is infamously slow (errors like $O(1/\log N)$). Instead, a parametric fit:
    $$\log R_c(N) = a(\log N)^2 + b\log N \log\log N + c\log N + d + o(1).$$
    
-   Nutze Multiple-Regression mit Daten aus Phase 1 (mindestens 20–30 Datenpunkte) und extrahiere $a, b, c, d$ sowie Fehlerbalken.
+   Use multiple regression with data from Phase 1 (at least 20–30 data points) and extract $a, b, c, d$ together with error bars.
    
-   Erwartet: $a \approx \frac{1}{4\log\varphi} \approx 0.520$.  
-   Test der Konjektur: Ist $a$ konsistent mit $0.520$ innerhalb der Unsicherheit?
+   Expected: $a \approx \frac{1}{4\log\varphi} \approx 0.520$.  
+   Test of the conjecture: is $a$ consistent with $0.520$ within the uncertainty?
 
-3. **Oszillationsdetektion:**  
+3. **Oscillation detection:**  
    
-   Berechne Residuen:
+   Compute residuals:
    $$R(N) := \log R_c(N) - a(\log N)^2 - b\log N\log\log N - c\log N - d.$$
    
-   Plotte $R(N)$ gegen $\{\log_\varphi N\}$ (Nachkommateil von $\log_\varphi N$), also die "*Fraktionale Phase*".
+   Plot $R(N)$ against $\{\log_\varphi N\}$ (fractional part of $\log_\varphi N$), i.e. the "*fractional phase*".
    
-   Falls es periodische Muster gibt: Fourieranalyse der Periode(n). Erwartet aus der Theorie: Hauptperiode 1 (da Pole der Dirichletreihen bei $z=\frac{2\pi i k}{\log\varphi}$ liegen).
+   If there are periodic patterns: Fourier analysis of the period(s). Expected from theory: main period 1 (since the poles of the Dirichlet series lie at $z=\frac{2\pi i k}{\log\varphi}$).
 
-4. **Verlässlichkeitsprüfung:**  
+4. **Reliability check:**  
    
-   Teile die Daten in zwei Hälften: Fit mit Hälfte A, teste Koeffiziente gegen Hälfte B. Abweichung sollte klein sein.
+   Split the data into two halves: fit with half A, test the coefficients against half B. The deviation should be small.
 
 ### Deliverables
 
-1. **Numerik-Skript:** `phase4_numerical.py`  
-   - Funktion `evaluate_product_FC(s, K_max)`: Berechnet $\log F_c(e^{-s})$ direkt.  
-   - Funktion `fit_logRC(data_file)`: Multiple Regression an Phase-1-Daten.  
-   - Visualisierungen: Plots (Produkt vs. Hypothese; Residuen vs. Phase; etc.).
+1. **Numerics script:** `phase4_numerical.py`  
+   - Function `evaluate_product_FC(s, K_max)`: computes $\log F_c(e^{-s})$ directly.  
+   - Function `fit_logRC(data_file)`: multiple regression on Phase 1 data.  
+   - Visualisations: plots (product vs. hypothesis; residuals vs. phase; etc.).
 
-2. **Numerik-Report:** `phase4_numerical_report.md` (5–7 Seiten)  
-   - Tabellen mit den Produktauswertungen.  
-   - Fitting-Ergebnisse mit Konfidenzintervalle.  
-   - Oszillations-Plots.  
-   - **Fazit:** Wie gut stimmt die Konjektur? Welche Korrektionen sind sichtbar?
+2. **Numerics report:** `phase4_numerical_report.md` (5–7 pages)  
+   - Tables with the product evaluations.  
+   - Fitting results with confidence intervals.  
+   - Oscillation plots.  
+   - **Conclusion:** How well does the conjecture hold up? Which corrections are visible?
 
-3. **Updated Konjektur-Statement (falls notwendig):**  
-   Falls die numerischen Daten systematische Abweichungen zeigen (z.B. Sekundärtermkoeffizienten), diese in die Konjektur einarbeiten.
+3. **Updated conjecture statement (if necessary):**  
+   If the numerical data show systematic deviations (e.g. secondary-term coefficients), incorporate them into the conjecture.
 
-### Risiken
+### Risks
 
-- **Langsame Konvergenz:** Mit $N$ nur bis $10^7$ könnten Sekundärtermeffekte noch dominieren; echte $(log N)^2$-Asymptotik zeigt sich erst bei $10^{10}$ o.ä.  
-- **Numerische Genauigkeit:** Floating-Point bei Summationen über $\sim 30$ Fibonacci-Terme kann Rundungsfehler aufbauen. Mit Double-Precision arbeiten und später Check mit Extended-Precision.
+- **Slow convergence:** With $N$ only up to $10^7$, secondary-term effects could still dominate; genuine $(log N)^2$ asymptotics only shows at $10^{10}$ or so.  
+- **Numerical accuracy:** Floating point in summations over $\sim 30$ Fibonacci terms can accumulate rounding errors. Work in double precision and check later with extended precision.
 
 ---
 
-## Phase 5 — Rigorisierung: Drei Angriffsrouten
+## Phase 5 — Rigorisation: three lines of attack
 
-> **Nachtrag (Phase 2).** Der Leitkoeffizient braucht diese Phase nicht mehr — C5 beweist
-> ihn elementar. Was hier zu holen bleibt, ist alles unterhalb davon: der Sekundärterm
-> (`saddle-correction-constant`, `secondary-term-constant`) und die Oszillationsstruktur.
+> **Addendum (Phase 2).** The leading coefficient no longer needs this phase — C5 proves
+> it elementarily. What remains to be gained here is everything below it: the secondary term
+> (`saddle-correction-constant`, `secondary-term-constant`) and the oscillation structure.
 
-**Zeithorizont:** Monate (3–6, je nach Route)  
-**Kritikalität:** KRITISCH — Unterschied zwischen Konjektur und Theorem
+**Time horizon:** months (3–6, depending on the route)  
+**Criticality:** CRITICAL — the difference between conjecture and theorem
 
-Diese Phase teilt sich in drei mögliche, teilweise parallele Routes:
+This phase splits into three possible, partly parallel routes:
 
-### Route A — Mellin-Transformation und Dirichletreihen (Favorit)
+### Route A — Mellin transform and Dirichlet series (favourite)
 
-**Zeithorizont:** 4–6 Monate  
-**Analoge zu:** Coons–Kristensen–Laursen, Navas auf $\zeta_F$.
+**Time horizon:** 4–6 months  
+**Analogous to:** Coons–Kristensen–Laursen, Navas on $\zeta_F$.
 
-**Strategie:**
+**Strategy:**
 
-1. **Setup der Mellin-Transformation:**  
-   Schreibe
-   $$\log F_c(e^{-s}) = \int_1^\infty \left(\log F_c(e^{-x/t})\right) \frac{dx}{x} \quad (\text{partielle Integration/Mellin-Pair}).$$
+1. **Setting up the Mellin transform:**  
+   Write
+   $$\log F_c(e^{-s}) = \int_1^\infty \left(\log F_c(e^{-x/t})\right) \frac{dx}{x} \quad (\text{integration by parts/Mellin pair}).$$
    
-   Dies transformiert das Produkt in eine Summe über Pole und Residuen einer meromorphen Funktion.
+   This transforms the product into a sum over poles and residues of a meromorphic function.
 
-2. **Dirichlereihen-Ansatz:**  
-   Definiere
+2. **Dirichlet-series approach:**  
+   Define
    $$\zeta_F^{(C)}(z) := \sum_{k\ge1} F_k^{-z}, \quad \zeta_F^{(F+1)}(z):=\sum_{k\ge1} (F_k(F_k+1))^{-z}.$$
    
-   Dann ist
-   $$\prod_k (1-x^{F_k}) = x^{\zeta_F^{(C)}(0)} \cdot (\text{Regge-Struktur in } z)$$
-   und ähnlich für den Zähler. Die Quotientenerzeugungsfunktion wird zu einer Differenz oder Ratio dieser Dirichletreihen.
+   Then
+   $$\prod_k (1-x^{F_k}) = x^{\zeta_F^{(C)}(0)} \cdot (\text{Regge structure in } z)$$
+   and similarly for the numerator. The quotient generating function becomes a difference or ratio of these Dirichlet series.
    
-   **Kritisches Neuland:** $\zeta_F^{(F+1)}(z)$ ist neu in der Literatur (nicht reduzibel auf frühere Arbeiten). Die analytische Fortsetzung dieser Reihe ist das Kernproblem.
+   **Critical new territory:** $\zeta_F^{(F+1)}(z)$ is new in the literature (not reducible to earlier work). The analytic continuation of this series is the core problem.
    
-   **Erwartetes Resultat:** $\zeta_F^{(F+1)}(z)$ hat poles und Residuen ähnlich wie $\zeta_F(z)$ (Navas), aber möglicherweise mit geänderten Residuen-Strukturen (z.B. Doppelpole bei $z=0$? Neue imaginäre Pole?). Eine vorsichtige Analyse mittels Borel-Summation oder Mellin-asymptotik könnte die Konstante $\frac{1}{4\log\varphi}$ rigoros etablieren.
+   **Expected result:** $\zeta_F^{(F+1)}(z)$ has poles and residues similar to $\zeta_F(z)$ (Navas), but possibly with altered residue structures (e.g. double poles at $z=0$? New imaginary poles?). A careful analysis by means of Borel summation or Mellin asymptotics could rigorously establish the constant $\frac{1}{4\log\varphi}$.
 
-3. **Mellin-Inversion:**  
-   Mit den analytischen Eigenschaften von $\zeta_F$ und $\zeta_F^{(F+1)}$ zurück zur Asymptotik von $R_c(N)$ über inverse Mellin-Transformation und Taubersätze.
+3. **Mellin inversion:**  
+   With the analytic properties of $\zeta_F$ and $\zeta_F^{(F+1)}$, back to the asymptotics of $R_c(N)$ via the inverse Mellin transform and Tauberian theorems.
 
-**Chancen:** Diese Route parallisiert historisch bewährte Techniken mit neuer Dirichletreihe — hohes Erfolgspotential bei moderatem technischen Aufwand (falls $\zeta_F^{(F+1)}$ sich ähnlich wie bekannte Fälle verhält).
+**Prospects:** This route parallels historically proven techniques with a new Dirichlet series — high potential for success at moderate technical effort (if $\zeta_F^{(F+1)}$ behaves similarly to known cases).
 
-**Fallstricke:** Die neue Reihe könnte pathologisch behaglichere Konvergenzeigenschaften haben (z.B. kleinerer Konvergenz-Radius); dann helfen Navas' Techniken vielleicht nicht direkt.
+**Pitfalls:** The new series could have pathologically awkward convergence properties (e.g. a smaller radius of convergence); then Navas' techniques might not help directly.
 
-**Hauptlieferable:** Theorem (mit vollen Beweis oder Detail-Skizze):
+**Main deliverable:** Theorem (with full proof or detailed sketch):
 $$\log R_c(N) = \frac{(\log N)^2}{4\log\varphi} + O\left(\frac{\log N \log\log N}{\log\varphi}\right).$$
 
 ---
 
-### Route B — Taubersätze (für summatorische Funktion)
+### Route B — Tauberian theorems (for the summatory function)
 
-**Zeithorizont:** 2–3 Monate  
-**Analoge zu:** Ingham 1941 (binäre Partitionen); Hardy–Littlewood-Tauberian-Klassiker.
+**Time horizon:** 2–3 months  
+**Analogous to:** Ingham 1941 (binary partitions); Hardy–Littlewood Tauberian classics.
 
-**Strategie:**
+**Strategy:**
 
-1. Falls $R_c(N)$ zu fluktuierig ist (aus Phase 1 bekannt), arbeite mit der Summatorischen:
+1. If $R_c(N)$ is too fluctuating (known from Phase 1), work with the summatory function:
    $$S_c(N) := \sum_{n\le N} R_c(n).$$
    
-   Diese ist monoton wachsend und glatter.
+   This is monotonically increasing and smoother.
 
-2. **Tauberian Theorem (Ingham-Typ):** Wenn
+2. **Tauberian theorem (Ingham type):** If
    $$\sum_{n\ge1} S_c(n) x^n \sim (1-x)^{-\alpha} L(1/(1-x)) \quad (x\to 1^-)$$
-   für bestimmtes $\alpha$ und (ggf. iteriertes) Logarithmus $L$, dann folgt
+   for a certain $\alpha$ and a (possibly iterated) logarithm $L$, then it follows that
    $$S_c(N) \sim \frac{N^{\alpha+1}}{(\alpha+1)!} \exp(\sqrt{\beta \log N})$$
-   oder ähnliche Form, je nach Struktur.
+   or a similar form, depending on the structure.
 
-3. **Von $S_c$ zurück zu $R_c$:**  
-   Differenzen $R_c(N) = S_c(N) - S_c(N-1)$ sind nicht direkt asymptotisch, es sei denn, $S_c$ ist sehr glatt. Dies ist die Gretchenfrage: falls $S_c(N)\sim A N^{\alpha} \exp(B(\log N)^\beta)$, dann ist $R_c(N)$ nur dann asymptotisch, wenn $\beta\ne 1$ oder weitere Glattheit vorhanden ist.
+3. **From $S_c$ back to $R_c$:**  
+   Differences $R_c(N) = S_c(N) - S_c(N-1)$ are not directly asymptotic unless $S_c$ is very smooth. This is the crux: if $S_c(N)\sim A N^{\alpha} \exp(B(\log N)^\beta)$, then $R_c(N)$ is asymptotic only if $\beta\ne 1$ or further smoothness is present.
 
-**Chancen:** Wenn $S_c$ sich wie $\exp(c(\log N)^2/\log\varphi)$ verhält, sind moderne Taubersätze (z.B. Delange, Karamata, etc.) wahrscheinlich anwendbar.
+**Prospects:** If $S_c$ behaves like $\exp(c(\log N)^2/\log\varphi)$, modern Tauberian theorems (e.g. Delange, Karamata, etc.) are probably applicable.
 
-**Fallstricke:** Der Rückgang von $S_c$ zu $R_c$ ist oft subtil und erfordert zusätzliche Regularitätsannahmen.
+**Pitfalls:** The passage from $S_c$ back to $R_c$ is often subtle and requires additional regularity assumptions.
 
-**Hauptlieferable:** Theorem für $S_c(N)$ mit Asymptotik; Korollar für $R_c(N)$ unter Regularität-Bedingungen.
-
----
-
-### Route C — Funktionalgleichung (explorativer Strang)
-
-**Zeithorizont:** 1–2 Monate (explorativ; hohes Risiko)  
-**Analoge zu:** de Bruijn's funktionale Gleichung für binäre Partitionen; Mahler-Operatoren.
-
-**Strategie:**
-
-1. **Gibt es eine funktionale Gleichung?**  
-   Im binären Fall: $b(x) = b(x^2)/(1-x)$ (unter Berücksichtigung von Doublons und Zeckendorf-artigen Symmetrien).  
-   
-   Ähnliche Struktur für $R_c$? Vermutlich *nicht exakt*, aber möglicherweise approximativ unter der Zeckendorf-Substitution $x\to x^{\varphi^k}$ für bestimmte Sequenzen?
-   
-   Dies ist sehr spekulativ und bedarf Exploration.
-
-2. **Selbstähnlichkeit nutzen:** Falls (teilweise) Selbstähnlichkeit vorhanden, Rekursionsgleichungen für asymptotische Konstanten aufstellen und lösen.
-
-**Chancen:** Könnte zu unerwartet eleganten Argumenten führen, die dem Problembestand zu Grunde liegen.
-
-**Fallstricke:** Sehr hochrisiko; könnte viel Zeit kostet ohne Resultat.
-
-**Hauptlieferable (bei Erfolg):** Funktionale Gleichung (oder asymptotische Version); daraus Asymptotik-Theorem.
+**Main deliverable:** Theorem for $S_c(N)$ with asymptotics; corollary for $R_c(N)$ under regularity conditions.
 
 ---
 
-### Wahl und Priorisierung
+### Route C — Functional equation (exploratory strand)
 
-**Empfehlung:** 
-- **Primär:** Route A (Mellin + Dirichletreihen), da es Coons–Kristensen–Laursen parallisiert.  
-- **Sekundär:** Route B (Taubersätze) als Fallback oder Verifizierung.  
-- **Tertiary:** Route C (Funktionalgleichung) nur, falls Zeit/Energie vorhanden und explorative Ideen entstehen.
+**Time horizon:** 1–2 months (exploratory; high risk)  
+**Analogous to:** de Bruijn's functional equation for binary partitions; Mahler operators.
 
-**Klarstellung nach Phase 1:** Route A und Route B stehen nicht zur Wahl
-zwischen zwei Alternativen für dasselbe Ziel — sie beantworten verschiedene
-Fragen. Route A bleibt die primäre Route für das rigorose
-Asymptotik-Theorem über $\log R_c(N)$. Der Fluktuations-Befund aus Phase 1
-(`docs/phases/phase1/report.md`) zeigt aber, dass $R_c(N)$ selbst über
-$N \le 10^6$ so unregelmäßig ist (49.6 {fig:decreasing-fraction}% fallende
-Schritte) {claim:rc-not-monotone},
-dass ein direkter
-Taubersatz-Angriff auf $R_c(N)$ dadurch erschwert wird — die summatorische
-Funktion $S_c(N)$ ist daher das numerisch sicherere Ziel für einen
-Tauberian-Angriff (Route B), sobald sie verfolgt wird, statt $R_c(N)$ selbst.
-Das ist keine Abschwächung von Route A, sondern eine Randbedingung an Route B,
-sobald sie verfolgt wird.
+**Strategy:**
+
+1. **Is there a functional equation?**  
+   In the binary case: $b(x) = b(x^2)/(1-x)$ (taking into account duplicates and Zeckendorf-like symmetries).  
+   
+   A similar structure for $R_c$? Presumably *not exactly*, but possibly approximately under the Zeckendorf substitution $x\to x^{\varphi^k}$ for certain sequences?
+   
+   This is very speculative and needs exploration.
+
+2. **Exploit self-similarity:** If (partial) self-similarity is present, set up and solve recursion equations for asymptotic constants.
+
+**Prospects:** Could lead to unexpectedly elegant arguments that underlie the problem.
+
+**Pitfalls:** Very high risk; could cost a lot of time without a result.
+
+**Main deliverable (if successful):** Functional equation (or an asymptotic version); from it an asymptotics theorem.
 
 ---
 
-## Phase 6 — Oszillationen und Fehlerterme
+### Choice and prioritisation
 
-**Zeithorizont:** 6–8 Wochen (nach Phase 5 begonnen)  
-**Kritikalität:** MITTEL — Verfeinert Theorem aus Phase 5
+**Recommendation:** 
+- **Primary:** Route A (Mellin + Dirichlet series), since it parallels Coons–Kristensen–Laursen.  
+- **Secondary:** Route B (Tauberian theorems) as a fallback or verification.  
+- **Tertiary:** Route C (functional equation) only if time/energy is available and exploratory ideas arise.
 
-### Ziele
+**Clarification after Phase 1:** Route A and Route B are not a choice
+between two alternatives for the same goal — they answer different
+questions. Route A remains the primary route for the rigorous
+asymptotics theorem about $\log R_c(N)$. The fluctuation finding from Phase 1
+(`docs/phases/phase1/report.md`) shows, however, that $R_c(N)$ itself over
+$N \le 10^6$ is so irregular (49.6 {fig:decreasing-fraction}% decreasing
+steps) {claim:rc-not-monotone}
+that a direct
+Tauberian attack on $R_c(N)$ is made harder by it — the summatory
+function $S_c(N)$ is therefore the numerically safer target for a
+Tauberian attack (Route B), once it is pursued, rather than $R_c(N)$ itself.
+This is not a weakening of Route A but a boundary condition on Route B,
+once it is pursued.
 
-- Oszillatorische Korrektionen zu $\log R_c(N)$ explizit identifizieren und charakterisieren  
-- Periodizität in $\log_\varphi N$ nachweisen/widersprechen  
-- Fehlerschranken erhalten, die bei berechenbaren $N$ greifen
+---
 
-### Substanz
+## Phase 6 — Oscillations and error terms
 
-1. **Pole der Dirichletreihen (folgt aus Phase 5A):**  
-   Die imaginären Pole von $\zeta_F$ liegen bei $z=\frac{2\pi i k}{\log\varphi}$, $k\in\mathbb{Z}\setminus\{0\}$.  
+**Time horizon:** 6–8 weeks (started after Phase 5)  
+**Criticality:** MEDIUM — refines the theorem from Phase 5
+
+### Goals
+
+- Explicitly identify and characterise oscillatory corrections to $\log R_c(N)$  
+- Prove/refute periodicity in $\log_\varphi N$  
+- Obtain error bounds that take effect at computable $N$
+
+### Substance
+
+1. **Poles of the Dirichlet series (follows from Phase 5A):**  
+   The imaginary poles of $\zeta_F$ lie at $z=\frac{2\pi i k}{\log\varphi}$, $k\in\mathbb{Z}\setminus\{0\}$.  
    
-   Diese erzeugen Oszillationen periodisch in $\log_\varphi N$ mit Periode 1.  
+   These generate oscillations periodic in $\log_\varphi N$ with period 1.  
    
-   In $\zeta_F^{(F+1)}$ könnten *zusätzliche* Pole auftreten (oder alte verschwinden), was zu reicherer Spektrum führen könnte.
+   In $\zeta_F^{(F+1)}$ *additional* poles could appear (or old ones disappear), which could lead to a richer spectrum.
 
-2. **Fourieranalyse der Residuen:**  
-   Residuum bei Pol $z=z_j$ trägt einen Term wie $N^{\text{Re}(z_j)} \exp(2\pi i (\text{Im}(z_j)/\log\varphi) \log N)$ zur asymptotischen Entwicklung bei.
+2. **Fourier analysis of the residues:**  
+   The residue at a pole $z=z_j$ contributes a term like $N^{\text{Re}(z_j)} \exp(2\pi i (\text{Im}(z_j)/\log\varphi) \log N)$ to the asymptotic expansion.
    
-   Sammle Terme nach *imaginären* Teilen (Frequenzen) und schreibe
-   $$\log R_c(N) = \frac{(\log N)^2}{4\log\varphi} + \text{(Hauptsekundärtermе)} + \Psi(\log_\varphi N),$$
-   wobei $\Psi$ eine (meist kleine) periodische Funktion ist.
+   Collect terms by *imaginary* parts (frequencies) and write
+   $$\log R_c(N) = \frac{(\log N)^2}{4\log\varphi} + \text{(main secondary terms)} + \Psi(\log_\varphi N),$$
+   where $\Psi$ is a (usually small) periodic function.
 
-3. **Explizite Fourierkoeffizienten:**  
-   Falls $\Psi(\phi) = \sum_{k\ne 0} a_k e^{2\pi i k \phi}$, extrahiere Koeffizienten $|a_k|$ aus theoretischen Residuen-Berechnungen und vergleiche gegen numerische Daten aus Phase 4.
+3. **Explicit Fourier coefficients:**  
+   If $\Psi(\phi) = \sum_{k\ne 0} a_k e^{2\pi i k \phi}$, extract the coefficients $|a_k|$ from theoretical residue computations and compare against numerical data from Phase 4.
 
-4. **Fehlerschranken:**  
-   Mit voller asymptotischer Entwicklung (bis zu Grad $d$ in Logarithmischen Termen) bekannt, verschaffe dir explizite, numerische Fehlerschranken der Form
-   $$\left|\log R_c(N) - \left(\frac{(\log N)^2}{4\log\varphi}+\text{(Korrektionen)}\right)\right| \le C\frac{(\log N)^d}{(\log\varphi)^d}$$
-   für effektive Konstante $C$ und Exponent $d < 2$ (besser als die Hauptordnung).
+4. **Error bounds:**  
+   With the full asymptotic expansion (up to degree $d$ in logarithmic terms) known, obtain explicit numerical error bounds of the form
+   $$\left|\log R_c(N) - \left(\frac{(\log N)^2}{4\log\varphi}+\text{(corrections)}\right)\right| \le C\frac{(\log N)^d}{(\log\varphi)^d}$$
+   for an effective constant $C$ and exponent $d < 2$ (better than the main order).
 
 ### Deliverables
 
-1. **Theorem: Asymptotische Entwicklung mit Oszillationen**  
-   Präzise Formulierung mit Fourierkoeffizienten.
+1. **Theorem: asymptotic expansion with oscillations**  
+   Precise formulation with Fourier coefficients.
 
-2. **Technical Note:** `phase6_oscillations.md` (6–8 Seiten)  
-   - Pole-Spektrum aus Phase 5.  
-   - Fourieranalyse.  
-   - Residuen-Berechnungen.  
-   - Fehlerschranken.
+2. **Technical note:** `phase6_oscillations.md` (6–8 pages)  
+   - Pole spectrum from Phase 5.  
+   - Fourier analysis.  
+   - Residue computations.  
+   - Error bounds.
 
-3. **Grafiken:** Vergleich numerischer Residuen (Phase 4) gegen theoretische Vorhersage der Oszillationen.
+3. **Figures:** Comparison of numerical residuals (Phase 4) against the theoretical prediction of the oscillations.
 
 ---
 
-## Phase 7 — Verallgemeinerung und Writeup
+## Phase 7 — Generalisation and write-up
 
-**Zeithorizont:** 2–3 Monate  
-**Kritikalität:** MITTEL — Kontext und Publikation
+**Time horizon:** 2–3 months  
+**Criticality:** MEDIUM — context and publication
 
-### Ziele
+### Goals
 
-- Die Ergebnisse auf allgemeine Caps und lineare Rekurrenzen verallgemeinern  
-- Verbindung zu den anderen vier offenen Problemen in Ihrem System herstellen  
-- Publikation schreiben
+- Generalise the results to general caps and linear recurrences  
+- Establish the connection to the other four open problems in your system  
+- Write the publication
 
-### Substanz
+### Substance
 
-1. **Verallgemeinerung: Beliebige Caps $d_k \le c F_k^\alpha$**  
+1. **Generalisation: arbitrary caps $d_k \le c F_k^\alpha$**  
    
-   Die Heuristik aus Phase 3 suggeriert, dass die Konstante $C_c(\alpha)$ interpoliert zwischen:
-   - $\alpha=0$: $d_k\le c$ (alle Positionen gleich gecappt) → andere Asymptotik?  
-   - $\alpha=1$: $d_k\le c F_k$ (unserer Fall) → $\frac{1}{4\log\varphi}$ (**bewiesen**, C5, Phase 2)
-   - $\alpha\to\infty$: $d_k\le c F_k^\infty$ (praktisch unkappot) → $\frac{1}{2\log\varphi}$ (Coons–Kristensen–Laursen).
+   The heuristic from Phase 3 suggests that the constant $C_c(\alpha)$ interpolates between:
+   - $\alpha=0$: $d_k\le c$ (all positions capped equally) → different asymptotics?  
+   - $\alpha=1$: $d_k\le c F_k$ (our case) → $\frac{1}{4\log\varphi}$ (**proved**, C5, Phase 2)
+   - $\alpha\to\infty$: $d_k\le c F_k^\infty$ (practically uncapped) → $\frac{1}{2\log\varphi}$ (Coons–Kristensen–Laursen).
    
-   Formuliere ein *parametrisches Theorem* mit $C_c(\alpha)$ als Funktion von $\alpha$ und verifiziere/beweise es für Grenzfälle.
+   Formulate a *parametric theorem* with $C_c(\alpha)$ as a function of $\alpha$ and verify/prove it for limiting cases.
 
-2. **Allgemeine lineare Rekurrenzen (Pisot-Basis)**  
+2. **General linear recurrences (Pisot base)**  
    
-   Coons–Kristensen–Laursen zeigen, dass der uncapped-Fall für beliebige linear-rekurrente Sequenzen (unter Pisot-Bedingung) funktioniert.  
+   Coons–Kristensen–Laursen show that the uncapped case works for arbitrary linearly recurrent sequences (under the Pisot condition).  
    
-   Extend dies zu Caps: Wie muss man $d_k$ auf Basis-$\alpha$ (statt Fibonacci) anpassen? Welche analogue Konstante $C_c(\text{Basis})$ ergibt sich?
+   Extend this to caps: how must $d_k$ be adapted on base $\alpha$ (instead of Fibonacci)? What analogous constant $C_c(\text{base})$ results?
 
-3. **Papierstruktur**  
-   - **Introduktion:** Ihr Zahlensystem; Motivation (Repräsentations-Zählung); Platzierung im Literatur-Kontext (Mahler, de Bruijn, CKL, Navas).  
-   - **Bekannte Anker:** Definieren, Satzbericht bestätigen für Fibonacci-uncapped und binär.  
-   - **Hauptresultat:** Sandwich-Theorem und Haupttheorem mit Beweis (beide Phase 2: C4 und C5, elementar, ohne Sattelpunkt); Heuristik als *Erklärung* der Konstante (Phase 3); Sekundärterm (Phase 5, offen).
-   - **Numerik:** Phase 4 Experimente.  
-   - **Oszillationen:** Phase 6 verfeinert Theorem.  
-   - **Verallgemeinerung:** $\alpha$-Interpolation; allgemeine Rekurrenzen (skizziert).  
-   - **Offene Probleme:** Die fünf Probleme aus ihrem System; welche sind jetzt teilweise gelöst? Welche bleiben offen?  
-   - **Anhang:** Vollständige Beweise schwieriger Lemmata; numerische Prozeduren.
+3. **Paper structure**  
+   - **Introduction:** Your number system; motivation (representation counting); placement in the context of the literature (Mahler, de Bruijn, CKL, Navas).  
+   - **Known anchors:** define, confirm the statement of results for Fibonacci-uncapped and binary.  
+   - **Main result:** Sandwich theorem and main theorem with proof (both Phase 2: C4 and C5, elementary, without saddle point); heuristic as an *explanation* of the constant (Phase 3); secondary term (Phase 5, open).
+   - **Numerics:** Phase 4 experiments.  
+   - **Oscillations:** Phase 6 refines the theorem.  
+   - **Generalisation:** $\alpha$-interpolation; general recurrences (sketched).  
+   - **Open problems:** The five problems from your system; which are now partially solved? Which remain open?  
+   - **Appendix:** Complete proofs of difficult lemmas; numerical procedures.
 
-4. **Verbindung zu anderen offenen Problemen in Ihrem System**  
+4. **Connection to other open problems in your system**  
    
-   (Basierend auf Ihrer bisherigen Forschung — bitte präzisieren Sie die vier anderen Probleme; dann kann diese Sektion konkretisiert werden.)
+   (Based on your research so far — please specify the four other problems; then this section can be made concrete.)
 
 ### Deliverables
 
-1. **Research Paper:** `CappedFibonacciPartitions.pdf`  
-   - Typisch 25–40 Seiten für ein gutes Mathematik-Journal (z.B. J. Number Theory, Ramanujan J., etc.).  
-   - Alle Theoreme rigoros; alle Numerik offengelegt.
+1. **Research paper:** `CappedFibonacciPartitions.pdf`  
+   - Typically 25–40 pages for a good mathematics journal (e.g. J. Number Theory, Ramanujan J., etc.).  
+   - All theorems rigorous; all numerics disclosed.
 
-2. **Preprint auf arXiv:** Vorbereitung und Submission.
+2. **Preprint on arXiv:** preparation and submission.
 
-3. **Präsentation (optional):** Kurz-Zusammenfassung (1–2 Seiten) für ggf. Diskussion mit Co-Autoren oder Mentoren.
-
----
-
-## Kritischer Pfad und Priorisierung
-
-```
-Phase 0 (1–2 Tage)
-    ↓
-Phase 0.5 (1 Tag)
-    ↓
-Phase 1 (1–2 Wochen) ← Parallels mit Phase 3
-    ↓
-Phase 2 (2–3 Wochen) — schnelles Theorem
-    ↓
-Phase 3 (3–4 Wochen) ← kritisches Herzstück
-Phase 4 (2–3 Wochen) — Numerik-Feedback
-    ↓
-**Entscheidungspunkt:** Konjektur robust genug für Phase 5?
-        (hinfällig für den Leitkoeffizienten — Phase 2 hat ihn bewiesen;
-         gilt weiter für den Sekundärterm)
-    ↓ Ja
-Phase 5A (4–6 Monate) — Mellin + Dirichletreihen
-    ↓
-Phase 6 (6–8 Wochen) — Oszillationen
-    ↓
-Phase 7 (2–3 Monate) — Writeup und Verallgemeinerung
-```
-
-**Zusammenfassung Zeithorizont:**  
-- **Kurzfristig (4–6 Wochen):** Phase 0–2 liefern Sandwich-Theorem + Beweis für Größenordnung.  
-- **Mittelfristig (3–4 Monate zusätzlich):** Phase 3–4 etablieren robuste numerische Konjektur.
-  (Phase 2 hat den Leitkoeffizienten bereits bewiesen; gemeint ist ab jetzt der Sekundärterm.)
-- **Langfristig (6–12 Monate):** Phase 5–7 erzielen vollständigen Beweis und publikationsfähiges Papier.
+3. **Presentation (optional):** Short summary (1–2 pages) for possible discussion with co-authors or mentors.
 
 ---
 
-## Literatur-Anker (Referenzen für alle Phasen)
+## Critical path and prioritisation
+
+```
+Phase 0 (1–2 days)
+    ↓
+Phase 0.5 (1 day)
+    ↓
+Phase 1 (1–2 weeks) ← in parallel with Phase 3
+    ↓
+Phase 2 (2–3 weeks) — quick theorem
+    ↓
+Phase 3 (3–4 weeks) ← critical core piece
+Phase 4 (2–3 weeks) — numerics feedback
+    ↓
+**Decision point:** conjecture robust enough for Phase 5?
+        (moot for the leading coefficient — Phase 2 has proved it;
+         still applies to the secondary term)
+    ↓ Yes
+Phase 5A (4–6 months) — Mellin + Dirichlet series
+    ↓
+Phase 6 (6–8 weeks) — oscillations
+    ↓
+Phase 7 (2–3 months) — write-up and generalisation
+```
+
+**Time horizon summary:**  
+- **Short term (4–6 weeks):** Phases 0–2 deliver the sandwich theorem + proof of the order of magnitude.  
+- **Medium term (3–4 additional months):** Phases 3–4 establish a robust numerical conjecture.
+  (Phase 2 has already proved the leading coefficient; from now on this refers to the secondary term.)
+- **Long term (6–12 months):** Phases 5–7 achieve a complete proof and a publishable paper.
+
+---
+
+## Literature anchors (references for all phases)
 
 1. **Mahler, K.** (1940). "An application of Jensen's formula to polynomials." *Mathematica*, 7(2).  
-   → Ursprung der Idee für binary partitions.
+   → Origin of the idea for binary partitions.
 
 2. **de Bruijn, N. G.** (1948). "On the number of uncancelled elements in the sieve of Eratosthenes." *Proc. Ned. Akad.*  
-   → Oszillations-Theorie für binary partitions.
+   → Oscillation theory for binary partitions.
 
 3. **Coons, M., Kristensen, S., Laursen, M. L.** (2023). "Asymptotics for partitions over the Fibonacci numbers and related sequences." arXiv:2312.07404.  
-   → *Zentral für unser Projekt:* uncapped Fibonacci partitions, Mellin/Dirichletreihen-Methode, Navas' $\zeta_F$.
+   → *Central to our project:* uncapped Fibonacci partitions, Mellin/Dirichlet-series method, Navas' $\zeta_F$.
 
-4. **Navas, L.** (20XX). "Analytic continuation of the Fibonacci zeta function." [Referenz nachschlagen; in Coons–Kristensen–Laursen zitiert].  
-   → $\zeta_F(z)$ analytische Fortsetzung; Pole und Residuen.
+4. **Navas, L.** (20XX). "Analytic continuation of the Fibonacci zeta function." [Reference to be looked up; cited in Coons–Kristensen–Laursen].  
+   → $\zeta_F(z)$ analytic continuation; poles and residues.
 
 5. **Hardy, G. H., Ramanujan, S.** (1918). "Asymptotic formulae in combinatory analysis." *Proc. London Math. Soc.*  
-   → Klassische partitions asymptotic; Ausgangspunkt für alle modernen Methoden.
+   → Classical partition asymptotics; starting point for all modern methods.
 
 6. **Meinardus, G.** (1954). "Asymptotische Formeln für Partitionsfunktionen." *Mathematische Annalen*.  
-   → Generalisiert Hardy–Ramanujan auf Partitionen mit Restringierten Summanden; scheitert bei lacunaren Sequenzen (wie Fibonacci!).
+   → Generalises Hardy–Ramanujan to partitions with restricted summands; fails for lacunary sequences (such as Fibonacci!).
 
-7. **Stockmeyer, P., Chow, S., Slattery, T.** (2019–2020). "On the Fibonacci partition function" (OEIS A000119 und erwandte Arbeiten).  
-   → Distinct Fibonacci partitions; Automatenliteratur.
+7. **Stockmeyer, P., Chow, S., Slattery, T.** (2019–2020). "On the Fibonacci partition function" (OEIS A000119 and related work).  
+   → Distinct Fibonacci partitions; automata literature.
 
 ---
 
-## Anhang: Offene Fragen zur Erkundung
+## Appendix: open questions for exploration
 
-1. **Beyond $\alpha=1$:** Wie veränd sich $C_c(\alpha)$ für $\alpha \ne 1$?  
-2. **Oszillationen:** Welche Frequenzen entstehen in $\Psi(\log_\varphi N)$?  
-3. **Allgemeine Rekurrenzen:** Welche Pisot-Sequenzen verhalten sich ähnlich?  
-4. **Zeckendorf-Konnex:** Wie verfeinert sich Ihre Zeckendorf-Darstellung unter dem Cap?  
-5. **Generische Frage:** Ist die Halbierung durch den Cap ein universelles Phänomen in gefilterten Partition-Problemen?
+1. **Beyond $\alpha=1$:** How does $C_c(\alpha)$ change for $\alpha \ne 1$?  
+2. **Oscillations:** Which frequencies arise in $\Psi(\log_\varphi N)$?  
+3. **General recurrences:** Which Pisot sequences behave similarly?  
+4. **Zeckendorf connection:** How does your Zeckendorf representation refine under the cap?  
+5. **Generic question:** Is the halving by the cap a universal phenomenon in filtered partition problems?
 
 ---
 
 **Version 1.0 — August 2026**  
-Bereit für Feedback, Iterationen und konkrete Umsetzung.
+Ready for feedback, iterations and concrete implementation.
