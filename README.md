@@ -50,3 +50,10 @@ bash scripts/setup.sh
 
 `F_1 = F_2 = 1`, `F_3 = 2`, `F_4 = 3`, `F_5 = 5`, … Defined once in `capfib/fib.py`.
 See `theory/00-definitions.md`.
+
+## License
+
+- **Code** (`capfib/`, `scripts/`, `tests/`, `lean/`, `.github/`, `.claude/`): [MIT](LICENSE).
+- **Everything else** — documentation, `theory/`, `paper/`, `data/`, `figures/`: [CC BY 4.0](LICENSE-CC-BY-4.0).
+
+To cite this work, see [`CITATION.cff`](CITATION.cff).
