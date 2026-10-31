@@ -9,6 +9,7 @@ leaves neither a partial artifact nor a stray temp file behind.
 import csv
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -160,9 +161,16 @@ def test_publish_writes_then_records_the_written_bytes(tmp_path):
     assert recorded[1]["params"] == {"n": 2}
 
 
-def test_git_rev_of_this_repository_is_a_sha():
-    rev = git_rev(ROOT)
-    assert len(rev) == 40 and all(ch in "0123456789abcdef" for ch in rev)
+def test_git_rev_returns_the_head_of_the_given_repository(tmp_path):
+    # Builds its own repository rather than asking about this one: a test run
+    # from `git archive` output has no .git, and must not fail for that.
+    git = ["git", "-C", str(tmp_path), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run([*git, "init", "-q"], check=True)
+    subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", "x"], check=True)
+    head = subprocess.run(
+        [*git, "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+    assert git_rev(tmp_path) == head
 
 
 def test_git_rev_outside_a_repository_is_unknown(tmp_path):
