@@ -30,7 +30,7 @@ Defined in code exactly once, in `capfib/fib.py`.
 
 - **(A)** Does `C_c` exist with `log R_c(N) ~ C_c (log N)^2`? — **answered, Phase 2:**
   yes, and `C_c = 1/(4 log phi)` ({claim:leading-constant}, C5 of
-  `docs/phases/phase2_bounds.md` §8). The weaker two-sided bound on the liminf and
+  `docs/phases/phase2/report.md` §8). The weaker two-sided bound on the liminf and
   limsup ({claim:sandwich-bounds}, C4) is a distinct and still-true statement, and it
   is what C5 improves on.
 - **(B)** `log R_c(N) = C_c (log N)^2 + c_1 log N loglog N + c_2 log N + osc + o(1)`?

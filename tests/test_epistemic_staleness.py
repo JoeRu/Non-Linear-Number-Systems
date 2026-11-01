@@ -13,7 +13,7 @@ even though those are exactly the trees `check_claims.py` reads. That is
 not because `check_claims.py` already screens that Markdown for stale
 proof-state language: it has no `sorry`-related pattern at all, only
 claim-ledger and universal-quantifier checks, so a "still a `sorry`"
-sentence written into e.g. `docs/phases/phase2_bounds.md` would be caught by
+sentence written into e.g. `docs/phases/phase2/report.md` would be caught by
 neither guard today. The trees are left out of this file only to avoid a
 second copy of the same patterns; that Markdown blind spot is real and
 unmitigated, not covered elsewhere.

@@ -3,7 +3,7 @@
 **Date:** 2026-08-21
 **Status:** design spec, awaiting review
 **Roadmap phase:** 2 (`docs/roadmap.md` §"Phase 2 — Elementare Schranken: Das Sandwich")
-**Predecessor:** Phase 1 (`docs/phase1.md`), Phase 0.5 (`docs/phases/phase0_5_gate.md`)
+**Predecessor:** Phase 1 (`docs/phases/phase1/summary.md`), Phase 0.5 (`docs/phases/phase0_5/report.md`)
 
 ---
 
@@ -32,7 +32,7 @@ infrastructure spec's `D1`, `D2`, … which this document also cites.
 ## 2. Notation
 
 Fibonacci convention is `D2` of the infrastructure spec
-(`docs/superpowers/specs/2026-08-19-research-infrastructure-design.md`), fixed in `capfib/fib.py`: `F_1 = F_2 = 1`, `F_3 = 2`, …
+(`docs/design/specs/2026-08-19-research-infrastructure-design.md`), fixed in `capfib/fib.py`: `F_1 = F_2 = 1`, `F_3 = 2`, …
 `phi = (1+sqrt 5)/2`, `log phi = 0.4812118…`.
 
 ```
@@ -284,7 +284,7 @@ Phase 1's fluctuation finding predicts.
 **Time-box.** T5 is attempted only after T1–C4, their proofs, artifacts, and the Lean work are
 complete and committed. If neither route closes, the phase ships T1–C4 unchanged and the gap is
 stated honestly. Whichever route is attempted, the outcome — including a negative one, with the
-reason — is recorded in `docs/phases/phase2_bounds.md`.
+reason — is recorded in `docs/phases/phase2/report.md`.
 
 ### 4.5 The Lean interface
 
@@ -490,8 +490,8 @@ reported. This gives correspondence, not mere co-occurrence.
    of the exact Phase 1 values in the suite, and across the full range in `run_phase2.py`.
 4. **Lower bound** — the T3 formula with the implemented `C`, `N_0` does not exceed the exact
    `log R_c(N)` anywhere in `[N_0, 10^6]`.
-5. **Figures file** — every `{fig:KEY}` tag in `docs/phase2.md` and
-   `docs/phases/phase2_bounds.md` resolves in `data/phase2_figures.json` and the literal
+5. **Figures file** — every `{fig:KEY}` tag in `docs/phases/phase2/summary.md` and
+   `docs/phases/phase2/report.md` resolves in `data/phase2_figures.json` and the literal
    preceding it matches the stored value at the recorded precision; unused keys are reported.
 6. **Lean** — `lake build` succeeds and `#print axioms` shows no `sorryAx` for the two target
    theorems.
@@ -503,10 +503,10 @@ sampled ones in `pytest`.
 
 ## 9. Documents
 
-- `docs/phases/phase2_bounds.md` — the technical note: T1, T2, T3, C4 with full proofs,
+- `docs/phases/phase2/report.md` — the technical note: T1, T2, T3, C4 with full proofs,
   the L2 attempt and its outcome, the numerical confrontation, and the CKL comparison remark.
-- `docs/phase2.md` — summary, cross-referenced from `docs/roadmap.md`, following the
-  `docs/phase1.md` pattern.
+- `docs/phases/phase2/summary.md` — summary, cross-referenced from `docs/roadmap.md`, following the
+  `docs/phases/phase1/summary.md` pattern.
 - `docs/roadmap.md` — Phase 2 checkboxes with commit hashes; and two corrections at
   `docs/roadmap.md:351`:
   1. The formula there reads `C_c = (log N)^2 / (C' log phi)`, which cannot be right for a
@@ -528,7 +528,7 @@ is not established here.
 The two documents cannot both stand as written. Phase 2 reconciles them in the weaker direction,
 which is cheap now that T2 does not depend on CKL at all: `theory/00-definitions.md` is amended
 so the identification is stated as *pending verification against the paper*, and the comparison
-remark in `phase2_bounds.md` is phrased qualitatively, asserting no numerical relationship
+remark in `docs/phases/phase2/report.md` is phrased qualitatively, asserting no numerical relationship
 between our constants and theirs. Obtaining the paper and making the comparison precise stays
 out of scope (§11).
 
@@ -571,7 +571,7 @@ the two in step.
 
 | id | status | statement shape |
 |---|---|---|
-| `sandwich-bounds` | `theorem` | `1/(8 log phi) <= liminf <= limsup <= 1/(4 log phi)`, stated for liminf/limsup and **not** asserting that `C_c` exists; proof location `docs/phases/phase2_bounds.md` |
+| `sandwich-bounds` | `theorem` | `1/(8 log phi) <= liminf <= limsup <= 1/(4 log phi)`, stated for liminf/limsup and **not** asserting that `C_c` exists; proof location `docs/phases/phase2/report.md` |
 | `chernoff-effective-verified` | `verified-numeric` | The certified Chernoff bound holds at every `N <= 10^6`, range stated explicitly |
 | `product-residual-constant` | `verified-numeric` | `log F_c(e^-s) - (log(1/s))^2/(4 log phi) ≈ 3.2274` over the **sampled** `log(1/s)` range, stated as a sampled observation and not as an `O(1)` error term |
 
@@ -587,7 +587,7 @@ repaired overlapping-interval argument (§9), and the untagged CKL row in
 
 ## 13. Acceptance criteria
 
-1. T1, T2, T3, C4 stated and proved in `docs/phases/phase2_bounds.md`, with T2's error control
+1. T1, T2, T3, C4 stated and proved in `docs/phases/phase2/report.md`, with T2's error control
    written up via the uniform-bound scheme of §4.2 — not the withdrawn Binet-only argument —
    and C4 carrying its "if `C_c` exists" caveat.
 2. `lake build` clean; no `sorry` remains in `lean/NonLinearNumberSystems/`.

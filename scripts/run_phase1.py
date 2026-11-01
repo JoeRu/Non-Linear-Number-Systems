@@ -8,14 +8,9 @@ standing gate covers. It costs ~5 minutes at 10^6 and is not optional.
 """
 
 import argparse
-import csv
-import io
 import json
 import math
-import os
 import resource
-import subprocess
-import tempfile
 import time
 from pathlib import Path
 
@@ -23,10 +18,17 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from capfib.artifacts import (  # noqa: E402
+    atomic_savefig,
+    atomic_write_text,
+    csv_text,
+    figures_text,
+    publish,
+)
 from capfib.dp import counts as dp_counts  # noqa: E402
 from capfib.fib import places_up_to  # noqa: E402
 from capfib.gf import coefficients  # noqa: E402
-from capfib.manifest import record  # noqa: E402
+from capfib.manifest import git_rev, record  # noqa: E402
 from capfib.stats import (  # noqa: E402
     block_extrema,
     local_ratios,
@@ -41,46 +43,6 @@ SUMMARY_JSON = REPO_ROOT / "data" / "phase1_summary.json"
 FIG_GROWTH = REPO_ROOT / "figures" / "phase1_growth.png"
 FIG_FLUCT = REPO_ROOT / "figures" / "phase1_fluctuation.png"
 MANIFEST = REPO_ROOT / "data" / "manifest.json"
-
-
-def git_rev() -> str:
-    try:
-        out = subprocess.run(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"],
-                             capture_output=True, text=True, check=True)
-        return out.stdout.strip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return "unknown"
-
-
-def atomic_write_text(path: Path, text: str) -> None:
-    """Write via a temp file and rename, so a failure cannot leave a partial
-    artifact that later looks validated."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", newline="") as fh:
-            fh.write(text)
-        os.replace(tmp, path)
-    except BaseException:
-        Path(tmp).unlink(missing_ok=True)
-        raise
-
-
-def atomic_savefig(fig, path: Path, **kwargs) -> None:
-    """Save a figure via a temp file and rename, matching atomic_write_text.
-
-    matplotlib infers the format from the filename, so the temp file keeps the
-    target's suffix.
-    """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=path.suffix)
-    os.close(fd)
-    try:
-        fig.savefig(tmp, **kwargs)
-        os.replace(tmp, path)
-    except BaseException:
-        Path(tmp).unlink(missing_ok=True)
-        raise
 
 
 def ladder(n_max: int) -> list[int]:
@@ -244,16 +206,12 @@ def main() -> int:
               f"would not be at the largest N computed.")
         print("Writing nothing.")
         return 1
-    sio = io.StringIO()
-    w = csv.DictWriter(sio, fieldnames=list(rows[0]))
-    w.writeheader()
-    w.writerows(rows)
-    atomic_write_text(DATA_CSV, sio.getvalue())
+    atomic_write_text(DATA_CSV, csv_text(rows))
 
     srt = sorted(ratios)
     summary = {
         "n_max": n_max,
-        "git_rev": git_rev(),
+        "git_rev": git_rev(REPO_ROOT),
         "crosscheck": crosscheck,
         # spec section 9 criterion 4: every measurement the design quotes must be
         # re-derived here, so no figure in the spec rests on an unrecorded run.
@@ -281,7 +239,6 @@ def main() -> int:
 
     # --- figures: distinct colours, matchable legend entries ---
     xs = [r["log_N_sq"] for r in rows]
-    FIG_GROWTH.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(xs, [r["log_R_c"] for r in rows], "o-", color="#1f77b4", label="log R_c(N)")
     ax.plot(xs, [r["log_S_c"] for r in rows], "s--", color="#d62728", label="log S_c(N)")
@@ -325,7 +282,7 @@ def main() -> int:
     #
     # The other half of that decision, learned the hard way: because they are
     # untagged, prose must not quote them as *specific values* either. Three
-    # regenerations on one branch left `docs/phases/phase1_report.md` saying
+    # regenerations on one branch left `docs/phases/phase1/report.md` saying
     # "8.7 s / 286.9 s / 273 MB" of a run that had recorded 8.9 / 286.1 / 274
     # -- risk R-002's exact failure mode, inside the branch that closed it.
     # The report now states them rounded ("roughly nine seconds", "under
@@ -336,7 +293,7 @@ def main() -> int:
     # full as tables/lists read straight from data/phase1_summary.json;
     # `tests/test_phase1_tables.py` checks every cell of both tables against
     # this file directly (anchored on the `<!-- table:... -->` markers in
-    # `docs/phases/phase1_report.md`), so they do not need a `{fig:key}` per
+    # `docs/phases/phase1/report.md`), so they do not need a `{fig:key}` per
     # cell -- that would be on the order of a hundred more keys. Only the
     # specific values pulled out of them into prose as headline figures (a
     # handful of individual place-jump ratios, the block count, the flat-step
@@ -465,9 +422,8 @@ def main() -> int:
         },
     }
     figures_path = REPO_ROOT / "data" / "phase1_figures.json"
-    atomic_write_text(figures_path, json.dumps(figures, indent=2, sort_keys=True) + "\n")
-    record(figures_path, script="scripts/run_phase1.py", params={"n_max": n_max},
-           manifest_path=MANIFEST)
+    publish(figures_path, figures_text(figures), "scripts/run_phase1.py",
+            {"n_max": n_max}, manifest_path=MANIFEST)
 
     print(f"wrote {DATA_CSV.name}, {SUMMARY_JSON.name}, "
           f"{FIG_GROWTH.name}, {FIG_FLUCT.name}, {figures_path.name}")

@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # bare boolean constant because a phase's documents can, in general, be
 # added and tagged on different schedules -- Phase 1 itself sat at `False`
 # while its documents were untagged, and this row is what got flipped once
-# they were (`docs/phase1.md`, `docs/phases/phase1_report.md`).
+# they were (`docs/phases/phase1/summary.md`, `docs/phases/phase1/report.md`).
 #
 # That flip is not automatic, and forgetting it half-way is worse than
 # forgetting it outright: if one of a phase's documents gets tagged and the
@@ -46,10 +46,10 @@ ROOT = Path(__file__).resolve().parents[1]
 # Registering it here is what lets those literals carry a `{fig:}` tag at all.
 PHASES = (
     ("phase1", ROOT / "data" / "phase1_figures.json",
-     ("docs/phase1.md", "docs/phases/phase1_report.md", "docs/roadmap.md"),
+     ("docs/phases/phase1/summary.md", "docs/phases/phase1/report.md", "docs/roadmap.md"),
      True),
     ("phase2", ROOT / "data" / "phase2_figures.json",
-     ("docs/phase2.md", "docs/phases/phase2_bounds.md"), True),
+     ("docs/phases/phase2/summary.md", "docs/phases/phase2/report.md"), True),
 )
 
 # Figure keys a phase generates but that no registered document quotes, with
@@ -58,7 +58,7 @@ PHASES = (
 # quotes fails, and a key here that later gets quoted fails too (remove it
 # then). Before this was an assertion it was a `print`, and
 # `figure keys generated but never quoted: ['n-max']` scrolled past on every
-# run for as long as `docs/phase1.md` claimed in prose that every generated
+# run for as long as `docs/phases/phase1/summary.md` claimed in prose that every generated
 # figure was tagged -- the statement and the evidence against it were in the
 # same test output.
 KEYS_KNOWINGLY_UNQUOTED = {
@@ -213,8 +213,8 @@ def test_every_tag_resolves_and_matches(phase):
 
     The test skips only when *none* of the documents exist. An earlier
     version skipped the whole test on the first absent document: while
-    `docs/phase2.md` was unwritten, this check silently did not run against
-    `docs/phases/phase2_bounds.md` either, even though that file was present
+    `docs/phases/phase2/summary.md` was unwritten, this check silently did not run against
+    `docs/phases/phase2/report.md` either, even though that file was present
     and full of tags. The drift detector for risk R-002 was disabled by the
     absence of an unrelated file. Absent documents are now reported and
     stepped over, not treated as grounds to stop.
@@ -403,7 +403,7 @@ def test_tags_required_matches_document_state(phase):
 #
 # Directories that legitimately quote a `{fig:...}` figure without being
 # registered. Kept short and explicit, not a broad pattern, per review:
-#   - `docs/superpowers/`: dated specs and plans are historical snapshots of
+#   - `docs/design/`, `docs/archive/`: dated specs and plans are historical snapshots of
 #     prose written *at* a past commit (some genuinely embed real,
 #     literal-backed tags, e.g. the plan for this very task) -- registering
 #     them would mean validating a finished plan's numbers forever after the
@@ -415,7 +415,7 @@ def test_tags_required_matches_document_state(phase):
 # `.superpowers/` (the session scratch workspace) was such an entry and has
 # been dropped for that reason -- it is not reachable, and keeping it
 # described a mechanism that does not exist.
-UNREGISTERED_DOC_PREFIXES = ("docs/superpowers/",)
+UNREGISTERED_DOC_PREFIXES = ("docs/design/", "docs/archive/")
 
 # Root files/directories that can hold narrative prose quoting generated
 # figures. Not the whole repository -- walking `.venv/`, `.git/`, or

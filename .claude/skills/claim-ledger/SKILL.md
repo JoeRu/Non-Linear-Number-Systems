@@ -72,7 +72,7 @@ citation; detect negation around the marker.
 The distinction this enforces is the epistemic content of the project, and the
 roadmap's original division of labour — Phase 3 produces the heuristic, Phase 5
 produces the theorem — no longer describes where things stand. C5 of
-`docs/phases/phase2_bounds.md` §8 proved the leading constant in **Phase 2**,
+`docs/phases/phase2/report.md` §8 proved the leading constant in **Phase 2**,
 elementarily and without a saddle point, so `leading-constant` is a `theorem`
 already. What Phase 3 still owes is an *explanation* of that constant from the
 saddle point, and what Phase 5 still owes is the secondary term
@@ -84,8 +84,10 @@ against the old plan went stale in the same commit.
 
 ## Promoting a claim
 
-Five checks, each earned by a specific promotion going wrong. Run all five
-whenever a claim's status field changes.
+Six checks. The first five were each earned by a specific promotion going
+wrong, and all five run whenever a claim's status field changes. The sixth was
+earned by measurement rather than by an incident, and binds only on a change
+*into* `verified-numeric` or `theorem`.
 
 1. **Grep the claim id and read every citing paragraph by hand.** Promotion to
    `theorem` silently removes the hedging guard from those paragraphs — the
@@ -115,6 +117,55 @@ whenever a claim's status field changes.
    project three of them fired during Phase 2 and none were updated until a
    reviewer noticed independently — the trigger existing did not mean anyone
    looked at it.
+6. **Before promoting to `verified-numeric` or `theorem`, watch the guard
+   behind the evidence fail.** A guard nobody has seen fail is a claim about a
+   test — the same species of claim as "the bound was verified", and no more
+   checked. *Watched* means one mutation, chosen because it perturbs **this**
+   claim's own evidence (a node that merely shares a test with another claim's
+   mutation does not count), applied to a scratch tree from
+   `git archive HEAD | tar -x`. Commit the candidate first and check
+   `git status --porcelain` is empty: the archive is of `HEAD`, so uncommitted
+   evidence or guards would be tested in their previous version. Run the
+   unmutated tree as a baseline and require every target to **pass**; then the
+   mutant, with exactly the expected node ids going red, each with its recorded
+   failure message. Three details are load-bearing: the verdict is node ids
+   plus reason, never the exit code, which collection errors and timeouts also
+   produce; a target that was already red makes a non-kill look like a kill,
+   which is what the baseline rules out; and the run must start with its
+   working directory **inside** the scratch tree, because `sys.path[0]` is the
+   cwd and it outranks `PYTHONPATH`. Launched from the repository root, the M1
+   mutant reports *5 passed* — survived — with `PYTHONPATH` pointing at the tree
+   the whole time. Procedure in
+   `docs/design/specs/2026-08-25-claim-promotion-gate-design.md` §5.1, the
+   per-claim mutations in §4.
+
+   **Lean-backed evidence has no pytest node.** For it the step is §6 of that
+   spec: in a `cp -a` copy of `lean/`, replace the cited declaration's proof
+   with `sorry`, build, and require `sorryAx` to appear in `#print axioms
+   <decl>` — and to be absent unmutated. `#print axioms` exits 0 either way;
+   the verdict is the output text.
+
+   This one comes from measurement, not from an incident. Certified T1 replaced
+   by the constant `80.0` leaves **286 passing**; every T3 `log_count` zeroed
+   leaves **287 passing**; T5 weakened to `T3 + 0.01` leaves **288 passing** —
+   and in each case the claims resting on that step read as well-evidenced
+   throughout. No amount of reading catches this class, which is what separates
+   it from items 1-5.
+
+   **Evidence nothing guards is not promotable.** There is no third state:
+   nothing to mutate is nothing to watch. Write the guard, or pick a status
+   that does not assert numerical verification. §3 of that spec is the
+   retrospective run over the sixteen claims promoted before it and records per
+   claim what was watched and what could not be — `gate-local-slope` has no
+   guard of any kind, and `dp-gf-agree-to-nmax` is unresolved.
+
+   **The statement is not protected by any of this.** Rewriting
+   `rc-not-monotone`'s census figures while `data/phase1_summary.json` keeps
+   the real ones passes the whole suite and the validator. The spec proposes a
+   statement-binding check (§2.5), but §2.5.1 measured it as written missing
+   exactly that drift, and whether to specify it properly or drop it is an
+   open decision. Until it is decided, **compare every number in the
+   statement against the artifact by hand** — that is the operative rule.
 
 ## Writing about generated data
 

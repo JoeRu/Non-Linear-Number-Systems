@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python >= 3.11, pytest, the project venv at `.venv`.
 
-**Spec:** `docs/superpowers/specs/2026-08-23-defect-prevention-infrastructure-design.md` — §1 class D, §6.1, §6.2, §7 ("Pulled in"), acceptance criteria 10 and 11.
+**Spec:** `docs/design/specs/2026-08-23-defect-prevention-infrastructure-design.md` — §1 class D, §6.1, §6.2, §7 ("Pulled in"), acceptance criteria 10 and 11.
 
 ## Global Constraints
 
@@ -31,7 +31,7 @@
 | `data/phase1_figures.json` | **new, tracked.** The quotable Phase 1 figures — same `{key: {value, precision, description}}` schema as Phase 2. |
 | `.gitignore` | **modify.** Negation for the new tracked artifact, with the reason. |
 | `tests/test_figure_tags.py` | **new.** The generalised correspondence check, table-driven over both phases. Replaces `tests/test_phase2_figures.py`. |
-| `docs/phase1.md`, `docs/phases/phase1_report.md` | **modify.** Tag every quoted generated number. |
+| `docs/phases/phase1/summary.md`, `docs/phases/phase1/report.md` | **modify.** Tag every quoted generated number. |
 | `.claude/skills/claim-ledger/SKILL.md` | **modify.** Add §6.1 promotion checklist and §6.2 endpoint trap. |
 | `~/.claude/projects/-root-code-Non-Linear-Number-Systems/memory/` | **new files.** Two memory entries plus `MEMORY.md` pointers. |
 | `docs/risks.md` | **modify.** R-002 moves to `mitigated` outright once both phases are covered. |
@@ -243,9 +243,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 PHASES = (
     ("phase1", ROOT / "data" / "phase1_figures.json",
-     ("docs/phase1.md", "docs/phases/phase1_report.md")),
+     ("docs/phases/phase1/summary.md", "docs/phases/phase1/report.md")),
     ("phase2", ROOT / "data" / "phase2_figures.json",
-     ("docs/phase2.md", "docs/phases/phase2_bounds.md")),
+     ("docs/phases/phase2/summary.md", "docs/phases/phase2/report.md")),
 )
 ```
 
@@ -258,7 +258,7 @@ Expected: PASS. The Phase 2 cases must **run**, not skip — both documents exis
 
 - [ ] **Step 3: Prove the guard did not weaken in the move**
 
-Temporarily change one literal in `docs/phase2.md` (for example `13.5505` → `13.5506`), run the test, confirm it FAILS naming the key and file, then restore the file and confirm it passes. Record both outputs in your report.
+Temporarily change one literal in `docs/phases/phase2/summary.md` (for example `13.5505` → `13.5506`), run the test, confirm it FAILS naming the key and file, then restore the file and confirm it passes. Record both outputs in your report.
 
 - [ ] **Step 4: Remove the superseded file**
 
@@ -286,8 +286,8 @@ is data rather than logic."
 ## Task 3: Tag the Phase 1 documents
 
 **Files:**
-- Modify: `docs/phase1.md`
-- Modify: `docs/phases/phase1_report.md`
+- Modify: `docs/phases/phase1/summary.md`
+- Modify: `docs/phases/phase1/report.md`
 
 **Interfaces:**
 - Consumes: the keys published in Task 1 and the checker from Task 2.
@@ -295,7 +295,7 @@ is data rather than logic."
 
 **Scope, precisely.** Tag every literal that came out of `data/phase1_summary.json` or `data/phase1_data.csv`. Do **not** tag mathematical constants (`1/(4 log phi)`), structural numbers (section numbers, dates, `N = 10^6` used as a range bound in prose rather than as a measured result), or numbers quoted from the literature. If a literal is generated but has no key, add the key in `scripts/run_phase1.py` and regenerate — do not hand-copy it.
 
-**The residue must be stated, not hidden.** After tagging, some literals will remain untagged by design. Add a short note to `docs/phase1.md` saying which categories are untagged and why, so a reader knows the guarantee's edge. An unstated edge is how "mitigated" turns into "assumed safe".
+**The residue must be stated, not hidden.** After tagging, some literals will remain untagged by design. Add a short note to `docs/phases/phase1/summary.md` saying which categories are untagged and why, so a reader knows the guarantee's edge. An unstated edge is how "mitigated" turns into "assumed safe".
 
 - [ ] **Step 1: Inventory what is generated**
 
@@ -305,7 +305,7 @@ Run:
 .venv/bin/python - <<'EOF'
 import json, re, pathlib
 figs = json.load(open('data/phase1_figures.json'))
-for doc in ('docs/phase1.md', 'docs/phases/phase1_report.md'):
+for doc in ('docs/phases/phase1/summary.md', 'docs/phases/phase1/report.md'):
     text = pathlib.Path(doc).read_text()
     print(f"\n== {doc}")
     for key, entry in sorted(figs.items()):
@@ -341,7 +341,7 @@ Expected: `claims.yaml OK`. If the universal-quantifier guard fires on a paragra
 
 - [ ] **Step 5: Record the residue**
 
-Add to `docs/phase1.md`, near the top:
+Add to `docs/phases/phase1/summary.md`, near the top:
 
 ```markdown
 > **On the numbers below.** Every figure produced by `scripts/run_phase1.py` is
@@ -356,7 +356,7 @@ Add to `docs/phase1.md`, near the top:
 - [ ] **Step 6: Commit**
 
 ```bash
-git add docs/phase1.md docs/phases/phase1_report.md
+git add docs/phases/phase1/summary.md docs/phases/phase1/report.md
 git commit -m "docs: bind the Phase 1 documents' generated numbers to their artifacts
 
 Closes the open half of risk R-002. Every number produced by run_phase1.py is
@@ -381,7 +381,7 @@ rather than left for a reader to discover."
 
 - [ ] **Step 1: Update the entry**
 
-R-002 currently reads `mitigated for the Phase 2 documents … open for the Phase 1 ones`. Change it to `mitigated`, and say in the body: the mechanism is `{fig:key}` tags checked by `tests/test_figure_tags.py` against per-phase figures files; both phases are covered; the residue is the untagged categories named in `docs/phase1.md`. Update `Revisit when:` to name what would reopen it — a new narrative document that quotes generated numbers without being added to `PHASES`.
+R-002 currently reads `mitigated for the Phase 2 documents … open for the Phase 1 ones`. Change it to `mitigated`, and say in the body: the mechanism is `{fig:key}` tags checked by `tests/test_figure_tags.py` against per-phase figures files; both phases are covered; the residue is the untagged categories named in `docs/phases/phase1/summary.md`. Update `Revisit when:` to name what would reopen it — a new narrative document that quotes generated numbers without being added to `PHASES`.
 
 - [ ] **Step 2: Verify**
 

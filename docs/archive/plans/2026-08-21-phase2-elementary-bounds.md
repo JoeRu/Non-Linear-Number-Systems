@@ -4,11 +4,11 @@
 
 **Goal:** Prove and certify two-sided bounds `(log N)^2/(8 log phi) <= log R_c(N) <= (1+o(1))(log N)^2/(4 log phi)`, verify the effective upper bound against every exact Phase 1 value, and clear the repository's last two Lean `sorry`s.
 
-**Architecture:** A new certified-numerics module (`capfib/interval.py`) evaluates `log F_c(e^-s)` in interval arithmetic and becomes the oracle for the existing float path; `capfib/saddle.py` turns that into a rigorous Chernoff bound at a float-chosen `s`; `scripts/run_phase2.py` verifies the bound across `N <= 10^6` and emits artifacts plus a tracked figures file the prose cites by key. The mathematics lives in `docs/phases/phase2_bounds.md`; Lean proves only the two finite combinatorial statements the paper consumes.
+**Architecture:** A new certified-numerics module (`capfib/interval.py`) evaluates `log F_c(e^-s)` in interval arithmetic and becomes the oracle for the existing float path; `capfib/saddle.py` turns that into a rigorous Chernoff bound at a float-chosen `s`; `scripts/run_phase2.py` verifies the bound across `N <= 10^6` and emits artifacts plus a tracked figures file the prose cites by key. The mathematics lives in `docs/phases/phase2/report.md`; Lean proves only the two finite combinatorial statements the paper consumes.
 
 **Tech Stack:** Python >= 3.11, `mpmath.iv` (new dependency), numpy, matplotlib, pytest; Lean 4 with Mathlib v4.14.0.
 
-**Spec:** `docs/superpowers/specs/2026-08-21-phase2-elementary-bounds-design.md`
+**Spec:** `docs/design/specs/2026-08-21-phase2-elementary-bounds-design.md`
 
 ## Global Constraints
 
@@ -42,8 +42,8 @@
 | `theory/00-definitions.md` | **modify.** Restate the `R_u`/CKL identification as pending verification. |
 | `theory/claims.yaml` | **modify.** Three new entries; one evidence pointer updated. |
 | `scripts/check_claims.py` | **modify.** Add the Phase 2 documents to `SEARCH_FILES`. |
-| `docs/phases/phase2_bounds.md` | **new.** T1, T2, T3, C4 with proofs; the L2 outcome; the CKL remark. |
-| `docs/phase2.md` | **new.** Summary, cross-referenced from the roadmap. |
+| `docs/phases/phase2/report.md` | **new.** T1, T2, T3, C4 with proofs; the L2 outcome; the CKL remark. |
+| `docs/phases/phase2/summary.md` | **new.** Summary, cross-referenced from the roadmap. |
 | `docs/roadmap.md` | **modify.** Phase 2 checkboxes; three corrections (lines 341-342 and 351). |
 | `pyproject.toml`, `.gitignore` | **modify.** `mpmath>=1.3`; the `!data/phase2_figures.json` exception. |
 
@@ -1471,7 +1471,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 FIGURES = ROOT / "data" / "phase2_figures.json"
-DOCUMENTS = ("docs/phase2.md", "docs/phases/phase2_bounds.md")
+DOCUMENTS = ("docs/phases/phase2/summary.md", "docs/phases/phase2/report.md")
 
 TAG = re.compile(r"([-+]?[\d][\d,]*(?:\.\d+)?)\s*\{fig:([a-z0-9-]+)\}")
 BARE_TAG = re.compile(r"\{fig:([a-z0-9-]+)\}")
@@ -1548,9 +1548,9 @@ SEARCH_FILES = (
     "docs/roadmap.md",
     "README.md",
     "CLAUDE.md",
-    "docs/phase1.md",
-    "docs/phase2.md",
-    "docs/phases/phase2_bounds.md",
+    "docs/phases/phase1/summary.md",
+    "docs/phases/phase2/summary.md",
+    "docs/phases/phase2/report.md",
 )
 ```
 
@@ -1582,7 +1582,7 @@ universal-quantifier guard covers them."
 ## Task 8: The technical note — proofs of T1, T2, T3, C4
 
 **Files:**
-- Create: `docs/phases/phase2_bounds.md`
+- Create: `docs/phases/phase2/report.md`
 
 **Interfaces:**
 - Consumes: `data/phase2_figures.json` keys from Task 6; `exists_numeral_of_le` from Task 3.
@@ -1605,7 +1605,7 @@ architecture. Four things the spec is emphatic about, because each was a defect 
 
 - [ ] **Step 1: Write the document**
 
-Create `docs/phases/phase2_bounds.md` with these sections:
+Create `docs/phases/phase2/report.md` with these sections:
 
 1. **Setting and notation** — `R_c`, `F_c(x)`, `a_k(s)`, `T = log(1/s)`, `lambda = log phi`. State the
    convention `F_1 = F_2 = 1` and cite `{claim:convention-duplicated-place}`.
@@ -1661,7 +1661,7 @@ observation as a universal one — fix the prose, never the guard.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add docs/phases/phase2_bounds.md
+git add docs/phases/phase2/report.md
 git commit -m "docs: Phase 2 technical note with proofs of T1, T2, T3 and C4
 
 T2's error control uses uniform bounds on h(x) = -log(1-e^-x) with exact
@@ -1679,17 +1679,17 @@ C' = 4 rather than nesting."
 ## Task 9: Summary, ledger entries, roadmap corrections
 
 **Files:**
-- Create: `docs/phase2.md`
+- Create: `docs/phases/phase2/summary.md`
 - Modify: `theory/claims.yaml`
 - Modify: `docs/roadmap.md`
 
 **Interfaces:**
-- Consumes: `docs/phases/phase2_bounds.md` from Task 8, figure keys from Task 6.
+- Consumes: `docs/phases/phase2/report.md` from Task 8, figure keys from Task 6.
 - Produces: the phase's public face.
 
 - [ ] **Step 1: Write the summary**
 
-Create `docs/phase2.md`, following `docs/phase1.md`'s shape: what was proved, what was verified and
+Create `docs/phases/phase2/summary.md`, following `docs/phases/phase1/summary.md`'s shape: what was proved, what was verified and
 over what range, what remains open. Quote figures by key exactly as in Task 8. State plainly that the
 sandwich does not close, that `C' in [4,8]` conditional on `C_c` existing, and that the Phase 3
 conjecture sits at the upper endpoint.
@@ -1702,7 +1702,7 @@ Append to `theory/claims.yaml`:
 - id: sandwich-bounds
   statement: "1/(8 log phi) <= liminf log R_c(N)/(log N)^2 <= limsup log R_c(N)/(log N)^2 <= 1/(4 log phi). This bounds the liminf and limsup only; it does not assert that the limit C_c exists."
   status: theorem
-  evidence: "Proved in docs/phases/phase2_bounds.md (T1, T2, T3, C4); the fixup step is formalised in Lean as exists_numeral_of_le in lean/NonLinearNumberSystems/Completeness.lean"
+  evidence: "Proved in docs/phases/phase2/report.md (T1, T2, T3, C4); the fixup step is formalised in Lean as exists_numeral_of_le in lean/NonLinearNumberSystems/Completeness.lean"
   source: "this project, Phase 2"
 
 - id: chernoff-effective-verified
@@ -1726,7 +1726,7 @@ make the three corrections:
 At `docs/roadmap.md:341-342`, replace the sentence claiming the construction gives "mindestens
 `R_u(N-M)` Möglichkeiten" with a note that this direction is unavailable — capping only removes
 representations, so `R_c <= R_u` and `R_u` cannot bound `R_c` from below — and point at
-`docs/phases/phase2_bounds.md` for the construction that does work.
+`docs/phases/phase2/report.md` for the construction that does work.
 
 At `docs/roadmap.md:351`, replace `C_c = \frac{(\log N)^2}{C'\log\varphi}` with
 `C_c = \frac{1}{C'\log\varphi}` — the `(\log N)^2` does not belong in a constant — and replace the
@@ -1747,7 +1747,7 @@ Expected: succeeds with no `sorry` warnings.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add docs/phase2.md theory/claims.yaml docs/roadmap.md
+git add docs/phases/phase2/summary.md theory/claims.yaml docs/roadmap.md
 git commit -m "docs: Phase 2 summary, ledger entries and roadmap corrections
 
 Records the sandwich as a theorem, the certified bound's verification over
@@ -1764,7 +1764,7 @@ below by R_u, which is the wrong direction; line 351 wrote a constant with a
 ## Task 10 (stretch): attempt to close the sandwich
 
 **Files:**
-- Modify: `docs/phases/phase2_bounds.md` (the L2 section)
+- Modify: `docs/phases/phase2/report.md` (the L2 section)
 - Modify: `theory/claims.yaml` only if a route succeeds
 
 **Interfaces:**
@@ -1791,11 +1791,11 @@ enough.
 
 - [ ] **Step 3: Record the outcome either way**
 
-Write the L2 section of `docs/phases/phase2_bounds.md`: which route was attempted, how far it got, and
+Write the L2 section of `docs/phases/phase2/report.md`: which route was attempted, how far it got, and
 precisely where it stopped. A negative result with a located obstacle is a deliverable; silence is not.
 
 If a route succeeded: restate `sandwich-bounds`, move `leading-constant` from `conjecture` to `theorem`
-with its proof location, and update `docs/roadmap.md` and `docs/phase2.md`.
+with its proof location, and update `docs/roadmap.md` and `docs/phases/phase2/summary.md`.
 
 - [ ] **Step 4: Validate and commit**
 

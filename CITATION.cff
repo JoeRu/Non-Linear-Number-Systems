@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it as below."
+title: "Non-Linear Number Systems: asymptotics of capacity-constrained Fibonacci partitions"
+abstract: >-
+  A research program on the asymptotics of R_c(N), the number of
+  representations of N as sum_k d_k F_k with position-dependent digit bounds
+  0 <= d_k <= F_k. Includes the capfib numerics package, exact values of
+  R_c(N) for N <= 10^6, a proof that log R_c(N)/(log N)^2 tends to
+  1/(4 log phi), and a Lean 4 / Mathlib formalisation of the elementary
+  combinatorial layer.
+type: software
+authors:
+  - family-names: Rumpf
+    given-names: Johannes
+    orcid: "https://orcid.org/0009-0001-8675-0608"
+repository-code: "https://github.com/JoeRu/Non-Linear-Number-Systems"
+version: 0.1.0
+license:
+  - MIT
+  - CC-BY-4.0
+keywords:
+  - Fibonacci numeration
+  - integer partitions
+  - asymptotic enumeration
+  - Lean 4
+  - Mathlib

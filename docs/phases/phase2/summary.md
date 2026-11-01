@@ -21,7 +21,7 @@ between two expressions at a given `N`: C5 is a statement about the limit, and
 the sampled ratios at `N = 2, 3, 5` sit above `1/(4 log phi)` (see "The ratio").
 C4 is likewise a statement about the liminf and limsup and about nothing else.
 
-The proofs are in [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md);
+The proofs are in [`docs/phases/phase2/report.md`](report.md);
 this page is the summary and quotes it. Every generated number below is read
 from `data/phase2_figures.json` by key, and `tests/test_figure_tags.py`
 requires the literal in the prose to match the stored value exactly.
@@ -72,7 +72,7 @@ numerically 0.2598 {fig:lower-constant} to 0.5195 {fig:upper-constant}.
 **C4 does not assert that `C_c` exists — C5 does.** C4 bounds the liminf and the
 limsup, which is strictly weaker than convergence, and nothing in T1–T3 bears on
 whether `log R_c(N)/(log N)^2` converges: that is research question (A) of
-[`theory/00-definitions.md`](../theory/00-definitions.md), and it is answered by
+[`theory/00-definitions.md`](../../../theory/00-definitions.md), and it is answered by
 C5 below, not by C4. Keeping the two apart matters, because it is exactly what
 T5 had to supply beyond a constant. The roadmap's parametrisation
 `C_c = 1/(C' log phi)` presupposes existence; C4 alone gives `C' in [4, 8]`
@@ -258,7 +258,7 @@ the all-places `R_c(N) <= R_u(N)` of §1 (technical note §7) — and it is
 **not load-bearing**: it backs the qualitative comparison remark of §7 of the
 technical note and nothing else. Nothing proved in Phase 2 depends on
 identifying our `R_u` with CKL's `p_F`, an identification that remains recorded
-as pending verification in [`theory/00-definitions.md`](../theory/00-definitions.md).
+as pending verification in [`theory/00-definitions.md`](../../../theory/00-definitions.md).
 
 **It does not confirm a leading constant numerically.** At `N <= 1000000` the
 ratio is far from either endpoint, and Phase 1 already recorded that this range
@@ -321,9 +321,9 @@ parent directory to exist.
 
 | | |
 |---|---|
-| Proofs (T1, T2, T3, C4, Lemma F, T5, C5) | [`docs/phases/phase2_bounds.md`](phases/phase2_bounds.md) |
-| Design spec | [`docs/superpowers/specs/2026-08-21-phase2-elementary-bounds-design.md`](superpowers/specs/2026-08-21-phase2-elementary-bounds-design.md) |
-| Claims | [`theory/claims.yaml`](../theory/claims.yaml), validated by `scripts/check_claims.py` |
+| Proofs (T1, T2, T3, C4, Lemma F, T5, C5) | [`docs/phases/phase2/report.md`](report.md) |
+| Design spec | [`docs/design/specs/2026-08-21-phase2-elementary-bounds-design.md`](../../../../design/specs/2026-08-21-phase2-elementary-bounds-design.md) |
+| Claims | [`theory/claims.yaml`](../../../theory/claims.yaml), validated by `scripts/check_claims.py` |
 | Lean | `lean/NonLinearNumberSystems/Completeness.lean`, `lean/NonLinearNumberSystems/Bounds.lean` |
 | Verification run | `scripts/run_phase2.py` → `data/phase2_bounds.csv`, `data/phase2_residual.csv`, `data/phase2_figures.json`, `figures/phase2_sandwich.png` |
-| Open review disputes | [`docs/risks.md`](risks.md) |
+| Open review disputes | [`docs/risks.md`](../../../../risks.md) |

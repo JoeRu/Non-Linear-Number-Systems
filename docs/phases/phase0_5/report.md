@@ -25,7 +25,7 @@ rising toward 0.5195 — and that is its whole content {claim:gate-local-slope}.
 Read the direction carefully, because this page had it backwards until it was corrected:
 the measured slope 0.5187 lies **below** `1/(2 log phi) = 1.039`, not above it, and
 **above** `1/(8 log phi) = 0.260`. Neither position is what rules the candidate out.
-`1/(2 log phi)` is excluded by T2 of `docs/phases/phase2_bounds.md` — which proves the
+`1/(2 log phi)` is excluded by T2 of `docs/phases/phase2/report.md` — which proves the
 transform's leading coefficient *is* `1/(4 log phi)` — together with T1 putting
 `log R_c(N)` at or below the transform. `1/(8 log phi)` is excluded by C5. Phase 0.5
 itself, which had neither, could only read the measurement conditionally on the
@@ -49,7 +49,7 @@ Phase 5 must still establish it rigorously.
 discharged, none of them by this page's own method:
 
 - `{claim:leading-constant}` is no longer a conjecture. C5 of
-  `docs/phases/phase2_bounds.md` §8 proves that the limit exists and equals
+  `docs/phases/phase2/report.md` §8 proves that the limit exists and equals
   `1/(4 log phi)`, elementarily and without a saddle point.
 - `{claim:saddle-tightness}` is no longer a heuristic; it is a `theorem`,
   forced by T1, T2 and T5 together. Where this page says it is "expected, but

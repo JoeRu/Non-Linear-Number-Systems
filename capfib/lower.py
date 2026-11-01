@@ -62,7 +62,7 @@ THETA_HI = 3 / 4
 
 RHO = 1 / 5
 """min(THETA_HI - THETA_LO, THETA_LO, 1 - THETA_HI): the worst case of the four
-cases in the flatness lemma of docs/phases/phase2_bounds.md 8.2."""
+cases in the flatness lemma of docs/phases/phase2/report.md 8.2."""
 
 FLATNESS_BASE = 7
 """Largest block index handled by completeness alone. For k > this, the flatness
@@ -86,7 +86,7 @@ def flatness_log_bound(a: int) -> float:
 
     `B(a, m)` counts cap-respecting digit tuples on places 1..a with value m.
     The bound is the product form of the flatness lemma
-    (docs/phases/phase2_bounds.md 8.2): one factor `RHO * F_{k-1} - 1` per
+    (docs/phases/phase2/report.md 8.2): one factor `RHO * F_{k-1} - 1` per
     index k from FLATNESS_BASE + 1 to a, with `B(FLATNESS_BASE, m) >= 1`
     supplied by completeness.
 

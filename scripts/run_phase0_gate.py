@@ -5,7 +5,7 @@ Candidates:
     1 / (2 log phi) = 1.03904   (no cap effect; Coons-Kristensen-Laursen)
     1 / (4 log phi) = 0.51952   (conjectured when this gate was written;
                                 proved in Phase 2 as C5 of
-                                docs/phases/phase2_bounds.md, so this is now
+                                docs/phases/phase2/report.md, so this is now
                                 the known value and the gate is a check)
     1 / (8 log phi) = 0.25976   (naive count; a lower bound only)
 
@@ -13,7 +13,6 @@ The estimator is the local slope d(log R)/d((log N)^2), which converges far
 faster than the plain ratio log R / (log N)^2.
 """
 
-import csv
 import math
 from pathlib import Path
 
@@ -21,6 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from capfib.artifacts import atomic_savefig, atomic_write_text, csv_text  # noqa: E402
 from capfib.manifest import record  # noqa: E402
 from capfib.saddle import log_R_bound  # noqa: E402
 
@@ -49,14 +49,9 @@ def main() -> None:
         prev = (value, sq)
         print(f"1e{e:<6} log R = {value:16.2f}  ratio = {value / sq:.6f}  slope = {slope}")
 
-    DATA.parent.mkdir(parents=True, exist_ok=True)
-    with DATA.open("w", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
+    atomic_write_text(DATA, csv_text(rows))
 
     slopes = [(r["log10_N"], r["local_slope"]) for r in rows if r["local_slope"] != ""]
-    FIGURE.parent.mkdir(parents=True, exist_ok=True)
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot([x for x, _ in slopes], [y for _, y in slopes], "o-", label="local slope")
     for c, lab in ((2, "1/(2 log phi)"), (4, "1/(4 log phi)"), (8, "1/(8 log phi)")):
@@ -67,7 +62,7 @@ def main() -> None:
     ax.set_title("Phase 0.5: leading constant of log R_c(N)")
     ax.legend()
     fig.tight_layout()
-    fig.savefig(FIGURE, dpi=150)
+    atomic_savefig(fig, FIGURE, dpi=150)
 
     final = slopes[-1][1]
     print(f"\nfinal local slope: {final:.6f}")

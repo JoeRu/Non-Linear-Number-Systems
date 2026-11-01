@@ -4,7 +4,7 @@ Risk R-002's Phase 1 entry (`docs/risks.md`) names three things as the
 hand-copy exposure: "the census, the place-jump table and the block-extrema
 table". `tests/test_figure_tags.py` closes the census (and a handful of
 headline figures pulled out of the two tables) with `{fig:key}` tags, but the
-two tables themselves are reproduced in `docs/phases/phase1_report.md` in
+two tables themselves are reproduced in `docs/phases/phase1/report.md` in
 full -- 28 and 29 rows -- and tagging every cell would mean on the order of a
 hundred more figure keys for tables that exist precisely so a reader does not
 have to go spelunking in `data/phase1_summary.json`. Tagging every cell was
@@ -27,7 +27,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "docs" / "phases" / "phase1_report.md"
+REPORT = ROOT / "docs" / "phases" / "phase1" / "report.md"
 SUMMARY = ROOT / "data" / "phase1_summary.json"
 
 

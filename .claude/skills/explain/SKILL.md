@@ -65,10 +65,10 @@ over a limit.
    section of `lean/NonLinearNumberSystems/Theorems.lean`, and there are no
    `sorry`s.
    None of the asymptotics is in Lean: T1, T2, T3, Lemma F, T5, C4 and C5 are
-   paper proofs in `docs/phases/phase2_bounds.md`.
+   paper proofs in `docs/phases/phase2/report.md`.
 
-Read from the sources rather than from memory — `docs/phase2.md` for the
-summary, `docs/phases/phase2_bounds.md` for the proofs, `theory/claims.yaml`
+Read from the sources rather than from memory — `docs/phases/phase2/summary.md` for the
+summary, `docs/phases/phase2/report.md` for the proofs, `theory/claims.yaml`
 for what is actually claimed and at what status. They are reviewed and current;
 restating them here would go stale.
 

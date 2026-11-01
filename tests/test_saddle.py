@@ -32,7 +32,7 @@ def test_leading_constant_approaches_quarter_log_phi():
 
     Both candidates are ruled out on paper, not here:
 
-    * 1/(2 log phi) by T2 of docs/phases/phase2_bounds.md, which proves the
+    * 1/(2 log phi) by T2 of docs/phases/phase2/report.md, which proves the
       transform's leading coefficient is 1/(4 log phi), together with T1
       putting log R_c(N) at or below the transform.
     * 1/(8 log phi) by C5, unconditionally, by a route that does not pass
@@ -54,7 +54,7 @@ def test_leading_constant_approaches_quarter_log_phi():
         "the measured slopes lie BELOW 1/(2 log phi) = 1.0390, not above it -- "
         "0.5107, 0.5146, 0.5168 against 1.0390. This assertion records which "
         "side they are on; the reason 1/(2 log phi) is excluded is T2 plus T1 "
-        "in docs/phases/phase2_bounds.md, not this measurement"
+        "in docs/phases/phase2/report.md, not this measurement"
     )
     assert abs(slopes[-1] - 1.0 / (2 * LOG_PHI)) > 0.4, (
         "the measured slope has drifted toward 1/(2 log phi); it should sit "
@@ -67,7 +67,7 @@ def test_leading_constant_approaches_quarter_log_phi():
         "the measured slope has drifted toward 1/(8 log phi). Being above it is "
         "not what excludes it: this is an upper bound on log R_c, so a smaller "
         "true constant is entirely compatible with a larger measured slope. "
-        "What excludes 1/(8 log phi) is C5 of docs/phases/phase2_bounds.md"
+        "What excludes 1/(8 log phi) is C5 of docs/phases/phase2/report.md"
     )
 
 

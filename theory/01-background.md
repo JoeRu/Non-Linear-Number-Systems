@@ -541,7 +541,7 @@ this exact form.
 
    **Answered in part (Phase 2).** The first half is settled: the limit exists and
    `c = 1/(4 log phi)` ({claim:leading-constant}, C5 of
-   `docs/phases/phase2_bounds.md` §8). The oscillation half is untouched and is
+   `docs/phases/phase2/report.md` §8). The oscillation half is untouched and is
    still question (C) of `theory/00-definitions.md`. The rest of this section is
    left as it was written — it is a reading record of the article, not a status
    board.

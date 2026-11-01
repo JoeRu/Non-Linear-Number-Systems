@@ -27,12 +27,12 @@
                                 over a fixed length). Not a step of the Phase 2
                                 upper bound either, which is sharper and is a
                                 *paper* result — proved on paper in
-                                `docs/phases/phase2_bounds.md` (T2), not here,
+                                `docs/phases/phase2/report.md` (T2), not here,
                                 so it carries none of the machine-checked
                                 force the rest of this section does. This
                                 declaration supports only the comparison
                                 against Coons–Kristensen–Laursen. See
-                                `docs/phase2.md` §"It does not use
+                                `docs/phases/phase2/summary.md` §"It does not use
                                 Coons–Kristensen–Laursen" for the same
                                 statement of scope.
 
